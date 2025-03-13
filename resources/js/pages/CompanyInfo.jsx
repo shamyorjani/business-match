@@ -57,18 +57,18 @@ return (
             <div className="flex">
                 <svg width="326" height="34" viewBox="0 0 400 40">
                     <polygon points="240,0 340,0 360,20 340,40 240,40 260,20" fill="#E5E7EB" />
-                    <polygon points="120,0 220,0 240,20 220,40 120,40 140,20" fill="#581C87" />
-                    <polygon points="0,0 100,0 120,20 100,40 0,40" fill="#581C87" />
+                    <polygon points="120,0 220,0 240,20 220,40 120,40 140,20" fill="#6f0f55" />
+                    <polygon points="0,0 100,0 120,20 100,40 0,40" fill="#40033f" />
                 </svg>
             </div>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-1">
                 {/* Left Column */}
                 <div>
-                    <div className='grid grid-cols-1 md:grid-cols-2 gap-5'>
+                    <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
                         <div>
                             <label htmlFor="website" className="form-label">Company Website:</label>
                             <input type="text" id="website" name="website" placeholder="E.g. www.xyz.com"
@@ -77,13 +77,13 @@ return (
                         <div>
                             <label htmlFor="phoneNumber" className="form-label">Phone Number:</label>
                             <div className="flex">
-                                <div className="flex items-center bg-gray-50 border border-gray-200 rounded-l px-2">
-                                    <div className="w-6 h-4 mr-1 flex items-center justify-center overflow-hidden">
+                                <div className="flex items-center px-2 border border-gray-200 rounded-l bg-gray-50">
+                                    <div className="flex items-center justify-center w-6 h-4 mr-1 overflow-hidden">
                                         {/* Malaysia flag - simplified version */}
-                                        <div className="w-full h-full relative bg-blue-600 flex flex-col">
-                                            <div className="w-full h-1/2 bg-red-600"></div>
+                                        <div className="relative flex flex-col w-full h-full bg-blue-600">
+                                            <div className="w-full bg-red-600 h-1/2"></div>
                                             <div
-                                                className="absolute top-0 left-0 w-1/3 h-full bg-blue-900 flex items-center justify-center">
+                                                className="absolute top-0 left-0 flex items-center justify-center w-1/3 h-full bg-blue-900">
                                                 <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
                                             </div>
                                         </div>
@@ -91,7 +91,7 @@ return (
                                     <span className="text-sm">+60</span>
                                 </div>
                                 <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="E.g. 123456789"
-                                    className="flex-1 border border-gray-200 rounded-r p-2 focus:outline-none focus:border-purple-500"
+                                    className="flex-1 p-2 border border-gray-200 rounded-r focus:outline-none focus:border-purple-500"
                                     value={formData.phoneNumber} onChange={handleChange} />
                             </div>
                         </div>
@@ -111,7 +111,7 @@ return (
                     </div>
 
 
-                    <div className='grid grid-cols-1 md:grid-cols-2 gap-5 mt-6'>
+                    <div className='grid grid-cols-1 gap-5 mt-6 md:grid-cols-2'>
                         <div>
                             <input type="text" id="city" name="city" placeholder="City"
                                 className="form-input" value={formData.city} onChange={handleChange} />
@@ -134,16 +134,16 @@ return (
                             {/* <label htmlFor="country" className="form-label">Country:</label> */}
                             <div className="relative">
                                 <button type="button"
-                                    className="flex items-center justify-between w-full px-3 py-2 border border-gray-200 rounded bg-white focus:outline-none focus:border-purple-500"
+                                    className="flex items-center justify-between w-full px-3 py-2 bg-white border border-gray-200 rounded focus:outline-none focus:border-purple-500"
                                     onClick={()=> setShowCountryDropdown(!showCountryDropdown)}
                                     >
                                     <div className="flex items-center">
-                                        <div className="w-6 h-4 mr-2 flex items-center justify-center overflow-hidden">
+                                        <div className="flex items-center justify-center w-6 h-4 mr-2 overflow-hidden">
                                             {/* Malaysia flag - simplified version */}
-                                            <div className="w-full h-full relative bg-blue-600 flex flex-col">
-                                                <div className="w-full h-1/2 bg-red-600"></div>
+                                            <div className="relative flex flex-col w-full h-full bg-blue-600">
+                                                <div className="w-full bg-red-600 h-1/2"></div>
                                                 <div
-                                                    className="absolute top-0 left-0 w-1/3 h-full bg-blue-900 flex items-center justify-center">
+                                                    className="absolute top-0 left-0 flex items-center justify-center w-1/3 h-full bg-blue-900">
                                                     <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
                                                 </div>
                                             </div>
@@ -172,12 +172,12 @@ return (
                                             }}
                                             >
                                             <div
-                                                className="w-6 h-4 mr-2 flex items-center justify-center overflow-hidden">
+                                                className="flex items-center justify-center w-6 h-4 mr-2 overflow-hidden">
                                                 {/* Malaysia flag - simplified version */}
-                                                <div className="w-full h-full relative bg-blue-600 flex flex-col">
-                                                    <div className="w-full h-1/2 bg-red-600"></div>
+                                                <div className="relative flex flex-col w-full h-full bg-blue-600">
+                                                    <div className="w-full bg-red-600 h-1/2"></div>
                                                     <div
-                                                        className="absolute top-0 left-0 w-1/3 h-full bg-blue-900 flex items-center justify-center">
+                                                        className="absolute top-0 left-0 flex items-center justify-center w-1/3 h-full bg-blue-900">
                                                         <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
                                                     </div>
                                                 </div>
@@ -211,12 +211,12 @@ return (
             </div>
 
             {/* Required Fields Note */}
-            <div className="mt-6 text-red-600 text-sm">*All fields are required to fill</div>
+            <div className="mt-6 text-sm text-red-600">*All fields are required to fill</div>
 
             {/* Navigation Buttons */}
-            <div className="mt-6 flex justify-end gap-4">
+            <div className="flex justify-end gap-4 mt-6">
                 <button type="button" onClick={handleBack}
-                    className="px-6 py-2 border border-purple-900 text-purple-900 rounded-full hover:bg-purple-50 focus:outline-none">
+                    className="px-6 py-2 text-purple-900 border border-purple-900 rounded-full hover:bg-purple-50 focus:outline-none">
                     Back
                 </button>
                 <button type="submit" onClick={handleNext} className="primary-btn">

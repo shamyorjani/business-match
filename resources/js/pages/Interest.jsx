@@ -11,7 +11,7 @@ const CompanyInfo = () => {
     };
 
     const handleNext = () => {
-        console.log('Next button clicked');
+        navigate('/exhibitors');
     };
 
     const handleBack = () => {
@@ -31,8 +31,7 @@ const CompanyInfo = () => {
             name: 'Haircare Product, Tools & Accessories',
             subCategories: [
                 {
-                    name: 'Lip Makeup',
-                    items: ['Lipstick', 'Lip Gloss', 'Lip Liner']
+                    name: 'Lip Makeup'
                 }
             ]
         },
@@ -40,16 +39,13 @@ const CompanyInfo = () => {
             name: 'Cosmetics',
             subCategories: [
                 {
-                    name: 'Face Makeup',
-                    items: ['Foundations', 'Concealers', 'Blush', 'Highlighters', 'Powders']
+                    name: 'Face Makeup'
                 },
                 {
-                    name: 'Eye Makeup',
-                    items: ['Eyeshadows', 'Eyeliner', 'Mascara']
+                    name: 'Eye Makeup'
                 },
                 {
-                    name: 'Lip Makeup',
-                    items: ['Lipstick', 'Lip Gloss', 'Lip Liner']
+                    name: 'Lip Makeup'
                 }
             ]
         },
@@ -78,49 +74,48 @@ const CompanyInfo = () => {
                     <h2 className="step-indicator">STEP 2</h2>
                     <div className="flex">
                         <svg width="326" height="34" viewBox="0 0 400 40">
-                            <polygon points="240,0 340,0 360,20 340,40 240,40 260,20" fill="#E5E7EB" />
-                            <polygon points="120,0 220,0 240,20 220,40 120,40 140,20" fill="#581C87" />
-                            <polygon points="0,0 100,0 120,20 100,40 0,40" fill="#581C87" />
+                            <polygon points="240,0 340,0 360,20 340,40 240,40 260,20" fill="#9c0c40" />
+                            <polygon points="120,0 220,0 240,20 220,40 120,40 140,20" fill="#6f0f55" />
+                            <polygon points="0,0 100,0 120,20 100,40 0,40" fill="#40033f" />
                         </svg>
                     </div>
                 </div>
 
                 {/* Form */}
                 <form onSubmit={handleSubmit}>
-                    <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-1">
                         <div className="mb-6">
                             <h3 className="text-lg font-bold">Kindly select your interest for business matching :</h3>
                             <p className="text-sm text-gray-600">You may select more than one interest.</p>
                         </div>
                     </div>
 
-                    {/* Search Input */}
-                    <div className="relative">
+                    <div className="relative border border-gray-300 rounded-2xl">
                         <input
                             type="text"
                             placeholder="Type Here to Search"
-                            className="w-full px-4 py-3 text-gray-700 bg-white border border-gray-300 rounded-md shadow-md focus:outline-none focus:ring-2 focus:ring-purple-500"
+                            className="w-full px-4 py-3 text-gray-700 bg-white border-0 shadow-2xl rounded-t-2xl focus:outline-none"
                             value={searchTerm}
                             onChange={handleSearchChange} // Update search term
                         />
 
                         {/* Main Dropdown */}
-                        <div className="relative left-0 w-full mt-2 bg-white ">
-                            <div className="max-h-60 border w-[500px] border-gray-300 rounded-md shadow-lg">
+                        <div className="relative left-0 w-full bg-white shadow-2xl rounded-b-2xl">
+                            <div className=" max-h-60">
                                 {searchTerm === '' ? (
                                     // Show all categories if search term is empty
                                     categories.map((category, categoryIndex) => (
                                         <div key={categoryIndex} className="relative">
                                             <div className="w-full">
                                                 <button
-                                                    className="w-full px-4 py-2 text-left text-purple-700 hover:bg-purple-50 focus:outline-none flex justify-between items-center"
+                                                    className="flex items-center justify-between w-full px-4 py-2 text-left text-black border-t-[1px] border-[#D9D9D9] focus:outline-none"
                                                     onClick={() =>
                                                         setOpenCategoryIndex(openCategoryIndex === categoryIndex ? null : categoryIndex)
                                                     }
                                                 >
                                                     <span>{category.name}</span>
                                                     {category.subCategories.length > 0 && (
-                                                        <svg className="w-4 h-4 transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <svg className={`w-4 h-4 transform ${openCategoryIndex === categoryIndex ? 'rotate-270' : 'rotate-0'}`} fill="none" stroke="#6f0f55" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                                                         </svg>
                                                     )}
@@ -129,34 +124,15 @@ const CompanyInfo = () => {
 
                                             {/* Subcategory Dropdown */}
                                             {openCategoryIndex === categoryIndex && category.subCategories.length > 0 && (
-                                                <div className="ml-4 pl-4">
+                                                <div className="">
                                                     {category.subCategories.map((subCategory, subCategoryIndex) => (
                                                         <div key={subCategoryIndex}>
                                                             <button
-                                                                className="w-full px-4 py-2 text-left text-purple-700 hover:bg-purple-50 focus:outline-none flex justify-between items-center"
+                                                                className="flex border-t-[1px] border-[#D9D9D9] items-center justify-between w-full px-[10%] py-2 text-left text-black hover:text-white hover:bg-[#6f0f55] focus:outline-none"
                                                                 onClick={() => handleClickSubCategory(subCategoryIndex)}
                                                             >
                                                                 <span>{subCategory.name}</span>
-                                                                {subCategory.items.length > 0 && (
-                                                                    <svg className="w-4 h-4 transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                                                    </svg>
-                                                                )}
                                                             </button>
-
-                                                            {/* Item Dropdown under the subcategory */}
-                                                            {openSubCategoryIndex === subCategoryIndex && (
-                                                                <div className="ml-8 pl-4 mt-2 bg-white border border-gray-300 rounded-md shadow-lg w-64  absolute z-10 right-[-220px] bottom-[-60px]">
-                                                                    {subCategory.items.map((item, itemIndex) => (
-                                                                        <div
-                                                                            key={itemIndex}
-                                                                            className="px-4 py-2 text-sm text-gray-600 hover:bg-purple-50 cursor-pointer"
-                                                                        >
-                                                                            {item}
-                                                                        </div>
-                                                                    ))}
-                                                                </div>
-                                                            )}
                                                         </div>
                                                     ))}
                                                 </div>
@@ -172,14 +148,14 @@ const CompanyInfo = () => {
                                             <div key={categoryIndex} className="relative">
                                                 <div className="w-full">
                                                     <button
-                                                        className="w-full px-4 py-2 text-left text-purple-700 hover:bg-purple-50 focus:outline-none flex justify-between items-center"
+                                                        className="flex items-center justify-between w-full px-4 py-2 text-left text-purple-700 hover:bg-purple-50 focus:outline-none"
                                                         onClick={() =>
                                                             setOpenCategoryIndex(openCategoryIndex === categoryIndex ? null : categoryIndex)
                                                         }
                                                     >
                                                         <span>{category.name}</span>
                                                         {category.subCategories.length > 0 && (
-                                                            <svg className="w-4 h-4 transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                            <svg className={`w-4 h-4 transform ${openCategoryIndex === categoryIndex ? 'rotate-270' : 'rotate-0'}`} fill="none" stroke="#6f0f55" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                                                             </svg>
                                                         )}
@@ -188,34 +164,15 @@ const CompanyInfo = () => {
 
                                                 {/* Subcategory Dropdown */}
                                                 {openCategoryIndex === categoryIndex && category.subCategories.length > 0 && (
-                                                    <div className="ml-4 pl-4">
+                                                    <div className="pl-4 ml-4">
                                                         {category.subCategories.map((subCategory, subCategoryIndex) => (
                                                             <div key={subCategoryIndex}>
                                                                 <button
-                                                                    className="w-full px-4 py-2 text-left text-purple-700 hover:bg-purple-50 focus:outline-none flex justify-between items-center"
+                                                                    className="flex items-center justify-between w-full px-4 py-2 text-left text-purple-700 hover:bg-purple-50 focus:outline-none"
                                                                     onClick={() => handleClickSubCategory(subCategoryIndex)}
                                                                 >
                                                                     <span>{subCategory.name}</span>
-                                                                    {subCategory.items.length > 0 && (
-                                                                        <svg className="w-4 h-4 transform" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                                                        </svg>
-                                                                    )}
                                                                 </button>
-
-                                                                {/* Item Dropdown under the subcategory */}
-                                                                {openSubCategoryIndex === subCategoryIndex && (
-                                                                    <div className="ml-8 pl-4 mt-2 bg-white border border-gray-300 rounded-md shadow-lg w-64">
-                                                                        {subCategory.items.map((item, itemIndex) => (
-                                                                            <div
-                                                                                key={itemIndex}
-                                                                                className="px-4 py-1 text-sm text-gray-600 hover:bg-purple-50 cursor-pointer"
-                                                                            >
-                                                                                {item}
-                                                                            </div>
-                                                                        ))}
-                                                                    </div>
-                                                                )}
                                                             </div>
                                                         ))}
                                                     </div>
@@ -229,12 +186,12 @@ const CompanyInfo = () => {
                     </div>
 
                     {/* Required Fields Note */}
-                    <div className="mt-6 text-red-600 text-sm">*All fields are required to fill</div>
+                    <div className="mt-6 text-sm text-red-600">*All fields are required to fill</div>
 
                     {/* Navigation Buttons */}
-                    <div className="mt-6 flex justify-end gap-4">
+                    <div className="flex justify-end gap-4 mt-6">
                         <button type="button" onClick={handleBack}
-                            className="px-6 py-2 border border-purple-900 text-purple-900 rounded-full hover:bg-purple-50 focus:outline-none">
+                            className="px-6 py-2 text-purple-900 border border-purple-900 rounded-full hover:bg-purple-50 focus:outline-none">
                             Back
                         </button>
                         <button type="submit" onClick={handleNext} className="primary-btn">

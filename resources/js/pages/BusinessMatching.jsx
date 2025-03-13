@@ -49,7 +49,7 @@ const BusinessMatchingForm = () => {
             <svg width="326" height="34" viewBox="0 0 400 40">
               <polygon points="240,0 340,0 360,20 340,40 240,40 260,20" fill="#E5E7EB" />
               <polygon points="120,0 220,0 240,20 220,40 120,40 140,20" fill="#E5E7EB" />
-              <polygon points="0,0 100,0 120,20 100,40 0,40" fill="#581C87" />
+              <polygon points="0,0 100,0 120,20 100,40 0,40" fill="#40033f" />
             </svg>
           </div>
         </div>
