@@ -22,12 +22,31 @@ const OrganiserDashboard = () => {
       country: 'Malaysia',
       schedules: [
         {
+          id: 101,
           day: 3,
           date: '04 June 2025',
           dayOfWeek: 'Thursday',
           time: '3.00pm-4.00pm',
           exhibitor: 'ABC Company',
           boothNumber: 'A11'
+        },
+        {
+          id: 102,
+          day: 2,
+          date: '03 June 2025',
+          dayOfWeek: 'Wednesday',
+          time: '1.00pm-2.00pm',
+          exhibitor: 'XYZ Company',
+          boothNumber: 'B22'
+        },
+        {
+          id: 103,
+          day: 4,
+          date: '05 June 2025',
+          dayOfWeek: 'Friday',
+          time: '10.00am-11.00am',
+          exhibitor: 'DEF Corporation',
+          boothNumber: 'C15'
         }
       ]
     },
@@ -126,6 +145,14 @@ const OrganiserDashboard = () => {
   const nextSchedule = () => {
     if (selectedItem && selectedItem.schedules.length > 1) {
       setCurrentScheduleIndex((prev) => (prev + 1) % selectedItem.schedules.length);
+    }
+  };
+
+  const prevSchedule = () => {
+    if (selectedItem && selectedItem.schedules.length > 1) {
+      setCurrentScheduleIndex((prev) =>
+        prev === 0 ? selectedItem.schedules.length - 1 : prev - 1
+      );
     }
   };
 
@@ -300,7 +327,7 @@ const OrganiserDashboard = () => {
 
               {/* Meeting Schedule */}
               {selectedItem.schedules && selectedItem.schedules.length > 0 && (
-                <div className="relative text-sm">
+                <div className="relative px-8 text-sm">
                   <div className="space-y-1">
                     <p className="font-medium">Day {selectedItem.schedules[currentScheduleIndex].day}</p>
                     <p>Date: {selectedItem.schedules[currentScheduleIndex].date} ({selectedItem.schedules[currentScheduleIndex].dayOfWeek})</p>
@@ -309,32 +336,47 @@ const OrganiserDashboard = () => {
                     <p>Booth Number: {selectedItem.schedules[currentScheduleIndex].boothNumber}</p>
                   </div>
 
-                  {/* Next button */}
+                  {/* Navigation arrows */}
                   {selectedItem.schedules.length > 1 && (
-                    <button
-                      onClick={nextSchedule}
-                      className="absolute right-0 transform -translate-y-1/2 top-1/2"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
+                    <>
+                      <button
+                        onClick={prevSchedule}
+                        className="absolute left-0 transform -translate-y-1/2 top-1/2"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={nextSchedule}
+                        className="absolute right-0 transform -translate-y-1/2 top-1/2"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </>
                   )}
                 </div>
               )}
 
-              {/* Navigation dots */}
+              {/* Navigation dots with counter */}
               {selectedItem.schedules && selectedItem.schedules.length > 1 && (
-                <div className="flex justify-center gap-1 mt-4">
-                  {selectedItem.schedules.map((_, index) => (
-                    <span
-                      key={index}
-                      className={`inline-block w-2 h-2 rounded-full ${
-                        currentScheduleIndex === index ? 'bg-black' : 'bg-gray-300'
-                      }`}
-                      onClick={() => setCurrentScheduleIndex(index)}
-                    ></span>
-                  ))}
+                <div className="flex flex-col items-center mt-4">
+                  <p className="mb-1 text-xs text-gray-500">
+                    {currentScheduleIndex + 1} of {selectedItem.schedules.length} meetings
+                  </p>
+                  <div className="flex justify-center gap-1">
+                    {selectedItem.schedules.map((_, index) => (
+                      <span
+                        key={index}
+                        className={`inline-block w-2 h-2 rounded-full ${
+                          currentScheduleIndex === index ? 'bg-black' : 'bg-gray-300'
+                        } cursor-pointer`}
+                        onClick={() => setCurrentScheduleIndex(index)}
+                      ></span>
+                    ))}
+                  </div>
                 </div>
               )}
 
