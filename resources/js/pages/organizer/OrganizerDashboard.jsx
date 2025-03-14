@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-const OrganiserDashboard = () => {
+const OrganizerDashboard = () => {
   const [activeTab, setActiveTab] = useState('Business Matching');
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
@@ -403,4 +403,4 @@ const OrganiserDashboard = () => {
   );
 };
 
-export default OrganiserDashboard;
+export default OrganizerDashboard;

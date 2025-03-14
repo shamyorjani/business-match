@@ -56,7 +56,7 @@ const BusinessMatchingForm = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             {/* Name */}
             <div>
               <label htmlFor="name" className="form-label">Name:</label>
@@ -101,14 +101,14 @@ const BusinessMatchingForm = () => {
 
             {/* Phone Number */}
             <div>
-              <label htmlFor="phoneNumber" className="block text-gray-800 font-medium mb-2">Phone Number:</label>
+              <label htmlFor="phoneNumber" className="block mb-2 font-medium text-gray-800">Phone Number:</label>
               <div className="flex">
-                <div className="flex items-center bg-gray-50 border border-gray-200 rounded-l px-2">
-                  <div className="w-6 h-4 mr-1 flex items-center justify-center overflow-hidden">
+                <div className="flex items-center px-2 border border-gray-200 rounded-l bg-gray-50">
+                  <div className="flex items-center justify-center w-6 h-4 mr-1 overflow-hidden">
                     {/* Malaysia flag - simplified version */}
-                    <div className="w-full h-full relative bg-blue-600 flex flex-col">
-                      <div className="w-full h-1/2 bg-red-600"></div>
-                      <div className="absolute top-0 left-0 w-1/3 h-full bg-blue-900 flex items-center justify-center">
+                    <div className="relative flex flex-col w-full h-full bg-blue-600">
+                      <div className="w-full bg-red-600 h-1/2"></div>
+                      <div className="absolute top-0 left-0 flex items-center justify-center w-1/3 h-full bg-blue-900">
                         <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
                       </div>
                     </div>
@@ -120,7 +120,7 @@ const BusinessMatchingForm = () => {
                   id="phoneNumber"
                   name="phoneNumber"
                   placeholder="E.g. 123456789"
-                  className="flex-1 border border-gray-200 rounded-r p-2 focus:outline-none focus:border-purple-500"
+                  className="flex-1 p-2 border border-gray-200 rounded-r focus:outline-none focus:border-purple-500"
                   value={formData.phoneNumber}
                   onChange={handleChange}
                 />
@@ -212,10 +212,10 @@ const BusinessMatchingForm = () => {
           </div>
 
           {/* Required Fields Note */}
-          <div className="mt-6 text-red-600 text-sm">*All fields are required to fill</div>
+          <div className="mt-6 text-sm text-red-600">*All fields are required to fill</div>
 
           {/* Next Button */}
-          <div className="mt-6 flex justify-end">
+          <div className="flex justify-end mt-6">
             <button onClick={handleNext} type="submit" className="primary-btn">Next</button>
           </div>
         </form>

@@ -3,9 +3,9 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        primary: '#1DA1F2',
-        secondary: '#14171A',
-        accent: '#657786',
+        primary: '#40033f',
+        secondary: '#6f0f55',
+        accent: '#9c0c40',
         background: '#F5F8FA',
         border: '#E1E8ED',
         'purple-900': '#6B21A8',
@@ -22,10 +22,16 @@ module.exports = {
         sans: ['Helvetica', 'Arial', 'sans-serif'],
         serif: ['Georgia', 'Cambria', 'serif'],
         mono: ['Menlo', 'Monaco', 'monospace'],
+        cardo: ['Cardo', 'serif'],
+      },
+
+      fontSize: {
+        '2xl': '1.5rem',
+        'sm': '0.875rem',
       },
       gradientColorStops: theme => ({
-        'primary-start': '#1DA1F2',
-        'primary-end': '#14171A',
+        'primary-start': '#40033f',
+        'primary-end': '#9c0c40',
         'secondary-start': '#657786',
         'secondary-end': '#AAB8C2',
         'purple-900': '#6B21A8',

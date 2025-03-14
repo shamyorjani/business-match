@@ -1,5 +1,12 @@
-/* filepath: c:\laragon\www\business-matching\resources\css\app.css */
-@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Cardo&display=swap');@import "tailwindcss";
+
+/* Tailwind Utility Class Application */
+.nav-menu {
+    @apply flex items-center font-bold text-[25px];
+}
+/* Other styles remain the same */
+
+
 
 .primary-btn {
     @apply bg-[#40033f] text-white px-8 py-2 rounded-full
@@ -42,3 +49,8 @@
 .step-indicator {
     @apply text-[#40033f] text-2xl font-bold mb-2;
 }
+
+.main-logo{
+    @apply w-[165px] h-[92px];
+}
+
