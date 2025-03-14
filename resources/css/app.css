@@ -1,56 +1,800 @@
-@import url('https://fonts.googleapis.com/css2?family=Cardo&display=swap');@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
 
-/* Tailwind Utility Class Application */
-.nav-menu {
-    @apply flex items-center font-bold text-[25px];
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&display=swap');
+
+@import "tailwindcss";
+
+@theme {
+    --font-cardo: "Cardo", serif;
+    --font-instrument: "Instrument Sans", sans-serif;
 }
-/* Other styles remain the same */
 
+@layer components {
+  /* Layout Components */
+  .nav-menu {
+    @apply flex items-center font-bold text-[25px];
+  }
 
+  .container-fluid {
+    @apply container w-full mx-auto px-4;
+  }
 
-.primary-btn {
+  .main-logo {
+    @apply w-[165px] h-[92px];
+  }
+
+  .page-container {
+    @apply flex flex-col min-h-screen;
+  }
+
+  /* Header Components */
+  .header {
+    @apply bg-gradient-to-r from-[#40033f] to-[#9c0c40] p-6;
+  }
+
+  .header-title {
+    @apply text-white text-2xl font-bold font-cardo;
+  }
+
+  .header-subtitle {
+    @apply mt-1 text-sm text-white;
+  }
+
+  .dashboard-header {
+    @apply w-full bg-gradient-to-r from-[#40033f] to-[#9c0c40] p-6;
+  }
+
+  .main-nav {
+    @apply bg-gradient-to-r from-[#40033f] to-[#9c0c40] text-white py-4 px-6;
+  }
+
+  /* Buttons */
+  .primary-btn {
     @apply bg-[#40033f] text-white px-8 py-2 rounded-full
            hover:bg-[#6f0f55] focus:outline-none focus:ring-2 focus:ring-offset-2;
-}
+  }
 
-.form-label {
+  .secondary-btn {
+    @apply px-6 py-2 text-purple-900 border border-purple-900 rounded-full
+           hover:bg-purple-50 focus:outline-none;
+  }
+
+  .upload-btn {
+    @apply flex items-center px-4 py-2 border border-gray-300 rounded focus:outline-none;
+  }
+
+  .action-btn {
+    @apply px-5 py-1.5 text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full;
+  }
+
+  .action-btn-primary {
+    @apply px-5 py-1.5 text-sm bg-[#40033f] text-white rounded-full;
+  }
+
+  .action-btn-secondary {
+    @apply px-5 py-1.5 text-sm bg-[#9c0c40] text-white rounded-full;
+  }
+
+  .back-btn {
+    @apply px-6 py-2 text-purple-900 border border-purple-900 rounded-full hover:bg-purple-50 focus:outline-none;
+  }
+
+  .btn-primary {
+    @apply bg-[#40033f] text-white px-4 py-1 rounded-full text-sm;
+  }
+
+  .btn-secondary {
+    @apply border border-[#6f0f55] text-[#6f0f55] px-4 py-1 rounded-full text-sm hover:bg-gray-50;
+  }
+
+  .btn-selected {
+    @apply bg-[#40033f] text-white px-4 py-1 rounded-full text-sm;
+  }
+
+  .btn-unselected {
+    @apply border border-[#40033f] text-[#40033f] px-4 py-1 rounded-full text-sm;
+  }
+
+  .btn-lg {
+    @apply px-6 py-2 rounded-full;
+  }
+
+  .btn-action {
+    @apply px-6 py-1.5 text-sm rounded-full;
+  }
+
+  /* Form Elements */
+  .form-container {
+    @apply max-w-7xl mx-auto shadow-lg rounded-lg overflow-hidden border border-gray-200;
+  }
+
+  .form-content {
+    @apply p-10 py-16 bg-white;
+  }
+
+  .form-label {
     @apply block text-gray-800 font-medium mb-2;
-}
+  }
 
-.form-input {
+  .form-input {
     @apply w-full border border-gray-200 rounded p-2
            focus:outline-none focus:border-purple-500;
-}
+  }
 
-.radio-container {
+  .radio-container {
     @apply flex items-center;
-}
+  }
 
-.radio-input {
+  .radio-input {
     @apply w-4 h-4 text-[#40033f] focus:ring-purple-500;
-}
+  }
 
-.radio-label {
+  .radio-label {
     @apply ml-2 text-gray-700;
-}
+  }
 
-.form-container {
-    @apply max-w-4xl mx-auto shadow-lg rounded-lg overflow-hidden border border-gray-200;
-}
+  .form-grid {
+    @apply grid grid-cols-1 gap-6 md:grid-cols-1;
+  }
 
-.header {
-    @apply bg-gradient-to-r from-[#40033f] to-[#9c0c40] p-6;
-}
+  .form-grid-2 {
+    @apply grid grid-cols-1 gap-5 md:grid-cols-2;
+  }
 
-.header-title {
-    @apply text-white text-2xl font-bold;
-}
+  .form-input-group {
+    @apply space-y-3;
+  }
 
-.step-indicator {
+  .required-note {
+    @apply mt-6 text-sm text-red-600;
+  }
+
+  .form-actions {
+    @apply flex justify-end gap-4 mt-6;
+  }
+
+  .form-white-container {
+    @apply p-10 py-16 bg-white;
+  }
+
+  .step-container {
+    @apply mb-8;
+  }
+
+  .step-progress {
+    @apply flex;
+  }
+
+  .two-column-grid {
+    @apply grid grid-cols-1 gap-5 md:grid-cols-2;
+  }
+
+  .phone-input-container {
+    @apply flex;
+  }
+
+  .phone-prefix {
+    @apply flex items-center px-2 border border-gray-200 rounded-l bg-gray-50;
+  }
+
+  .flag-container {
+    @apply flex items-center justify-center w-6 h-4 mr-1 overflow-hidden;
+  }
+
+  .malaysia-flag {
+    @apply relative flex flex-col w-full h-full bg-blue-600;
+  }
+
+  .flag-top {
+    @apply w-full bg-red-600 h-1/2;
+  }
+
+  .flag-emblem {
+    @apply absolute top-0 left-0 flex items-center justify-center w-1/3 h-full bg-blue-900;
+  }
+
+  .country-code {
+    @apply text-sm;
+  }
+
+  .phone-input {
+    @apply flex-1 p-2 border border-gray-200 rounded-r focus:outline-none focus:border-purple-500;
+  }
+
+  .address-section {
+    @apply mt-6;
+  }
+
+  .address-inputs {
+    @apply space-y-3;
+  }
+
+  .address-details {
+    @apply mt-6;
+  }
+
+  .country-dropdown {
+    @apply relative;
+  }
+
+  .country-selector {
+    @apply flex items-center justify-between w-full px-3 py-2 bg-white border border-gray-200 rounded focus:outline-none focus:border-purple-500;
+  }
+
+  .country-flag-name {
+    @apply flex items-center;
+  }
+
+  .dropdown-arrow {
+    @apply w-4 h-4 text-gray-500;
+  }
+
+  .country-dropdown-menu {
+    @apply absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg;
+  }
+
+  .dropdown-content {
+    @apply py-1;
+  }
+
+  .country-option {
+    @apply flex items-center w-full px-3 py-2 hover:bg-gray-100;
+  }
+
+  .documents-section {
+    @apply mt-6;
+  }
+
+  .documents-label {
+    @apply block mb-1 text-sm font-medium text-gray-700;
+  }
+
+  .documents-format-info {
+    @apply mb-2 text-xs text-gray-500;
+  }
+
+  .documents-list {
+    @apply pl-5 mb-4 text-sm list-decimal;
+  }
+
+  .upload-container {
+    @apply mt-2;
+  }
+
+  .upload-button {
+    @apply flex items-center px-4 py-2 border border-gray-300 rounded focus:outline-none;
+  }
+
+  .upload-icon {
+    @apply w-4 h-4 ml-2;
+  }
+
+  .hidden {
+    @apply hidden;
+  }
+
+  .uploaded-files {
+    @apply mt-4;
+  }
+
+  .uploaded-files-title {
+    @apply mb-2 text-sm font-medium;
+  }
+
+  .file-list {
+    @apply pl-5 text-sm list-disc;
+  }
+
+  .file-item {
+    @apply text-green-600;
+  }
+
+  .required-fields-note {
+    @apply mt-6 text-sm text-red-600;
+  }
+
+  .navigation-buttons {
+    @apply flex justify-end gap-4 mt-6;
+  }
+
+  .back-button {
+    @apply px-6 py-2 text-purple-900 border border-purple-900 rounded-full hover:bg-purple-50 focus:outline-none;
+  }
+
+  /* Dropdown Components */
+  .dropdown-container {
+    @apply relative;
+  }
+
+  .dropdown-button {
+    @apply flex items-center justify-between w-full px-3 py-2 bg-white
+           border border-gray-200 rounded focus:outline-none focus:border-purple-500;
+  }
+
+  .dropdown-menu {
+    @apply absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg;
+  }
+
+  .dropdown-item {
+    @apply flex items-center w-full px-3 py-2 hover:bg-gray-100;
+  }
+
+  .dropdown-flag {
+    @apply flex items-center justify-center w-6 h-4 mr-2 overflow-hidden;
+  }
+
+  .dropdown-arrow {
+    @apply w-4 h-4 text-gray-500;
+  }
+
+  /* Phone Input Components */
+  .phone-input-container {
+    @apply flex border border-gray-200 rounded overflow-hidden;
+  }
+
+  .country-code-container {
+    @apply flex items-center px-3 bg-gray-50 border-r border-gray-200;
+  }
+
+  .flag-container {
+    @apply flex items-center justify-center w-6 h-4 mr-2 overflow-hidden;
+  }
+
+  .country-code {
+    @apply text-sm font-medium;
+  }
+
+  .phone-input-field {
+    @apply flex-1 p-2 border-none outline-none;
+  }
+
+  /* Malaysia Flag Components */
+  .malaysia-flag {
+    @apply relative flex flex-col w-full h-full bg-blue-600;
+  }
+
+  .malaysia-flag-stripe {
+    @apply w-full bg-red-600 h-1/2;
+  }
+
+  .malaysia-flag-emblem {
+    @apply absolute top-0 left-0 flex items-center justify-center w-1/3 h-full bg-blue-900;
+  }
+
+  .malaysia-flag-star {
+    @apply w-3 h-3 bg-yellow-400 rounded-full;
+  }
+
+  /* Country Dropdown Components */
+  .country-dropdown {
+    @apply relative;
+  }
+
+  .country-dropdown-button {
+    @apply flex items-center justify-between w-full px-3 py-2 bg-white border border-gray-200 rounded focus:outline-none focus:border-purple-500;
+  }
+
+  .country-dropdown-menu {
+    @apply absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg;
+  }
+
+  .country-dropdown-item {
+    @apply flex items-center w-full px-3 py-2 hover:bg-gray-100;
+  }
+
+  .country-flag-container {
+    @apply flex items-center justify-center w-6 h-4 mr-2 overflow-hidden;
+  }
+
+  /* Step Indicators */
+  .step-indicator {
     @apply text-[#40033f] text-2xl font-bold mb-2;
-}
+  }
 
-.main-logo{
-    @apply w-[165px] h-[92px];
-}
+  .step-progress {
+    @apply flex;
+  }
 
+  /* Card Components */
+  .card {
+    @apply bg-white rounded-lg shadow-lg p-4;
+  }
+
+  .thank-you-card {
+    @apply max-w-xl p-12 mx-auto bg-white rounded-lg shadow-lg;
+  }
+
+  .success-icon {
+    @apply flex items-center justify-center w-16 h-16 bg-green-500 rounded-full;
+  }
+
+  .meeting-card {
+    @apply relative p-4 mb-2 border border-gray-300 rounded-lg;
+  }
+
+  .exhibitor-list {
+    @apply space-y-6;
+  }
+
+  .exhibitor-card {
+    @apply p-6 border border-gray-200 rounded-lg;
+  }
+
+  .exhibitor-flex {
+    @apply flex;
+  }
+
+  .company-logo {
+    @apply flex flex-col items-center justify-center w-24 h-24 text-center text-gray-600 bg-gray-300 mr-6;
+  }
+
+  .product-logo {
+    @apply flex flex-col items-center justify-center w-24 h-24 mb-4 text-center text-gray-600 bg-gray-300;
+  }
+
+  .card-content {
+    @apply flex-1;
+  }
+
+  .card-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-y-1;
+  }
+
+  .label {
+    @apply font-medium;
+  }
+
+  /* Table Components */
+  .table-container {
+    @apply w-full border-collapse;
+  }
+
+  .table-header {
+    @apply px-4 py-3 text-sm font-medium text-left;
+  }
+
+  .table-header-sortable {
+    @apply flex items-center;
+  }
+
+  .table-cell {
+    @apply px-4 py-4;
+  }
+
+  /* Content Sections */
+  .content {
+    @apply p-6 bg-white;
+  }
+
+  .info-bar {
+    @apply flex items-center justify-between mb-6;
+  }
+
+  .info-counter {
+    @apply text-gray-400;
+  }
+
+  .selected-counter {
+    @apply font-medium;
+  }
+
+  /* Modal Components */
+  .modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center;
+  }
+
+  .modal-container {
+    @apply relative w-full max-w-md p-6 mx-4 bg-white rounded-2xl;
+  }
+
+  .modal-close {
+    @apply absolute text-gray-500 top-4 right-4;
+  }
+
+  .modal-content {
+    @apply flex flex-col items-center;
+  }
+
+  .modal-title {
+    @apply text-base font-medium;
+  }
+
+  .modal-close-btn {
+    @apply absolute text-xl text-gray-500 top-4 right-4;
+  }
+
+  /* Navigation & Dots */
+  .navigation-dots {
+    @apply flex justify-center gap-1 mt-2;
+  }
+
+  .dot {
+    @apply w-2 h-2 rounded-full;
+  }
+
+  .dot-active {
+    @apply bg-black;
+  }
+
+  .dot-inactive {
+    @apply bg-gray-300;
+  }
+
+  .button-group {
+    @apply flex justify-center gap-4 mt-4;
+  }
+
+  /* Sidebar Components */
+  .sidebar {
+    @apply w-48 bg-gradient-to-b from-[#40033f] to-[#9c0c40];
+  }
+
+  .sidebar-tab {
+    @apply py-4 px-6 text-white text-sm cursor-pointer;
+  }
+
+  .sidebar-tab-active {
+    @apply bg-[#6f0f55];
+  }
+
+  /* Hero Section */
+  .hero-section {
+    @apply relative h-48 md:h-64;
+  }
+
+  .hero-background {
+    @apply absolute inset-0 bg-center bg-cover;
+  }
+
+  .hero-content {
+    @apply absolute inset-0 flex items-center justify-center;
+  }
+
+  .hero-title {
+    @apply font-serif text-4xl font-bold text-white md:text-5xl drop-shadow-lg;
+  }
+
+  /* Feature Section */
+  .feature-section {
+    @apply mb-16;
+  }
+
+  .feature-title {
+    @apply text-3xl text-center text-[#40033f] font-serif mb-12;
+  }
+
+  .feature-grid {
+    @apply grid grid-cols-1 gap-8 md:grid-cols-2;
+  }
+
+  .feature-item {
+    @apply flex items-start p-4 space-x-4;
+  }
+
+  .feature-icon {
+    @apply flex-shrink-0 w-16 h-16 text-[#40033f];
+  }
+
+  .feature-heading {
+    @apply text-lg font-medium;
+  }
+
+  /* Thank You Page Components */
+  .thank-you-page {
+    @apply max-w-xl p-12 mx-auto bg-white rounded-lg shadow-lg;
+  }
+
+  .success-icon-container {
+    @apply flex justify-center mb-4;
+  }
+
+  .success-icon {
+    @apply flex items-center justify-center w-16 h-16 bg-green-500 rounded-full;
+  }
+
+  .check-icon {
+    @apply w-10 h-10 text-white;
+  }
+
+  .thank-you-title {
+    @apply mb-2 text-2xl font-bold text-center;
+  }
+
+  .thank-you-message {
+    @apply mb-6 text-center;
+  }
+
+  .meeting-schedule-label {
+    @apply mb-2 font-medium;
+  }
+
+  .meeting-card {
+    @apply relative p-4 mb-2 border border-gray-300 rounded-lg;
+  }
+
+  .meeting-day {
+    @apply font-medium;
+  }
+
+  .next-button {
+    @apply absolute transform -translate-y-1/2 right-4 top-1/2;
+  }
+
+  .next-icon {
+    @apply w-6 h-6;
+  }
+
+  .navigation-dots {
+    @apply flex justify-center gap-1 mt-2;
+  }
+
+  .dot {
+    @apply inline-block w-2 h-2 rounded-full;
+  }
+
+  .dot-active {
+    @apply bg-black;
+  }
+
+  .dot-inactive {
+    @apply bg-gray-300;
+  }
+
+  .contact-info {
+    @apply mt-6 text-sm;
+  }
+
+  /* Schedule Meeting Components */
+  .schedule-container {
+    @apply max-w-4xl mx-auto overflow-hidden border border-gray-200 rounded-lg shadow-lg;
+  }
+
+  .schedule-header {
+    @apply bg-gradient-to-r from-[#40033f] to-[#9c0c40] p-6;
+  }
+
+  .schedule-title {
+    @apply text-2xl font-bold text-white;
+  }
+
+  .schedule-subtitle {
+    @apply mt-1 text-sm text-white;
+  }
+
+  .schedule-content {
+    @apply p-6 bg-white;
+  }
+
+  .company-info {
+    @apply mb-4;
+  }
+
+  .company-detail {
+    @apply font-medium;
+  }
+
+  .legend-container {
+    @apply flex items-center gap-6 mb-4;
+  }
+
+  .legend-item {
+    @apply flex items-center gap-2;
+  }
+
+  .legend-available {
+    @apply w-4 h-4 border border-gray-300 rounded-full;
+  }
+
+  .legend-unavailable {
+    @apply w-4 h-4 bg-[#9c0c40] rounded-full;
+  }
+
+  .schedule-table-container {
+    @apply overflow-x-auto;
+  }
+
+  .schedule-table {
+    @apply w-full border-collapse;
+  }
+
+  .table-header {
+    @apply p-2 text-left border border-gray-300;
+  }
+
+  .time-header {
+    @apply p-2 text-left border border-gray-300;
+  }
+
+  .day-header {
+    @apply p-2 text-center border border-gray-300;
+  }
+
+  .time-label {
+    @apply text-xs;
+  }
+
+  .day-number {
+    @apply text-base;
+  }
+
+  .day-date {
+    @apply text-xs;
+  }
+
+  .day-name {
+    @apply text-xs;
+  }
+
+  .time-cell {
+    @apply p-2 border border-gray-300;
+  }
+
+  .slot-cell {
+    @apply p-2 border border-gray-300 text-center cursor-pointer;
+  }
+
+  .slot-unavailable {
+    @apply bg-[#9c0c40];
+  }
+
+  .button-container {
+    @apply flex justify-end mt-8;
+  }
+
+  /* Modal Components */
+  .modal-overlay {
+    @apply fixed inset-0 z-50 flex items-center justify-center;
+  }
+
+  .modal-background {
+    @apply bg-[#584058B5];
+  }
+
+  .modal-container {
+    @apply relative w-full max-w-md p-6 mx-4 bg-white rounded-2xl;
+  }
+
+  .modal-close-button {
+    @apply absolute text-xl font-light text-gray-500 top-4 right-4;
+  }
+
+  .modal-content {
+    @apply flex flex-col items-center;
+  }
+
+  .modal-title {
+    @apply my-6 text-xl font-semibold text-center;
+  }
+
+  .modal-info {
+    @apply w-full mb-8 text-center;
+  }
+
+  .modal-day {
+    @apply text-lg font-medium;
+  }
+
+  .modal-date {
+    @apply text-base;
+  }
+
+  .modal-time {
+    @apply text-base;
+  }
+
+  .modal-buttons {
+    @apply flex justify-center gap-4 mt-4;
+  }
+
+  .cancel-button {
+    @apply px-8 py-2 text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full;
+  }
+
+  .confirm-button {
+    @apply px-8 py-2 text-sm text-white bg-[#40033f] rounded-full;
+  }
+
+  .previous-button {
+    @apply px-6 py-2 text-[#9c0c40] border border-[#9c0c40] rounded-full;
+  }
+}

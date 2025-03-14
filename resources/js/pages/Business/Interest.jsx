@@ -11,11 +11,11 @@ const CompanyInfo = () => {
     };
 
     const handleNext = () => {
-        navigate('/exhibitors');
+        navigate('/business/exhibitors');
     };
 
     const handleBack = () => {
-        navigate('/company');
+        navigate('/business/company');
     };
 
     const [openCategoryIndex, setOpenCategoryIndex] = useState(null); // Track which category is expanded
@@ -191,7 +191,7 @@ const CompanyInfo = () => {
                     {/* Navigation Buttons */}
                     <div className="flex justify-end gap-4 mt-6">
                         <button type="button" onClick={handleBack}
-                            className="px-6 py-2 text-purple-900 border border-purple-900 rounded-full hover:bg-purple-50 focus:outline-none">
+                            className="back-btn">
                             Back
                         </button>
                         <button type="submit" onClick={handleNext} className="primary-btn">

@@ -75,52 +75,52 @@ const ScheduleMeeting = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto overflow-hidden border border-gray-200 rounded-lg shadow-lg">
+    <div className="schedule-container">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#40033f] to-[#9c0c40] p-6">
-        <h1 className="text-2xl font-bold text-white">Schedule your meeting</h1>
-        <p className="mt-1 text-sm text-white">
+      <div className="schedule-header">
+        <h1 className="schedule-title">Schedule your meeting</h1>
+        <p className="schedule-subtitle">
           Kindly select the available time slots to book a meeting
         </p>
-        <p className="mt-1 text-sm text-white">
+        <p className="schedule-subtitle">
           For more information or any updates, kindly contact pr@elite.com.my or WhatsApp, +6016-704 8058
         </p>
       </div>
 
       {/* Content */}
-      <div className="p-6 bg-white">
+      <div className="schedule-content">
         {/* Company details */}
-        <div className="mb-4">
-          <p className="font-medium">Company Name: {companyName}</p>
-          <p className="font-medium">Booth Number: {boothNumber}</p>
+        <div className="company-info">
+          <p className="company-detail">Company Name: {companyName}</p>
+          <p className="company-detail">Booth Number: {boothNumber}</p>
         </div>
 
         {/* Legend */}
-        <div className="flex items-center gap-6 mb-4">
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 border border-gray-300 rounded-full"></div>
+        <div className="legend-container">
+          <div className="legend-item">
+            <div className="legend-available"></div>
             <span>Available</span>
           </div>
-          <div className="flex items-center gap-2">
-            <div className="w-4 h-4 bg-[#9c0c40] rounded-full"></div>
+          <div className="legend-item">
+            <div className="legend-unavailable"></div>
             <span>Unavailable</span>
           </div>
         </div>
 
         {/* Schedule table */}
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
+        <div className="schedule-table-container">
+          <table className="schedule-table">
             <thead>
               <tr>
-                <th className="p-2 text-left border border-gray-300">
+                <th className="time-header">
                   <div>Time</div>
-                  <div className="text-xs">(UTC+8)</div>
+                  <div className="time-label">(UTC+8)</div>
                 </th>
                 {days.map((day) => (
-                  <th key={day.day} className="p-2 text-center border border-gray-300">
-                    <div>Day {day.day}</div>
-                    <div className="text-xs">{day.date}</div>
-                    <div className="text-xs">({day.dayOfWeek})</div>
+                  <th key={day.day} className="day-header">
+                    <div className="day-number">Day {day.day}</div>
+                    <div className="day-date">{day.date}</div>
+                    <div className="day-name">({day.dayOfWeek})</div>
                   </th>
                 ))}
               </tr>
@@ -128,15 +128,13 @@ const ScheduleMeeting = () => {
             <tbody>
               {timeSlots.map((time) => (
                 <tr key={time}>
-                  <td className="p-2 border border-gray-300">{time}</td>
+                  <td className="time-cell">{time}</td>
                   {days.map((day) => {
                     const unavailable = isSlotUnavailable(day.day, time);
                     return (
                       <td
                         key={`${day.day}-${time}`}
-                        className={`p-2 border border-gray-300 text-center cursor-pointer ${
-                          unavailable ? 'bg-[#9c0c40]' : ''
-                        }`}
+                        className={`slot-cell ${unavailable ? 'slot-unavailable' : ''}`}
                         onClick={() => !unavailable && handleSlotClick(day, time)}
                       >
                         {/* Empty cell with background color for status */}
@@ -150,8 +148,8 @@ const ScheduleMeeting = () => {
         </div>
 
         {/* Back button */}
-        <div className="flex justify-end mt-8">
-          <button className="px-6 py-2 text-[#9c0c40] border border-[#9c0c40] rounded-full">
+        <div className="button-container">
+          <button className="previous-button">
             Back to Previous
           </button>
         </div>
@@ -159,35 +157,35 @@ const ScheduleMeeting = () => {
 
       {/* Confirmation Modal */}
       {showConfirmModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: '#584058B5' }}>
-          <div className="relative w-full max-w-md p-6 mx-4 bg-white rounded-2xl">
+        <div className="modal-overlay modal-background">
+          <div className="modal-container">
             {/* Close button */}
             <button
               onClick={handleCancel}
-              className="absolute text-xl font-light text-gray-500 top-4 right-4"
+              className="modal-close-button"
             >
               ×
             </button>
 
-            <div className="flex flex-col items-center">
-              <h2 className="my-6 text-xl font-semibold text-center">Selected Date and Time</h2>
+            <div className="modal-content">
+              <h2 className="modal-title">Selected Date and Time</h2>
 
-              <div className="w-full mb-8 text-center">
-                <p className="text-lg font-medium">Day {selectedSlot.day}</p>
-                <p className="text-base">Date: {selectedSlot.date.split(' ')[0]} {selectedSlot.date.split(' ')[1]} {selectedSlot.date.split(' ')[2]} ({selectedSlot.dayOfWeek})</p>
-                <p className="text-base">Time: {formatTimeRange(selectedSlot.time)}</p>
+              <div className="modal-info">
+                <p className="modal-day">Day {selectedSlot.day}</p>
+                <p className="modal-date">Date: {selectedSlot.date.split(' ')[0]} {selectedSlot.date.split(' ')[1]} {selectedSlot.date.split(' ')[2]} ({selectedSlot.dayOfWeek})</p>
+                <p className="modal-time">Time: {formatTimeRange(selectedSlot.time)}</p>
               </div>
 
-              <div className="flex justify-center gap-4 mt-4">
+              <div className="modal-buttons">
                 <button
                   onClick={handleCancel}
-                  className="px-8 py-2 text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full"
+                  className="cancel-button"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleConfirm}
-                  className="px-8 py-2 text-sm text-white bg-[#40033f] rounded-full"
+                  className="confirm-button"
                 >
                   Confirm
                 </button>

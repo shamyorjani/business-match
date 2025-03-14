@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-
 const CompanyInfo = () => {
 const navigate = useNavigate();
 const [formData, setFormData] = useState({
@@ -30,16 +29,12 @@ e.preventDefault();
 console.log(formData);
 };
 
-
-
 const handleNext = () => {
-    navigate("/interest");
+    navigate("/business/interest");
 };
 
-
-
 const handleBack = () => {
-navigate('/');
+navigate('/business/registration');
 };
 
 return (
@@ -50,7 +45,7 @@ return (
     </div> */}
 
     {/* Form Content */}
-    <div className="p-10 py-16 bg-white">
+    <div className="form-white-container">
         {/* Step Indicator */}
         <div className="mb-8">
             <h2 className="step-indicator">STEP 2</h2>
@@ -65,10 +60,10 @@ return (
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-1">
+            <div className="form-grid">
                 {/* Left Column */}
                 <div>
-                    <div className='grid grid-cols-1 gap-5 md:grid-cols-2'>
+                    <div className="form-grid-2">
                         <div>
                             <label htmlFor="website" className="form-label">Company Website:</label>
                             <input type="text" id="website" name="website" placeholder="E.g. www.xyz.com"
@@ -76,109 +71,89 @@ return (
                         </div>
                         <div>
                             <label htmlFor="phoneNumber" className="form-label">Phone Number:</label>
-                            <div className="flex">
-                                <div className="flex items-center px-2 border border-gray-200 rounded-l bg-gray-50">
-                                    <div className="flex items-center justify-center w-6 h-4 mr-1 overflow-hidden">
+                            <div className="phone-input-container">
+                                <div className="country-code-container">
+                                    <div className="flag-container">
                                         {/* Malaysia flag - simplified version */}
-                                        <div className="relative flex flex-col w-full h-full bg-blue-600">
-                                            <div className="w-full bg-red-600 h-1/2"></div>
-                                            <div
-                                                className="absolute top-0 left-0 flex items-center justify-center w-1/3 h-full bg-blue-900">
-                                                <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                                        <div className="malaysia-flag">
+                                            <div className="malaysia-flag-stripe"></div>
+                                            <div className="malaysia-flag-emblem">
+                                                <div className="malaysia-flag-star"></div>
                                             </div>
                                         </div>
                                     </div>
-                                    <span className="text-sm">+60</span>
+                                    <span className="country-code">+60</span>
                                 </div>
                                 <input type="tel" id="phoneNumber" name="phoneNumber" placeholder="E.g. 123456789"
-                                    className="flex-1 p-2 border border-gray-200 rounded-r focus:outline-none focus:border-purple-500"
+                                    className="phone-input-field"
                                     value={formData.phoneNumber} onChange={handleChange} />
                             </div>
                         </div>
                     </div>
 
-
                     <div className="mt-6">
                         <label htmlFor="addressLine1" className="form-label">Company Address:</label>
-                        <div className="space-y-3">
+                        <div className="form-input-group">
                             <input type="text" id="addressLine1" name="addressLine1" placeholder="Address Line 1"
                                 className="form-input" value={formData.addressLine1} onChange={handleChange} />
                             <input type="text" id="addressLine2" name="addressLine2" placeholder="Address Line 2"
                                 className="form-input" value={formData.addressLine2} onChange={handleChange} />
-
-
                         </div>
                     </div>
 
-
-                    <div className='grid grid-cols-1 gap-5 mt-6 md:grid-cols-2'>
+                    <div className="mt-6 form-grid-2">
                         <div>
                             <input type="text" id="city" name="city" placeholder="City"
                                 className="form-input" value={formData.city} onChange={handleChange} />
                         </div>
                         <div>
-
-<input type="text" id="region" name="region" placeholder="Region"
-    className="form-input" value={formData.region} onChange={handleChange} />
-</div>
+                            <input type="text" id="region" name="region" placeholder="Region"
+                                className="form-input" value={formData.region} onChange={handleChange} />
+                        </div>
                         <div>
-
                             <input type="text" id="postalCode" name="postalCode" placeholder="Postal/ Zip Code"
                                 className="form-input" value={formData.postalCode} onChange={handleChange} />
-
                         </div>
 
-
-
                         <div>
-                            {/* <label htmlFor="country" className="form-label">Country:</label> */}
-                            <div className="relative">
+                            <div className="country-dropdown">
                                 <button type="button"
-                                    className="flex items-center justify-between w-full px-3 py-2 bg-white border border-gray-200 rounded focus:outline-none focus:border-purple-500"
-                                    onClick={()=> setShowCountryDropdown(!showCountryDropdown)}
-                                    >
+                                    className="country-dropdown-button"
+                                    onClick={()=> setShowCountryDropdown(!showCountryDropdown)}>
                                     <div className="flex items-center">
-                                        <div className="flex items-center justify-center w-6 h-4 mr-2 overflow-hidden">
-                                            {/* Malaysia flag - simplified version */}
-                                            <div className="relative flex flex-col w-full h-full bg-blue-600">
-                                                <div className="w-full bg-red-600 h-1/2"></div>
-                                                <div
-                                                    className="absolute top-0 left-0 flex items-center justify-center w-1/3 h-full bg-blue-900">
-                                                    <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                                        <div className="country-flag-container">
+                                            <div className="malaysia-flag">
+                                                <div className="malaysia-flag-stripe"></div>
+                                                <div className="malaysia-flag-emblem">
+                                                    <div className="malaysia-flag-star"></div>
                                                 </div>
                                             </div>
                                         </div>
                                         <span>{formData.country}</span>
                                     </div>
-                                    <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor"
+                                    <svg className="dropdown-arrow" fill="none" stroke="currentColor"
                                         viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                                             d="M19 9l-7 7-7-7"></path>
                                     </svg>
                                 </button>
                                 {showCountryDropdown && (
-                                <div
-                                    className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded shadow-lg">
+                                <div className="country-dropdown-menu">
                                     <div className="py-1">
                                         <button type="button"
-                                            className="flex items-center w-full px-3 py-2 hover:bg-gray-100"
-                                            onClick={()=>
-                                            {
-                                            setFormData(prevState => ({
-                                            ...prevState,
-                                            country: 'Malaysia'
-                                            }));
-                                            setShowCountryDropdown(false);
-                                            }}
-                                            >
-                                            <div
-                                                className="flex items-center justify-center w-6 h-4 mr-2 overflow-hidden">
-                                                {/* Malaysia flag - simplified version */}
-                                                <div className="relative flex flex-col w-full h-full bg-blue-600">
-                                                    <div className="w-full bg-red-600 h-1/2"></div>
-                                                    <div
-                                                        className="absolute top-0 left-0 flex items-center justify-center w-1/3 h-full bg-blue-900">
-                                                        <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                                            className="country-dropdown-item"
+                                            onClick={()=> {
+                                                setFormData(prevState => ({
+                                                    ...prevState,
+                                                    country: 'Malaysia'
+                                                }));
+                                                setShowCountryDropdown(false);
+                                            }}>
+                                            <div className="country-flag-container">
+                                                <div className="malaysia-flag">
+                                                    <div className="malaysia-flag-stripe"></div>
+                                                    <div className="malaysia-flag-emblem">
+                                                        <div className="malaysia-flag-star"></div>
                                                     </div>
                                                 </div>
                                             </div>
@@ -189,34 +164,16 @@ return (
                                 )}
                             </div>
                         </div>
-
-
-
-
-
                     </div>
-
-
-
-
-
-                </div>
-
-                {/* Right Column */}
-                <div>
-
-
-
                 </div>
             </div>
 
             {/* Required Fields Note */}
-            <div className="mt-6 text-sm text-red-600">*All fields are required to fill</div>
+            <div className="required-note">*All fields are required to fill</div>
 
             {/* Navigation Buttons */}
-            <div className="flex justify-end gap-4 mt-6">
-                <button type="button" onClick={handleBack}
-                    className="px-6 py-2 text-purple-900 border border-purple-900 rounded-full hover:bg-purple-50 focus:outline-none">
+            <div className="form-actions">
+                <button type="button" onClick={handleBack} className="back-btn">
                     Back
                 </button>
                 <button type="submit" onClick={handleNext} className="primary-btn">

@@ -99,82 +99,74 @@ const ExhibitorMatching = () => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto overflow-hidden border border-gray-200 rounded-lg shadow-lg">
+    <div className="form-container">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#40033f] to-[#9c0c40] p-6">
-        <h1 className="text-2xl font-bold text-white">Top Matches</h1>
-        <p className="mt-1 text-sm text-white">Kindly select one or more exhibitors to match and schedule a meeting</p>
+      <div className="header">
+        <h1 className="header-title">Top Matches</h1>
+        <p className="header-subtitle">Kindly select one or more exhibitors to match and schedule a meeting</p>
       </div>
 
       {/* Content */}
-      <div className="p-6 bg-white">
+      <div className="content">
         {/* Info bar */}
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-gray-400">Showing {exhibitors.length} out of {exhibitors.length} matches</p>
+        <div className="info-bar">
+          <p className="info-counter">Showing {exhibitors.length} out of {exhibitors.length} matches</p>
           <div className="flex items-center gap-4">
-            <p className="font-medium">{selectedExhibitors.length} Exhibitor(s) selected</p>
-            <button
-              className="bg-[#40033f] text-white px-4 py-1 rounded-full text-sm"
-            >
+            <p className="selected-counter">{selectedExhibitors.length} Exhibitor(s) selected</p>
+            <button className="btn-primary">
               Schedule meeting
             </button>
           </div>
         </div>
 
         {/* Exhibitor Cards */}
-        <div className="space-y-6">
+        <div className="exhibitor-list">
           {exhibitors.map((exhibitor) => (
-            <div key={exhibitor.id} className="p-6 border border-gray-200 rounded-lg">
-              <div className="flex">
+            <div key={exhibitor.id} className="exhibitor-card">
+              <div className="exhibitor-flex">
                 {/* Logo */}
-                <div className="mr-6">
-                  <div className="flex flex-col items-center justify-center w-24 h-24 text-center text-gray-600 bg-gray-300">
-                    <div>Company</div>
-                    <div>Logo</div>
-                    <div>1:1</div>
-                  </div>
+                <div className="company-logo">
+                  <div>Company</div>
+                  <div>Logo</div>
+                  <div>1:1</div>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-y-1">
+                <div className="card-content">
+                  <div className="card-grid">
                     <div>
-                      <span className="font-medium">Company Name: </span>
+                      <span className="label">Company Name: </span>
                       {exhibitor.name}
                     </div>
                     <div>
-                      <span className="font-medium">Booth Number: </span>
+                      <span className="label">Booth Number: </span>
                       {exhibitor.boothNumber}
                     </div>
                     <div>
-                      <span className="font-medium">Country/Region: </span>
+                      <span className="label">Country/Region: </span>
                       {exhibitor.country}
                     </div>
                   </div>
 
                   <div className="mt-2">
-                    <span className="font-medium">Product Profile: </span>
+                    <span className="label">Product Profile: </span>
                     {exhibitor.productProfile}
                   </div>
 
                   <div className="mt-2">
-                    <span className="font-medium">Company Description: </span>
+                    <span className="label">Company Description: </span>
                     <p className="mt-1">{exhibitor.description}</p>
                   </div>
 
                   <div className="flex justify-end gap-3 mt-4">
                     <button
-                      className="border border-[#6f0f55] text-[#6f0f55] px-4 py-1 rounded-full text-sm hover:bg-gray-50"
+                      className="btn-secondary"
                       onClick={() => openProductModal(exhibitor.name)}
                     >
                       View Products
                     </button>
                     <button
-                      className={`px-4 py-1 rounded-full text-sm ${
-                        selectedExhibitors.includes(exhibitor.name)
-                          ? 'bg-[#40033f] text-white'
-                          : 'border border-[#40033f] text-[#40033f]'
-                      }`}
+                      className={selectedExhibitors.includes(exhibitor.name) ? 'btn-selected' : 'btn-unselected'}
                       onClick={() => toggleSelection(exhibitor.name)}
                     >
                       {selectedExhibitors.includes(exhibitor.name) ? 'Selected' : 'Select'}
@@ -188,7 +180,7 @@ const ExhibitorMatching = () => {
 
         {/* Back to Top Button */}
         <div className="flex justify-end mt-8">
-          <button className="bg-[#40033f] text-white px-6 py-2 rounded-full">
+          <button className="btn-primary btn-lg">
             Show More
           </button>
         </div>
@@ -196,19 +188,19 @@ const ExhibitorMatching = () => {
 
       {/* Product Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: '#584058B5' }}>
-          <div className="relative w-full max-w-md p-6 mx-4 bg-white rounded-2xl">
+        <div className="modal-overlay" style={{ backgroundColor: '#584058B5' }}>
+          <div className="modal-container">
             {/* Close button */}
             <button
               onClick={closeModal}
-              className="absolute text-gray-500 top-4 right-4"
+              className="modal-close"
             >
               ×
             </button>
 
-            <div className="flex flex-col items-center">
+            <div className="modal-content">
               {/* Product Image */}
-              <div className="flex flex-col items-center justify-center w-24 h-24 mb-4 text-center text-gray-600 bg-gray-300">
+              <div className="product-logo">
                 <div>Product</div>
                 <div>Picture</div>
                 <div>1:1</div>
@@ -216,10 +208,10 @@ const ExhibitorMatching = () => {
 
               {/* Product Details */}
               <div className="w-full">
-                <h3 className="text-base font-medium">Product Name: {currentProduct?.name}</h3>
+                <h3 className="modal-title">Product Name: {currentProduct?.name}</h3>
 
                 <div className="relative mt-4">
-                  <h4 className="text-base font-medium">Product Description:</h4>
+                  <h4 className="modal-title">Product Description:</h4>
                   <p className="mt-2 text-sm">{currentProduct?.description}</p>
 
                   {/* Next button */}
@@ -235,20 +227,20 @@ const ExhibitorMatching = () => {
 
                 {/* Navigation dots */}
                 <div className="flex justify-center gap-2 mt-6">
-                  <span className={`w-2 h-2 rounded-full ${currentProductIndex === 0 ? 'bg-black' : 'bg-gray-300'}`}></span>
-                  <span className={`w-2 h-2 rounded-full ${currentProductIndex === 1 ? 'bg-black' : 'bg-gray-300'}`}></span>
-                  <span className={`w-2 h-2 rounded-full ${currentProductIndex === 2 ? 'bg-black' : 'bg-gray-300'}`}></span>
+                  <span className={`dot ${currentProductIndex === 0 ? 'dot-active' : 'dot-inactive'}`}></span>
+                  <span className={`dot ${currentProductIndex === 1 ? 'dot-active' : 'dot-inactive'}`}></span>
+                  <span className={`dot ${currentProductIndex === 2 ? 'dot-active' : 'dot-inactive'}`}></span>
                 </div>
 
                 {/* Action buttons */}
-                <div className="flex justify-center gap-4 mt-4">
+                <div className="button-group">
                   <button
                     onClick={closeModal}
-                    className="px-6 py-1.5 text-sm border border-[#6f0f55] text-[#6f0f55] rounded-full"
+                    className="btn-action border border-[#6f0f55] text-[#6f0f55]"
                   >
                     Close
                   </button>
-                  <button className="px-6 py-1.5 text-sm text-white bg-[#40033f] rounded-full">
+                  <button className="btn-action bg-[#40033f] text-white">
                     Select
                   </button>
                 </div>

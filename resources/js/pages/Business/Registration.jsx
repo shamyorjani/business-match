@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
 
-const BusinessMatchingForm = () => {
+const Registration = () => {
 
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -16,7 +16,7 @@ const BusinessMatchingForm = () => {
 
 
     const handleNext = () => {
-        navigate("/company");
+        navigate("/business/company");
     };
 
   const handleChange = (e) => {
@@ -101,26 +101,26 @@ const BusinessMatchingForm = () => {
 
             {/* Phone Number */}
             <div>
-              <label htmlFor="phoneNumber" className="block mb-2 font-medium text-gray-800">Phone Number:</label>
-              <div className="flex">
-                <div className="flex items-center px-2 border border-gray-200 rounded-l bg-gray-50">
-                  <div className="flex items-center justify-center w-6 h-4 mr-1 overflow-hidden">
+              <label htmlFor="phoneNumber" className="form-label">Phone Number:</label>
+              <div className="phone-input-container">
+                <div className="country-code-container">
+                  <div className="flag-container">
                     {/* Malaysia flag - simplified version */}
-                    <div className="relative flex flex-col w-full h-full bg-blue-600">
-                      <div className="w-full bg-red-600 h-1/2"></div>
-                      <div className="absolute top-0 left-0 flex items-center justify-center w-1/3 h-full bg-blue-900">
-                        <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                    <div className="malaysia-flag">
+                      <div className="malaysia-flag-stripe"></div>
+                      <div className="malaysia-flag-emblem">
+                        <div className="malaysia-flag-star"></div>
                       </div>
                     </div>
                   </div>
-                  <span className="text-sm">+60</span>
+                  <span className="country-code">+60</span>
                 </div>
                 <input
                   type="tel"
                   id="phoneNumber"
                   name="phoneNumber"
                   placeholder="E.g. 123456789"
-                  className="flex-1 p-2 border border-gray-200 rounded-r focus:outline-none focus:border-purple-500"
+                  className="phone-input-field"
                   value={formData.phoneNumber}
                   onChange={handleChange}
                 />
@@ -225,4 +225,4 @@ const BusinessMatchingForm = () => {
 
 };
 
-export default BusinessMatchingForm;
+export default Registration;

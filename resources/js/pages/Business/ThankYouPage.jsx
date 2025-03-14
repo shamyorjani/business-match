@@ -28,42 +28,27 @@ const ThankYouPage = () => {
   };
 
   return (
-    <div className="max-w-xl p-12 mx-auto bg-white rounded-lg shadow-lg">
+    <div className="thank-you-card">
       {/* Success Check Icon */}
-      <div className="flex justify-center mb-4">
-        <div className="flex items-center justify-center w-16 h-16 bg-green-500 rounded-full">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="w-10 h-10 text-white"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={3}
-              d="M5 13l4 4L19 7"
-            />
-          </svg>
-        </div>
+      <div className='flex justify-center'>
+      <img src="/images/thanks.svg" alt="My Image" />
       </div>
 
       {/* Thank You Message */}
-      <h1 className="mb-2 text-2xl font-bold text-center">Thank You !</h1>
-      <p className="mb-6 text-center">
+      <h1 className="thank-you-title">Thank You !</h1>
+      <p className="thank-you-message">
         You have successfully matched with {confirmedMeetings.length} exhibitor(s). One the
         meetings schedule is confirmed, you will be notified via email.
       </p>
 
       {/* Meetings Schedule Section */}
       <div>
-        <p className="mb-2 font-medium">Schedule Meetings:</p>
+        <p className="meeting-schedule-label">Schedule Meetings:</p>
 
         {/* Meeting Card */}
-        <div className="relative p-4 mb-2 border border-gray-300 rounded-lg">
+        <div className="meeting-card">
           <div>
-            <p className="font-medium">Day {confirmedMeetings[currentSlide].day}</p>
+            <p className="meeting-day">Day {confirmedMeetings[currentSlide].day}</p>
             <p>Date: {confirmedMeetings[currentSlide].date} ({confirmedMeetings[currentSlide].dayOfWeek})</p>
             <p>Time: {confirmedMeetings[currentSlide].time}</p>
             <p>Exhibitor: {confirmedMeetings[currentSlide].exhibitor}</p>
@@ -74,11 +59,11 @@ const ThankYouPage = () => {
           {confirmedMeetings.length > 1 && (
             <button
               onClick={nextSlide}
-              className="absolute transform -translate-y-1/2 right-4 top-1/2"
+              className="next-button"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
-                className="w-6 h-6"
+                className="next-icon"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -96,13 +81,11 @@ const ThankYouPage = () => {
 
         {/* Navigation Dots */}
         {confirmedMeetings.length > 1 && (
-          <div className="flex justify-center gap-1 mt-2">
+          <div className="navigation-dots">
             {confirmedMeetings.map((_, index) => (
               <span
                 key={index}
-                className={`inline-block w-2 h-2 rounded-full ${
-                  currentSlide === index ? 'bg-black' : 'bg-gray-300'
-                }`}
+                className={`dot ${currentSlide === index ? 'dot-active' : 'dot-inactive'}`}
                 onClick={() => setCurrentSlide(index)}
               ></span>
             ))}
@@ -111,7 +94,7 @@ const ThankYouPage = () => {
       </div>
 
       {/* Contact Information */}
-      <p className="mt-6 text-sm">
+      <p className="contact-info">
         For more information or any updates, kindly contact pr@elite.com.my or WhatsApp,<br />
         +6016-704 8058
       </p>
