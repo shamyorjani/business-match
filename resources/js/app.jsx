@@ -11,7 +11,7 @@ import BusinessThankYouPage from "./pages/Business/ThankYouPage";
 
 import HostedRegistration from "./pages/Hosted/Registration";
 import HostedCompanyInfo from "./pages/Hosted/CompanyInfo";
-import HostedPaymentGateway from "./pages/Hosted/PaymentGateway";
+import PaymentGateway from "./pages/Hosted/PaymentGateway";
 import HostedThankYouPage from "./pages/Hosted/ThankYouPage";
 import PaymentCard from "./pages/Hosted/PaymentCard";
 
@@ -32,7 +32,7 @@ const App = () => {
 
         <Route path="/hosted/registration" element={<HostedRegistration />} />
         <Route path="/hosted/company" element={<HostedCompanyInfo />} />
-        <Route path="/hosted/payment" element={<HostedPaymentGateway />} />
+        <Route path="/hosted/payments" element={<PaymentGateway />} />
         <Route path="/hosted/thank-you" element={<HostedThankYouPage />} />
         <Route path="/hosted/payment-card" element={<PaymentCard />} />
 

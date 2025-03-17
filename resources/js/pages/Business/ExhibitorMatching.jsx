@@ -102,24 +102,27 @@ const ExhibitorMatching = () => {
     <div className="form-container">
       {/* Header */}
       <div className="header">
-        <h1 className="header-title">Top Matches</h1>
+        <h1 className="header-title">Top Matches
         <p className="header-subtitle">Kindly select one or more exhibitors to match and schedule a meeting</p>
+        </h1>
+
       </div>
 
       {/* Content */}
       <div className="content">
-        {/* Info bar */}
         <div className="info-bar">
-          <p className="info-counter">Showing {exhibitors.length} out of {exhibitors.length} matches</p>
-          <div className="flex items-center gap-4">
-            <p className="selected-counter">{selectedExhibitors.length} Exhibitor(s) selected</p>
-            <button className="btn-primary">
-              Schedule meeting
-            </button>
-          </div>
+            <p className="info-counter">Showing {exhibitors.length} out of {exhibitors.length} matches</p>
+            <div className="flex items-center gap-4">
+                <p className="selected-counter">{selectedExhibitors.length} Exhibitor(s) selected</p>
+                <button
+                    className="btn-primary"
+                    onClick={() => window.location.href = '/business/schedule'}
+                >
+                    Schedule meeting
+                </button>
+            </div>
         </div>
 
-        {/* Exhibitor Cards */}
         <div className="exhibitor-list">
           {exhibitors.map((exhibitor) => (
             <div key={exhibitor.id} className="exhibitor-card">
@@ -207,7 +210,7 @@ const ExhibitorMatching = () => {
               </div>
 
               {/* Product Details */}
-              <div className="w-full">
+              <div className="w-[90%]">
                 <h3 className="modal-title">Product Name: {currentProduct?.name}</h3>
 
                 <div className="relative mt-4">
@@ -226,23 +229,10 @@ const ExhibitorMatching = () => {
                 </div>
 
                 {/* Navigation dots */}
-                <div className="flex justify-center gap-2 mt-6">
+                <div className="flex items-center justify-center gap-2 mt-6">
                   <span className={`dot ${currentProductIndex === 0 ? 'dot-active' : 'dot-inactive'}`}></span>
                   <span className={`dot ${currentProductIndex === 1 ? 'dot-active' : 'dot-inactive'}`}></span>
                   <span className={`dot ${currentProductIndex === 2 ? 'dot-active' : 'dot-inactive'}`}></span>
-                </div>
-
-                {/* Action buttons */}
-                <div className="button-group">
-                  <button
-                    onClick={closeModal}
-                    className="btn-action border border-[#6f0f55] text-[#6f0f55]"
-                  >
-                    Close
-                  </button>
-                  <button className="btn-action bg-[#40033f] text-white">
-                    Select
-                  </button>
                 </div>
               </div>
             </div>

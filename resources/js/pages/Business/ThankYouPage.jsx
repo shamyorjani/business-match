@@ -30,16 +30,19 @@ const ThankYouPage = () => {
   return (
     <div className="thank-you-card">
       {/* Success Check Icon */}
-      <div className='flex justify-center'>
-      <img src="/images/thanks.svg" alt="My Image" />
+      <div className='flex justify-center mb-6'>
+      <img className='w-15' src="/images/thanks.svg" alt="My Image" />
       </div>
 
       {/* Thank You Message */}
+      <div className='flex flex-col items-center'>
       <h1 className="thank-you-title">Thank You !</h1>
       <p className="thank-you-message">
         You have successfully matched with {confirmedMeetings.length} exhibitor(s). One the
         meetings schedule is confirmed, you will be notified via email.
+
       </p>
+      </div>
 
       {/* Meetings Schedule Section */}
       <div>

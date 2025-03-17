@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
+import FormInput from '../../components/form/FormInput';
+import PhoneInput from '../../components/form/PhoneInput';
+import RadioGroup from '../../components/form/RadioGroup';
 
 const Registration = () => {
-
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
     name: '',
@@ -14,10 +16,9 @@ const Registration = () => {
     companySize: ''
   });
 
-
-    const handleNext = () => {
-        navigate("/business/company");
-    };
+  const handleNext = () => {
+    navigate("/business/company");
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,6 +34,13 @@ const Registration = () => {
     console.log(formData);
   };
 
+  const companySizeOptions = [
+    { value: '1-10', label: '1-10' },
+    { value: '11-50', label: '11-50' },
+    { value: '51-100', label: '51-100' },
+    { value: '101 and above', label: '101 and above' },
+  ];
+
   return (
     <div className="form-container">
       {/* Header */}
@@ -41,7 +49,7 @@ const Registration = () => {
       </div>
 
       {/* Form Content */}
-      <div className="p-6 bg-white">
+      <div className="p-6 px-16 py-12 bg-white">
         {/* Step Indicator */}
         <div className="mb-8">
           <h2 className="step-indicator">STEP 1</h2>
@@ -54,164 +62,79 @@ const Registration = () => {
           </div>
         </div>
 
-        {/* Form */}
-        <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {/* Name */}
-            <div>
-              <label htmlFor="name" className="form-label">Name:</label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                placeholder="E.g. John Doe"
-                className="form-input"
-                value={formData.name}
-                onChange={handleChange}
-              />
-            </div>
+            <form onSubmit={handleSubmit}>
+              <div className="grid grid-cols-1 gap-6 mb-4 md:grid-cols-2 md:gap-x-[120px]">
+                <FormInput
+                  id="name"
+                  name="name"
+                  label="Name:"
+                  placeholder="E.g. John Doe"
+                  value={formData.name}
+                  onChange={handleChange}
+                  required
+                />
 
-            {/* Designation */}
-            <div>
-              <label htmlFor="designation" className="form-label">Designation:</label>
-              <input
-                type="text"
-                id="designation"
-                name="designation"
-                placeholder="E.g. CEO"
-                className="form-input"
-                value={formData.designation}
-                onChange={handleChange}
-              />
-            </div>
+                <FormInput
+                  id="designation"
+                  name="designation"
+                  label="Designation:"
+                  placeholder="E.g. CEO"
+                  value={formData.designation}
+                  onChange={handleChange}
+                  required
+                />
 
-            {/* Email */}
-            <div>
-              <label htmlFor="email" className="form-label">Email:</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                placeholder="E.g. john@xyz.com"
-                className="form-input"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
+                <FormInput
+                  id="email"
+                  name="email"
+                  type="email"
+                  label="Email:"
+                  placeholder="E.g. john@xyz.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
 
-            {/* Phone Number */}
-            <div>
-              <label htmlFor="phoneNumber" className="form-label">Phone Number:</label>
-              <div className="phone-input-container">
-                <div className="country-code-container">
-                  <div className="flag-container">
-                    {/* Malaysia flag - simplified version */}
-                    <div className="malaysia-flag">
-                      <div className="malaysia-flag-stripe"></div>
-                      <div className="malaysia-flag-emblem">
-                        <div className="malaysia-flag-star"></div>
-                      </div>
-                    </div>
-                  </div>
-                  <span className="country-code">+60</span>
-                </div>
-                <input
-                  type="tel"
+                <PhoneInput
                   id="phoneNumber"
                   name="phoneNumber"
-                  placeholder="E.g. 123456789"
-                  className="phone-input-field"
+                  label="Phone Number:"
                   value={formData.phoneNumber}
                   onChange={handleChange}
+                  required
+                />
+
+                <FormInput
+                  id="companyName"
+                  name="companyName"
+                  label="Company Name:"
+                  placeholder="E.g. XZ Sdn Bhd."
+                  value={formData.companyName}
+                  onChange={handleChange}
+                  required
+                />
+
+                <FormInput
+                  id="companyNature"
+                  name="companyNature"
+                  label="Company Nature of Business:"
+                  placeholder="E.g. E-Commerce, Distributor"
+                  value={formData.companyNature}
+                  onChange={handleChange}
+                  required
                 />
               </div>
-            </div>
 
-            {/* Company Name */}
-            <div>
-              <label htmlFor="companyName" className="form-label">Company Name:</label>
-              <input
-                type="text"
-                id="companyName"
-                name="companyName"
-                placeholder="E.g. XZ Sdn Bhd."
-                className="form-input"
-                value={formData.companyName}
+              <RadioGroup
+                name="companySize"
+                label="Company Size (People):"
+                options={companySizeOptions}
+                value={formData.companySize}
                 onChange={handleChange}
+                required
               />
-            </div>
 
-            {/* Company Nature */}
-            <div>
-              <label htmlFor="companyNature" className="form-label">Company Nature of Business:</label>
-              <input
-                type="text"
-                id="companyNature"
-                name="companyNature"
-                placeholder="E.g. E-Commerce, Distributor"
-                className="form-input"
-                value={formData.companyNature}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          {/* Company Size */}
-          <div className="mt-6">
-            <label className="form-label">Company Size (People):</label>
-            <div className="flex flex-wrap gap-x-8">
-              <div className="radio-container">
-                <input
-                  type="radio"
-                  id="size1"
-                  name="companySize"
-                  value="1-10"
-                  checked={formData.companySize === '1-10'}
-                  onChange={handleChange}
-                  className="radio-input"
-                />
-                <label htmlFor="size1" className="radio-label">1-10</label>
-              </div>
-              <div className="radio-container">
-                <input
-                  type="radio"
-                  id="size2"
-                  name="companySize"
-                  value="11-50"
-                  checked={formData.companySize === '11-50'}
-                  onChange={handleChange}
-                  className="radio-input"
-                />
-                <label htmlFor="size2" className="radio-label">11-50</label>
-              </div>
-              <div className="radio-container">
-                <input
-                  type="radio"
-                  id="size3"
-                  name="companySize"
-                  value="51-100"
-                  checked={formData.companySize === '51-100'}
-                  onChange={handleChange}
-                  className="radio-input"
-                />
-                <label htmlFor="size3" className="radio-label">51-100</label>
-              </div>
-              <div className="radio-container">
-                <input
-                  type="radio"
-                  id="size4"
-                  name="companySize"
-                  value="101 and above"
-                  checked={formData.companySize === '101 and above'}
-                  onChange={handleChange}
-                  className="radio-input"
-                />
-                <label htmlFor="size4" className="radio-label">101 and above</label>
-              </div>
-            </div>
-          </div>
-
-          {/* Required Fields Note */}
+              {/* Required Fields Note */}
           <div className="mt-6 text-sm text-red-600">*All fields are required to fill</div>
 
           {/* Next Button */}
@@ -222,7 +145,6 @@ const Registration = () => {
       </div>
     </div>
   );
-
 };
 
 export default Registration;

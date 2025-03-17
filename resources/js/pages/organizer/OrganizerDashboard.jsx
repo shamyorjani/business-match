@@ -159,13 +159,13 @@ const OrganizerDashboard = () => {
   return (
     <div className="flex flex-col h-screen">
       {/* Full-width header */}
-      <div className="w-full bg-gradient-to-r from-[#40033f] to-[#9c0c40] p-6">
-        <h1 className="text-2xl font-medium text-white">Organiser Dashboard</h1>
+      <div className="header">
+        <h1 className="header-title">Organizer Dashboard</h1>
       </div>
 
       <div className="flex flex-1">
         {/* Sidebar */}
-        <div className="w-48 bg-gradient-to-b from-[#40033f] to-[#9c0c40]">
+        <div className="sidebar">
           {/* Navigation Tabs */}
           <div>
             <div
@@ -182,12 +182,11 @@ const OrganizerDashboard = () => {
             </div>
           </div>
         </div>
-
         {/* Main Content */}
         <div className="flex-1 bg-white">
           {/* Content for Business Matching tab */}
           {activeTab === 'Business Matching' && (
-            <div className="p-6">
+            <div className="p-16 py-10">
               <div className="flex justify-between mt-6 mb-6">
                 {/* Add categories button */}
                 <button className="flex items-center px-4 py-1 text-sm border border-gray-300 rounded-full">
@@ -255,6 +254,14 @@ const OrganizerDashboard = () => {
                         </svg>
                       </div>
                     </th>
+                    <th className="px-4 py-3 text-sm font-medium text-left">
+                      <div className="flex items-center">
+                        Action
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -266,7 +273,7 @@ const OrganizerDashboard = () => {
                       <td className="px-4 py-4">
                         <a
                           href="#"
-                          className="underline text-[#40033f]"
+                          className="text-black underline"
                           onClick={(e) => {
                             e.preventDefault();
                             handleViewClick(item);
@@ -280,14 +287,25 @@ const OrganizerDashboard = () => {
                           {item.status}
                         </span>
                       </td>
+                    <td className="flex items-center gap-2 px-4 py-4">
+                      <button className="px-2 py-1 text-white bg-green-500 rounded-full hover:bg-green-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </button>
+
+                      <button className="px-2 py-1 text-white bg-red-500 rounded-full hover:bg-red-700">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
           )}
-
-          {/* Content for Hosted Buyer Program tab */}
           {activeTab === 'Hosted Buyer Program' && (
             <div className="p-6">
               <h2 className="text-xl font-semibold">Hosted Buyer Program</h2>
@@ -300,17 +318,17 @@ const OrganizerDashboard = () => {
       {/* Detail Modal */}
       {showModal && selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(88, 64, 88, 0.7)' }}>
-          <div className="relative w-full max-w-md p-6 mx-4 bg-white shadow-lg rounded-xl">
+          <div className="relative w-full max-w-lg p-6 mx-4 bg-white shadow-lg rounded-xl">
             {/* Close button */}
             <button
               onClick={closeModal}
-              className="absolute text-xl text-gray-500 top-4 right-4"
+              className="modal-close"
             >
               ×
             </button>
+            <h2 className="mb-4 text-lg font-medium">Schedule Meetings:</h2>
+            <div className="px-4">
 
-            <div>
-              <h2 className="mb-4 text-lg font-medium">Schedule Meetings:</h2>
 
               {/* Visitor Details */}
               <div className="space-y-1 text-sm">
@@ -327,26 +345,26 @@ const OrganizerDashboard = () => {
 
               {/* Meeting Schedule */}
               {selectedItem.schedules && selectedItem.schedules.length > 0 && (
-                <div className="relative px-8 text-sm">
+                <div className="relative pr-8 text-sm">
                   <div className="space-y-1">
-                    <p className="font-medium">Day {selectedItem.schedules[currentScheduleIndex].day}</p>
-                    <p>Date: {selectedItem.schedules[currentScheduleIndex].date} ({selectedItem.schedules[currentScheduleIndex].dayOfWeek})</p>
-                    <p>Time: {selectedItem.schedules[currentScheduleIndex].time}</p>
-                    <p>Exhibitor: {selectedItem.schedules[currentScheduleIndex].exhibitor}</p>
-                    <p>Booth Number: {selectedItem.schedules[currentScheduleIndex].boothNumber}</p>
+                    <p className="font-bold">Day {selectedItem.schedules[currentScheduleIndex].day}</p>
+                    <p className="font-bold">Date: {selectedItem.schedules[currentScheduleIndex].date} ({selectedItem.schedules[currentScheduleIndex].dayOfWeek})</p>
+                    <p className="font-bold">Time: {selectedItem.schedules[currentScheduleIndex].time}</p>
+                    <p className="font-bold">Exhibitor: {selectedItem.schedules[currentScheduleIndex].exhibitor}</p>
+                    <p className="font-bold">Booth Number: {selectedItem.schedules[currentScheduleIndex].boothNumber}</p>
                   </div>
 
                   {/* Navigation arrows */}
                   {selectedItem.schedules.length > 1 && (
                     <>
-                      <button
+                      {/* <button
                         onClick={prevSchedule}
                         className="absolute left-0 transform -translate-y-1/2 top-1/2"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                         </svg>
-                      </button>
+                      </button> */}
                       <button
                         onClick={nextSchedule}
                         className="absolute right-0 transform -translate-y-1/2 top-1/2"
@@ -366,12 +384,12 @@ const OrganizerDashboard = () => {
                   <p className="mb-1 text-xs text-gray-500">
                     {currentScheduleIndex + 1} of {selectedItem.schedules.length} meetings
                   </p>
-                  <div className="flex justify-center gap-1">
+                  <div className="flex items-center justify-center gap-1">
                     {selectedItem.schedules.map((_, index) => (
                       <span
                         key={index}
                         className={`inline-block w-2 h-2 rounded-full ${
-                          currentScheduleIndex === index ? 'bg-black' : 'bg-gray-300'
+                          currentScheduleIndex === index ? 'bg-black h-3 w-3' : 'bg-gray-300'
                         } cursor-pointer`}
                         onClick={() => setCurrentScheduleIndex(index)}
                       ></span>
@@ -381,7 +399,7 @@ const OrganizerDashboard = () => {
               )}
 
               {/* Action buttons */}
-              <div className="flex justify-between mt-6">
+              <div className="flex flex-row items-center gap-3 p-3 ">
                 <button className="px-5 py-1.5 text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full">
                   Delete
                 </button>

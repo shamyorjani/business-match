@@ -67,11 +67,9 @@ const CompanyInfo = () => {
 
     return (
         <div className="form-container">
-            {/* Form Content */}
-            <div className="p-10 py-16 bg-white">
-                {/* Step Indicator */}
+            <div className="form-white-container">
                 <div className="mb-8">
-                    <h2 className="step-indicator">STEP 2</h2>
+                    <h2 className="step-indicator" style={{ fontFamily: 'Instrument Sans', fontWeight: 700 }}>STEP 3</h2>
                     <div className="flex">
                         <svg width="326" height="34" viewBox="0 0 400 40">
                             <polygon points="240,0 340,0 360,20 340,40 240,40 260,20" fill="#9c0c40" />
@@ -81,54 +79,56 @@ const CompanyInfo = () => {
                     </div>
                 </div>
 
-                {/* Form */}
                 <form onSubmit={handleSubmit}>
                     <div className="grid grid-cols-1 gap-6 md:grid-cols-1">
                         <div className="mb-6">
-                            <h3 className="text-lg font-bold">Kindly select your interest for business matching :</h3>
+                            <h3 className="text-lg font-bold" style={{ fontFamily: 'Instrument Sans', fontWeight: 700, fontSize: '24px' }}>Kindly select your interest for business matching :</h3>
                             <p className="text-sm text-gray-600">You may select more than one interest.</p>
                         </div>
                     </div>
 
-                    <div className="relative border border-gray-300 rounded-2xl">
-                        <input
-                            type="text"
-                            placeholder="Type Here to Search"
-                            className="w-full px-4 py-3 text-gray-700 bg-white border-0 shadow-2xl rounded-t-2xl focus:outline-none"
-                            value={searchTerm}
-                            onChange={handleSearchChange} // Update search term
+                    <div className='flex justify-center w-full align-items-center'>
+                                                    <div className="relative rounded-2xl w-[80%] md:w-[60%]">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Type Here to Search"
+                                                            className="w-full px-4 py-3 text-gray-700 bg-white border-0 shadow-2xl rounded-t-2xl focus:outline-none"
+                                                            style={{ padding: '21px 0 10px 48px', fontFamily: 'Instrument Sans', fontWeight: 700, fontSize: '18px' }}
+                                                            value={searchTerm}
+                                                            onChange={handleSearchChange} // Update search term
                         />
 
                         {/* Main Dropdown */}
-                        <div className="relative left-0 w-full bg-white shadow-2xl rounded-b-2xl">
-                            <div className=" max-h-60">
+                        <div className="relative left-0 w-full overflow-y-auto bg-white shadow-2xl rounded-b-2xl max-h-70">
+                            <div className="">
                                 {searchTerm === '' ? (
                                     // Show all categories if search term is empty
                                     categories.map((category, categoryIndex) => (
                                         <div key={categoryIndex} className="relative">
                                             <div className="w-full">
                                                 <button
-                                                    className="flex items-center justify-between w-full px-4 py-2 text-left text-black border-t-[1px] border-[#D9D9D9] focus:outline-none"
+                                                    className="flex items-center justify-between w-full text-left text-black border-t-[1px] border-[#D9D9D9] focus:outline-none py-[16px] px-[48px] bg-[#FBFBFB]"
+                                                    style={{ fontFamily: 'Instrument Sans', fontWeight: 700, fontSize: '15px' }}
                                                     onClick={() =>
                                                         setOpenCategoryIndex(openCategoryIndex === categoryIndex ? null : categoryIndex)
                                                     }
                                                 >
                                                     <span>{category.name}</span>
                                                     {category.subCategories.length > 0 && (
-                                                        <svg className={`w-4 h-4 transform ${openCategoryIndex === categoryIndex ? 'rotate-270' : 'rotate-0'}`} fill="none" stroke="#6f0f55" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                        <svg className={`w-4 h-4 transform ${openCategoryIndex === categoryIndex ? 'rotate-270' : 'rotate-0'}`} fill="none" stroke="#6f0f55" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{ width: '29.140735626220703px', height: '31.879962921142578px' }}>
                                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
                                                         </svg>
                                                     )}
                                                 </button>
                                             </div>
 
-                                            {/* Subcategory Dropdown */}
                                             {openCategoryIndex === categoryIndex && category.subCategories.length > 0 && (
                                                 <div className="">
                                                     {category.subCategories.map((subCategory, subCategoryIndex) => (
-                                                        <div key={subCategoryIndex}>
+                                                        <div className='' key={subCategoryIndex}>
                                                             <button
-                                                                className="flex border-t-[1px] border-[#D9D9D9] items-center justify-between w-full px-[10%] py-2 text-left text-black hover:text-white hover:bg-[#6f0f55] focus:outline-none"
+                                                                className={`flex border-t-[1px] border-[#D9D9D9] items-center justify-between w-full px-[10%] py-[10px] text-left text-black hover:text-white hover:bg-[#6f0f55] focus:outline-none ${categoryIndex === categories.length - 1 && subCategoryIndex === category.subCategories.length - 1 ? 'rounded-b-2xl' : ''}`}
+                                                                style={{ fontFamily: 'Instrument Sans', fontWeight: 700, fontSize: '15px' }}
                                                                 onClick={() => handleClickSubCategory(subCategoryIndex)}
                                                             >
                                                                 <span>{subCategory.name}</span>
@@ -184,6 +184,9 @@ const CompanyInfo = () => {
                             </div>
                         </div>
                     </div>
+                                                         </div>
+
+
 
                     {/* Required Fields Note */}
                     <div className="mt-6 text-sm text-red-600">*All fields are required to fill</div>

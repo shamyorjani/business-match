@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from "react-router-dom";
+import FormInput from '../../components/form/FormInput';
+import PhoneInput from '../../components/form/PhoneInput';
+import RadioGroup from '../../components/form/RadioGroup';
 
 const Registration = () => {
 
@@ -13,11 +16,42 @@ const Registration = () => {
     companyNature: '',
     companySize: ''
   });
+  const [errors, setErrors] = useState({});
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
+  const handleNext = () => {
+    setIsSubmitted(true);
 
-    const handleNext = () => {
-        navigate("/hosted/company");
-    };
+    // Validate all fields
+    const validationErrors = validateForm();
+    setErrors(validationErrors);
+
+    // Only navigate if there are no errors
+    if (Object.keys(validationErrors).length === 0) {
+      navigate("/hosted/company");
+    }
+  };
+
+  const validateForm = () => {
+    let tempErrors = {};
+
+    if (!formData.name.trim()) tempErrors.name = "Name is required";
+    if (!formData.designation.trim()) tempErrors.designation = "Designation is required";
+
+    // Email validation
+    if (!formData.email.trim()) {
+      tempErrors.email = "Email is required";
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      tempErrors.email = "Email is invalid";
+    }
+
+    if (!formData.phoneNumber.trim()) tempErrors.phoneNumber = "Phone number is required";
+    if (!formData.companyName.trim()) tempErrors.companyName = "Company name is required";
+    if (!formData.companyNature.trim()) tempErrors.companyNature = "Company nature is required";
+    if (!formData.companySize) tempErrors.companySize = "Company size is required";
+
+    return tempErrors;
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -25,23 +59,37 @@ const Registration = () => {
       ...prevState,
       [name]: value
     }));
+
+    // Clear error for this field when user starts typing
+    if (isSubmitted) {
+      setErrors({
+        ...errors,
+        [name]: ''
+      });
+    }
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Form submission logic here
-    console.log(formData);
+    handleNext();
   };
+
+  const companySizeOptions = [
+    { id: 'size1', value: '1-10', label: '1-10' },
+    { id: 'size2', value: '11-50', label: '11-50' },
+    { id: 'size3', value: '51-100', label: '51-100' },
+    { id: 'size4', value: '101 and above', label: '101 and above' }
+  ];
 
   return (
     <div className="form-container">
       {/* Header */}
       <div className="header">
-        <h1 className="header-title">Business Matching Registration and Form Submission</h1>
+        <h1 className="header-title">Hosted Buyer Program and Form Submission</h1>
       </div>
 
       {/* Form Content */}
-      <div className="p-6 bg-white">
+      <div className="p-6 px-16 py-12 bg-white">
         {/* Step Indicator */}
         <div className="mb-8">
           <h2 className="step-indicator">STEP 1</h2>
@@ -56,159 +104,93 @@ const Registration = () => {
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-6 mb-4 md:grid-cols-2 md:gap-x-[120px]">
             {/* Name */}
-            <div>
-              <label htmlFor="name" className="form-label">Name:</label>
-              <input
-                type="text"
-                id="name"
-                name="name"
-                placeholder="E.g. John Doe"
-                className="form-input"
-                value={formData.name}
-                onChange={handleChange}
-              />
-            </div>
+            <FormInput
+              label="Name"
+              id="name"
+              name="name"
+              placeholder="E.g. John Doe"
+              value={formData.name}
+              onChange={handleChange}
+              error={errors.name}
+              required={true}
+            />
 
             {/* Designation */}
-            <div>
-              <label htmlFor="designation" className="form-label">Designation:</label>
-              <input
-                type="text"
-                id="designation"
-                name="designation"
-                placeholder="E.g. CEO"
-                className="form-input"
-                value={formData.designation}
-                onChange={handleChange}
-              />
-            </div>
+            <FormInput
+              label="Designation"
+              id="designation"
+              name="designation"
+              placeholder="E.g. CEO"
+              value={formData.designation}
+              onChange={handleChange}
+              error={errors.designation}
+              required={true}
+            />
 
             {/* Email */}
-            <div>
-              <label htmlFor="email" className="form-label">Email:</label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                placeholder="E.g. john@xyz.com"
-                className="form-input"
-                value={formData.email}
-                onChange={handleChange}
-              />
-            </div>
+            <FormInput
+              label="Email"
+              type="email"
+              id="email"
+              name="email"
+              placeholder="E.g. john@xyz.com"
+              value={formData.email}
+              onChange={handleChange}
+              error={errors.email}
+              required={true}
+            />
 
             {/* Phone Number */}
-            <div>
-              <label htmlFor="phoneNumber" className="form-label">Phone Number:</label>
-              <div className="phone-input-container">
-                <div className="country-code-container">
-                  <div className="flag-container">
-                    {/* Malaysia flag - simplified version */}
-                    <div className="malaysia-flag">
-                      <div className="malaysia-flag-stripe"></div>
-                      <div className="malaysia-flag-emblem">
-                        <div className="malaysia-flag-star"></div>
-                      </div>
-                    </div>
-                  </div>
-                  <span className="country-code">+60</span>
-                </div>
-                <input
-                  type="tel"
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  placeholder="E.g. 123456789"
-                  className="phone-input-field"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
+            <PhoneInput
+              label="Phone Number"
+              id="phoneNumber"
+              name="phoneNumber"
+              placeholder="E.g. 123456789"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              error={errors.phoneNumber}
+              countryCode="+60"
+              required={true}
+            />
 
             {/* Company Name */}
-            <div>
-              <label htmlFor="companyName" className="form-label">Company Name:</label>
-              <input
-                type="text"
-                id="companyName"
-                name="companyName"
-                placeholder="E.g. XZ Sdn Bhd."
-                className="form-input"
-                value={formData.companyName}
-                onChange={handleChange}
-              />
-            </div>
+            <FormInput
+              label="Company Name"
+              id="companyName"
+              name="companyName"
+              placeholder="E.g. XZ Sdn Bhd."
+              value={formData.companyName}
+              onChange={handleChange}
+              error={errors.companyName}
+              required={true}
+            />
 
             {/* Company Nature */}
-            <div>
-              <label htmlFor="companyNature" className="form-label">Company Nature of Business:</label>
-              <input
-                type="text"
-                id="companyNature"
-                name="companyNature"
-                placeholder="E.g. E-Commerce, Distributor"
-                className="form-input"
-                value={formData.companyNature}
-                onChange={handleChange}
-              />
-            </div>
+            <FormInput
+              label="Company Nature of Business"
+              id="companyNature"
+              name="companyNature"
+              placeholder="E.g. E-Commerce, Distributor"
+              value={formData.companyNature}
+              onChange={handleChange}
+              error={errors.companyNature}
+              required={true}
+            />
           </div>
 
           {/* Company Size */}
           <div className="mt-6">
-            <label className="form-label">Company Size (People):</label>
-            <div className="flex flex-wrap gap-x-8">
-              <div className="radio-container">
-                <input
-                  type="radio"
-                  id="size1"
-                  name="companySize"
-                  value="1-10"
-                  checked={formData.companySize === '1-10'}
-                  onChange={handleChange}
-                  className="radio-input"
-                />
-                <label htmlFor="size1" className="radio-label">1-10</label>
-              </div>
-              <div className="radio-container">
-                <input
-                  type="radio"
-                  id="size2"
-                  name="companySize"
-                  value="11-50"
-                  checked={formData.companySize === '11-50'}
-                  onChange={handleChange}
-                  className="radio-input"
-                />
-                <label htmlFor="size2" className="radio-label">11-50</label>
-              </div>
-              <div className="radio-container">
-                <input
-                  type="radio"
-                  id="size3"
-                  name="companySize"
-                  value="51-100"
-                  checked={formData.companySize === '51-100'}
-                  onChange={handleChange}
-                  className="radio-input"
-                />
-                <label htmlFor="size3" className="radio-label">51-100</label>
-              </div>
-              <div className="radio-container">
-                <input
-                  type="radio"
-                  id="size4"
-                  name="companySize"
-                  value="101 and above"
-                  checked={formData.companySize === '101 and above'}
-                  onChange={handleChange}
-                  className="radio-input"
-                />
-                <label htmlFor="size4" className="radio-label">101 and above</label>
-              </div>
-            </div>
+            <RadioGroup
+              label="Company Size (People)"
+              name="companySize"
+              options={companySizeOptions}
+              value={formData.companySize}
+              onChange={handleChange}
+              error={errors.companySize}
+              required={true}
+            />
           </div>
 
           {/* Required Fields Note */}
@@ -216,13 +198,12 @@ const Registration = () => {
 
           {/* Next Button */}
           <div className="flex justify-end mt-6">
-            <button onClick={handleNext} type="submit" className="primary-btn">Next</button>
+            <button onClick={handleNext} type="button" className="primary-btn">Next</button>
           </div>
         </form>
       </div>
     </div>
   );
-
 };
 
 export default Registration;

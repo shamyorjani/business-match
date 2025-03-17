@@ -4,23 +4,23 @@ const HostedBuyerProgram = () => {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header/Navigation Bar */}
-      <header className="bg-gradient-to-r from-[#40033f] to-[#9c0c40] text-white py-4 px-6">
+      <header className="bg-gradient-to-r from-[#40033f] to-[#9c0c40] text-white py-8 px-6">
         <div className="container flex items-center justify-between mx-auto">
           <div className="flex items-center">
             {/* Logo */}
             <img className='main-logo' src="/images/logo.svg" alt="My Image" />
 
-            {/* Navigation Links */}
-            <nav className="hidden space-x-6 md:flex">
+          </div>
+
+          {/* Sign In & Cart */}
+          <div className="flex items-center space-x-4 font-cardo">
+               {/* Navigation Links */}
+               <nav className="hidden space-x-12 md:flex">
               <a href="#" className="nav-menu">Home</a>
               <a href="#" className="nav-menu">Exhibitions</a>
               <a href="#" className="nav-menu">About us</a>
               <a href="#" className="nav-menu">Contact us</a>
             </nav>
-          </div>
-
-          {/* Sign In & Cart */}
-          <div className="flex items-center space-x-4">
             <button className="bg-white text-[#40033f] px-4 py-1 rounded-full text-sm font-medium">
               Sign In
             </button>
