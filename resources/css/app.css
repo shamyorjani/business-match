@@ -17,6 +17,10 @@ body{
 @apply font-instrument;
 }
 
+button{
+@apply cursor-pointer;
+}
+
 .nav-menu {
 @apply flex items-center font-bold text-[20px] mr-[60px];
 }

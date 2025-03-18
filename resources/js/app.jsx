@@ -1,3 +1,4 @@
+// resources/js/app.jsx
 import React from "react";
 import { createRoot } from "react-dom/client";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
@@ -16,7 +17,7 @@ import HostedThankYouPage from "./pages/Hosted/ThankYouPage";
 import PaymentCard from "./pages/Hosted/PaymentCard";
 
 import OrganizerDashboard from "./pages/organizer/OrganizerDashboard";
-import "../css/app.css";
+import "../css/app.css"; // Make sure you are using the correct CSS
 
 const App = () => {
   return (
@@ -36,10 +37,7 @@ const App = () => {
         <Route path="/hosted/thank-you" element={<HostedThankYouPage />} />
         <Route path="/hosted/payment-card" element={<PaymentCard />} />
 
-
         <Route path="/dashboard" element={<OrganizerDashboard />} />
-
-
       </Routes>
     </Router>
   );

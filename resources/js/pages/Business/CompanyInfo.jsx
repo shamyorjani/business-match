@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import FormInput from '../../components/form/FormInput';
 import PhoneInput from '../../components/form/PhoneInput';
@@ -20,11 +20,34 @@ const [formData, setFormData] = useState({
     addressLine2: '',
     city: '',
     postalCode: '',
-    phoneNumber: '',
+    companyPhone: '', // Changed from phoneNumber to companyPhone
     region: '',
     country: 'Malaysia'
 });
 const [showCountryDropdown, setShowCountryDropdown] = useState(false);
+const [errors, setErrors] = useState({});
+
+useEffect(() => {
+    // Load data from previous step
+    const savedData = JSON.parse(localStorage.getItem('businessRegistration') || '{}');
+    const savedCompanyData = JSON.parse(localStorage.getItem('companyInfoData') || '{}');
+
+    // Keep personal and company phone numbers separate
+    const companyPhoneToUse = savedCompanyData.companyPhone || ''; // Only use company phone from company data
+
+    // Set form data with company specific fields
+    setFormData(prevState => ({
+        ...prevState,
+        website: savedCompanyData.website || savedData.website || '',
+        addressLine1: savedCompanyData.addressLine1 || savedData.addressLine1 || '',
+        addressLine2: savedCompanyData.addressLine2 || savedData.addressLine2 || '',
+        city: savedCompanyData.city || savedData.city || '',
+        postalCode: savedCompanyData.postalCode || savedData.postalCode || '',
+        region: savedCompanyData.region || savedData.region || '',
+        country: savedCompanyData.country || savedData.country || 'Malaysia',
+        companyPhone: companyPhoneToUse // Use only company phone, not personal phone
+    }));
+}, []);
 
 const handleChange = (e) => {
     const { name, value } = e.target;
@@ -32,12 +55,61 @@ const handleChange = (e) => {
         ...prevState,
         [name]: value
     }));
+    // Clear error when field is edited
+    if (errors[name]) {
+        setErrors(prevErrors => ({
+            ...prevErrors,
+            [name]: ''
+        }));
+    }
+};
+
+const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.addressLine1.trim()) newErrors.addressLine1 = 'Address Line 1 is required';
+    if (!formData.city.trim()) newErrors.city = 'City is required';
+    if (!formData.postalCode.trim()) newErrors.postalCode = 'Postal code is required';
+    if (!formData.region.trim()) newErrors.region = 'Region is required';
+    if (!formData.companyPhone.trim()) newErrors.companyPhone = 'Company phone number is required'; // Changed field name
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
 };
 
 const handleSubmit = (e) => {
     e.preventDefault();
-    // Form submission logic here
-    console.log(formData);
+
+    if (validateForm()) {
+        // Get existing data and merge with new data
+        const existingData = JSON.parse(localStorage.getItem('businessRegistration') || '{}');
+
+        // Create updated data that preserves the original phoneNumber
+        const updatedData = {
+            ...existingData,
+            website: formData.website,
+            addressLine1: formData.addressLine1,
+            addressLine2: formData.addressLine2,
+            city: formData.city,
+            postalCode: formData.postalCode,
+            region: formData.region,
+            country: formData.country,
+            companyPhone: formData.companyPhone // Store company phone separately
+            // Note: We're NOT including phoneNumber here to avoid overwriting personal phone
+        };
+
+        // Save to localStorage - both to the main storage and a separate key for this page
+        localStorage.setItem('businessRegistration', JSON.stringify(updatedData));
+        localStorage.setItem('companyInfoData', JSON.stringify(formData));
+
+        // Navigate to next page
+        handleNext();
+    } else {
+        // Focus on first error field
+        const firstErrorField = Object.keys(errors)[0];
+        const errorElement = document.getElementById(firstErrorField);
+        if (errorElement) errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
 };
 
 const handleNext = () => {
@@ -45,6 +117,8 @@ const handleNext = () => {
 };
 
 const handleBack = () => {
+    // Save current form data before navigating back
+    localStorage.setItem('companyInfoData', JSON.stringify(formData));
     navigate('/business/registration');
 };
 
@@ -83,19 +157,22 @@ return (
                                 placeholder="E.g. www.xyz.com"
                                 value={formData.website}
                                 onChange={handleChange}
+                                error={errors.website}
                             />
                         </div>
                         <div>
-                            <label htmlFor="phoneNumber" className="form-label">Phone Number</label>
+                            <label htmlFor="companyPhone" className="form-label">Company Phone Number</label>
                             <PhoneInput
-                                id="phoneNumber"
-                                name="phoneNumber"
+                                id="companyPhone"
+                                name="companyPhone"
                                 placeholder="E.g. 123456789"
-                                value={formData.phoneNumber}
+                                value={formData.companyPhone}
                                 onChange={handleChange}
                                 countryCode="+60"
                                 country="Malaysia"
+                                error={errors.companyPhone}
                             />
+                            {errors.companyPhone && <p className="mt-1 text-sm text-red-600">{errors.companyPhone}</p>}
                         </div>
                     </div>
 
@@ -111,6 +188,7 @@ return (
                                     onChange={handleChange}
                                     hideLabel={true}
                                     style={{maxWidth: '435px'}}
+                                    error={errors.addressLine1}
                                 />
                             </div>
                             <div className="w-full mt-4">
@@ -136,6 +214,7 @@ return (
                                 value={formData.city}
                                 onChange={handleChange}
                                 hideLabel={true}
+                                error={errors.city}
                             />
                         </div>
                         <div>
@@ -146,6 +225,7 @@ return (
                                 value={formData.region}
                                 onChange={handleChange}
                                 hideLabel={true}
+                                error={errors.region}
                             />
                         </div>
                         <div>
@@ -156,6 +236,7 @@ return (
                                 value={formData.postalCode}
                                 onChange={handleChange}
                                 hideLabel={true}
+                                error={errors.postalCode}
                             />
                         </div>
 
@@ -220,7 +301,7 @@ return (
                 <button type="button" onClick={handleBack} className="back-btn">
                     Back
                 </button>
-                <button type="submit" onClick={handleNext} className="primary-btn">
+                <button type="submit" className="primary-btn">
                     Next
                 </button>
             </div>

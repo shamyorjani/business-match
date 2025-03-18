@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import FormInput from '../../components/form/FormInput';
 import PhoneInput from '../../components/form/PhoneInput';
@@ -15,10 +15,18 @@ const Registration = () => {
     companyNature: '',
     companySize: ''
   });
+  const [errors, setErrors] = useState({});
 
-  const handleNext = () => {
-    navigate("/business/company");
-  };
+  // Load saved data when component mounts
+  useEffect(() => {
+    const savedData = JSON.parse(localStorage.getItem('businessRegistration') || '{}');
+    if (Object.keys(savedData).length > 0) {
+      setFormData(prevState => ({
+        ...prevState,
+        ...savedData
+      }));
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,12 +34,44 @@ const Registration = () => {
       ...prevState,
       [name]: value
     }));
+    // Clear error when field is edited
+    if (errors[name]) {
+      setErrors(prevErrors => ({
+        ...prevErrors,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!formData.designation.trim()) newErrors.designation = 'Designation is required';
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
+    if (!formData.phoneNumber.trim()) newErrors.phoneNumber = 'Phone number is required';
+    if (!formData.companyName.trim()) newErrors.companyName = 'Company name is required';
+    if (!formData.companyNature.trim()) newErrors.companyNature = 'Company nature is required';
+    if (!formData.companySize) newErrors.companySize = 'Company size is required';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Form submission logic here
-    console.log(formData);
+
+    if (validateForm()) {
+      // Save form data to localStorage
+      localStorage.setItem('businessRegistration', JSON.stringify(formData));
+      // Navigate to the next page using react-router-dom
+      navigate("/business/company");
+    } else {
+      // Focus on first error field
+      const firstErrorField = Object.keys(errors)[0];
+      const errorElement = document.getElementById(firstErrorField);
+      if (errorElement) errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   };
 
   const companySizeOptions = [
@@ -62,84 +102,91 @@ const Registration = () => {
           </div>
         </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="grid grid-cols-1 gap-6 mb-4 md:grid-cols-2 md:gap-x-[120px]">
-                <FormInput
-                  id="name"
-                  name="name"
-                  label="Name:"
-                  placeholder="E.g. John Doe"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                />
+        <form onSubmit={handleSubmit}>
+          <div className="grid grid-cols-1 gap-6 mb-4 md:grid-cols-2 md:gap-x-[120px]">
+            <FormInput
+              id="name"
+              name="name"
+              label="Name:"
+              placeholder="E.g. John Doe"
+              value={formData.name}
+              onChange={handleChange}
+              required
+              error={errors.name}
+            />
 
-                <FormInput
-                  id="designation"
-                  name="designation"
-                  label="Designation:"
-                  placeholder="E.g. CEO"
-                  value={formData.designation}
-                  onChange={handleChange}
-                  required
-                />
+            <FormInput
+              id="designation"
+              name="designation"
+              label="Designation:"
+              placeholder="E.g. CEO"
+              value={formData.designation}
+              onChange={handleChange}
+              required
+              error={errors.designation}
+            />
 
-                <FormInput
-                  id="email"
-                  name="email"
-                  type="email"
-                  label="Email:"
-                  placeholder="E.g. john@xyz.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                />
+            <FormInput
+              id="email"
+              name="email"
+              type="email"
+              label="Email:"
+              placeholder="E.g. john@xyz.com"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              error={errors.email}
+            />
 
-                <PhoneInput
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  label="Phone Number:"
-                  value={formData.phoneNumber}
-                  onChange={handleChange}
-                  required
-                />
+            <PhoneInput
+              id="phoneNumber"
+              name="phoneNumber"
+              label="Phone Number:"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              required
+              error={errors.phoneNumber}
+            />
 
-                <FormInput
-                  id="companyName"
-                  name="companyName"
-                  label="Company Name:"
-                  placeholder="E.g. XZ Sdn Bhd."
-                  value={formData.companyName}
-                  onChange={handleChange}
-                  required
-                />
+            <FormInput
+              id="companyName"
+              name="companyName"
+              label="Company Name:"
+              placeholder="E.g. XZ Sdn Bhd."
+              value={formData.companyName}
+              onChange={handleChange}
+              required
+              error={errors.companyName}
+            />
 
-                <FormInput
-                  id="companyNature"
-                  name="companyNature"
-                  label="Company Nature of Business:"
-                  placeholder="E.g. E-Commerce, Distributor"
-                  value={formData.companyNature}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
+            <FormInput
+              id="companyNature"
+              name="companyNature"
+              label="Company Nature of Business:"
+              placeholder="E.g. E-Commerce, Distributor"
+              value={formData.companyNature}
+              onChange={handleChange}
+              required
+              error={errors.companyNature}
+            />
+          </div>
 
-              <RadioGroup
-                name="companySize"
-                label="Company Size (People):"
-                options={companySizeOptions}
-                value={formData.companySize}
-                onChange={handleChange}
-                required
-              />
+          <RadioGroup
+            name="companySize"
+            label="Company Size (People):"
+            options={companySizeOptions}
+            value={formData.companySize}
+            onChange={handleChange}
+            required
+            error={errors.companySize}
+          />
 
-              {/* Required Fields Note */}
+          {/* Required Fields Note */}
           <div className="mt-6 text-sm text-red-600">*All fields are required to fill</div>
 
           {/* Next Button */}
           <div className="flex justify-end mt-6">
-            <button onClick={handleNext} type="submit" className="primary-btn">Next</button>
+            <button type="submit" className="primary-btn">Next</button>
           </div>
         </form>
       </div>
