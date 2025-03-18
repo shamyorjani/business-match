@@ -26,6 +26,8 @@ const [formData, setFormData] = useState({
 });
 const [showCountryDropdown, setShowCountryDropdown] = useState(false);
 const [errors, setErrors] = useState({});
+const [countries, setCountries] = useState([]);
+const [searchTerm, setSearchTerm] = useState('');
 
 useEffect(() => {
     // Load data from previous step
@@ -47,6 +49,26 @@ useEffect(() => {
         country: savedCompanyData.country || savedData.country || 'Malaysia',
         companyPhone: companyPhoneToUse // Use only company phone, not personal phone
     }));
+
+    // Fetch countries data
+    fetch('https://restcountries.com/v3.1/all')
+        .then(response => response.json())
+        .then(data => {
+            // Sort countries by name
+            const sortedCountries = data.sort((a, b) =>
+                a.name.common.localeCompare(b.name.common)
+            );
+            setCountries(sortedCountries);
+        })
+        .catch(error => {
+            console.error('Error fetching countries:', error);
+            // Fallback to a simple array with Malaysia
+            setCountries([{
+                name: { common: 'Malaysia' },
+                flags: { png: 'https://flagcdn.com/w320/my.png' },
+                cca2: 'MY'
+            }]);
+        });
 }, []);
 
 const handleChange = (e) => {
@@ -63,6 +85,16 @@ const handleChange = (e) => {
         }));
     }
 };
+
+const handleCountrySearch = (e) => {
+    setSearchTerm(e.target.value);
+};
+
+// Filter countries based on search term
+const filteredCountries = searchTerm
+    ? countries.filter(country =>
+        country.name.common.toLowerCase().includes(searchTerm.toLowerCase()))
+    : countries;
 
 const validateForm = () => {
     const newErrors = {};
@@ -246,14 +278,19 @@ return (
                                     className="country-dropdown-button"
                                     onClick={()=> setShowCountryDropdown(!showCountryDropdown)}>
                                     <div className="flex items-center">
-                                        <div className="country-flag-container">
-                                            <div className="malaysia-flag">
-                                                <div className="malaysia-flag-stripe"></div>
-                                                <div className="malaysia-flag-emblem">
-                                                    <div className="malaysia-flag-star"></div>
-                                                </div>
+                                        {formData.country && countries.length > 0 && (
+                                            <div className="mr-2 country-flag-container">
+                                                {countries.find(c => c.name.common === formData.country) ? (
+                                                    <img
+                                                        src={countries.find(c => c.name.common === formData.country)?.flags.png}
+                                                        alt={`${formData.country} flag`}
+                                                        className="object-cover w-6 h-4"
+                                                    />
+                                                ) : (
+                                                    <div className="w-6 h-4 bg-gray-200"></div>
+                                                )}
                                             </div>
-                                        </div>
+                                        )}
                                         <span>{formData.country}</span>
                                     </div>
                                     <svg className="dropdown-arrow" fill="none" stroke="currentColor"
@@ -264,26 +301,44 @@ return (
                                 </button>
                                 {showCountryDropdown && (
                                 <div className="country-dropdown-menu">
-                                    <div className="py-1">
-                                        <button type="button"
-                                            className="country-dropdown-item"
-                                            onClick={()=> {
-                                                setFormData(prevState => ({
-                                                    ...prevState,
-                                                    country: 'Malaysia'
-                                                }));
-                                                setShowCountryDropdown(false);
-                                            }}>
-                                            <div className="country-flag-container">
-                                                <div className="malaysia-flag">
-                                                    <div className="malaysia-flag-stripe"></div>
-                                                    <div className="malaysia-flag-emblem">
-                                                        <div className="malaysia-flag-star"></div>
+                                    <div className="px-3 py-2">
+                                        <input
+                                            type="text"
+                                            placeholder="Search country..."
+                                            className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                                            value={searchTerm}
+                                            onChange={handleCountrySearch}
+                                        />
+                                    </div>
+                                    <div className="py-1 overflow-y-auto max-h-60">
+                                        {filteredCountries.length > 0 ? (
+                                            filteredCountries.map((country) => (
+                                                <button
+                                                    key={country.cca2}
+                                                    type="button"
+                                                    className="country-dropdown-item"
+                                                    onClick={() => {
+                                                        setFormData(prevState => ({
+                                                            ...prevState,
+                                                            country: country.name.common
+                                                        }));
+                                                        setShowCountryDropdown(false);
+                                                        setSearchTerm('');
+                                                    }}
+                                                >
+                                                    <div className="mr-2 country-flag-container">
+                                                        <img
+                                                            src={country.flags.png}
+                                                            alt={`${country.name.common} flag`}
+                                                            className="object-cover w-6 h-4"
+                                                        />
                                                     </div>
-                                                </div>
-                                            </div>
-                                            <span>Malaysia</span>
-                                        </button>
+                                                    <span>{country.name.common}</span>
+                                                </button>
+                                            ))
+                                        ) : (
+                                            <div className="px-4 py-2 text-sm text-gray-500">No countries found</div>
+                                        )}
                                     </div>
                                 </div>
                                 )}
