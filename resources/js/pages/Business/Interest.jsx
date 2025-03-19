@@ -24,7 +24,7 @@ const CompanyInfo = () => {
         localStorage.setItem('selectedInterests', JSON.stringify(selectedInterests));
 
         // Pass along the selected interests with navigation
-        navigate('/business/exhibitors', { state: { selectedInterests, ...formData } });
+        navigate('/business/exhibitor-matching', { state: { selectedInterests, ...formData } });
     };
 
     const handleBack = () => {

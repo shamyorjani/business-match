@@ -3,7 +3,6 @@ import { createBrowserRouter } from 'react-router-dom';
 import Registration from './pages/Business/Registration';
 import CompanyInfo from './pages/Business/CompanyInfo';
 import ExhibitorMatching from './pages/Business/ExhibitorMatching';
-import Exhibitors from './pages/Business/Exhibitors';
 import Home from './layouts/Home';
 import ScheduleMeeting from './pages/Business/ScheduleMeeting';
 import ThankYouPage from './pages/Business/ThankYouPage';
@@ -37,10 +36,6 @@ const router = createBrowserRouter([
   {
     path: '/business/interest',
     element: <Interest />
-  },
-  {
-    path: '/business/exhibitors',
-    element: <Exhibitors />
   },
   {
     path: '/business/exhibitor-matching',

@@ -22,6 +22,10 @@ const ExhibitorMatching = () => {
     localStorage.setItem('selectedExhibitors', JSON.stringify(selectedExhibitors));
   }, [selectedExhibitors]);
 
+  const goBack = () => {
+    navigate('/business/interest'); // Navigate specifically to interest page
+  };
+
   const toggleSelection = (companyName) => {
     if (selectedExhibitors.includes(companyName)) {
       setSelectedExhibitors(selectedExhibitors.filter(name => name !== companyName));
@@ -85,15 +89,15 @@ const ExhibitorMatching = () => {
 
   const handleScheduleMeeting = () => {
     // Find the full exhibitor objects for the selected exhibitors
-    const selectedExhibitorData = exhibitors.filter(exhibitor => 
+    const selectedExhibitorData = exhibitors.filter(exhibitor =>
       selectedExhibitors.includes(exhibitor.name)
     );
-    
+
     // Navigate to schedule meeting page with selected exhibitor data
-    navigate('/business/schedule', { 
-      state: { 
-        selectedExhibitors: selectedExhibitorData 
-      } 
+    navigate('/business/schedule', {
+      state: {
+        selectedExhibitors: selectedExhibitorData
+      }
     });
   };
 
@@ -206,7 +210,6 @@ const ExhibitorMatching = () => {
         <h1 className="header-title">Top Matches
         <p className="header-subtitle">Kindly select one or more exhibitors to match and schedule a meeting</p>
         </h1>
-
       </div>
 
       {/* Content */}
@@ -284,14 +287,22 @@ const ExhibitorMatching = () => {
           ))}
         </div>
 
-        {/* Show More Button (only shown if there are more exhibitors to display) */}
-        {displayCount < exhibitors.length && (
-          <div className="flex justify-end mt-8">
+        {/* Button row with show more and back buttons aligned horizontally */}
+        <div className="flex items-center justify-between mt-8 mb-4">
+          {/* Back to Interest Page Button - positioned at bottom left */}
+          <button className="btn-secondary" onClick={goBack}>
+            &larr; Back to Interest
+          </button>
+
+          {/* Show More Button (only shown if there are more exhibitors to display) */}
+          {displayCount < exhibitors.length ? (
             <button className="btn-primary btn-lg" onClick={loadMore}>
               Show More
             </button>
-          </div>
-        )}
+          ) : (
+            <div></div> /* Empty div to maintain layout when show more is not displayed */
+          )}
+        </div>
       </div>
 
       {/* Product Modal */}

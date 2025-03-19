@@ -6,19 +6,30 @@ const ScheduleMeeting = () => {
   const navigate = useNavigate();
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false); // New state for cancel booking modal
+  const [slotToCancel, setSlotToCancel] = useState(null); // Store the slot to be cancelled
   const [selectedCompany, setSelectedCompany] = useState("");
   const [selectedSlots, setSelectedSlots] = useState([]);
   // Track if we're updating an existing slot
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Remove multiple mode state
-  // const [selectedCompanies, setSelectedCompanies] = useState([]);
-  // const [multipleMode, setMultipleMode] = useState(false);
+  // New state for message modal
+  const [showMessageModal, setShowMessageModal] = useState(false);
+  const [messageModalContent, setMessageModalContent] = useState("");
+
+  // Function to show message modal instead of alert
+  const showMessage = (message) => {
+    setMessageModalContent(message);
+    setShowMessageModal(true);
+  };
 
   // Get selected exhibitors from navigation state
   const [companies, setCompanies] = useState([]);
 
   useEffect(() => {
+    // Try to load from localStorage first
+    const storedSlots = JSON.parse(localStorage.getItem('selectedMeetingSlots')) || [];
+
     if (location.state && location.state.selectedExhibitors) {
       // Process exhibitor data from navigation state
       const exhibitorData = location.state.selectedExhibitors.map(exhibitor => ({
@@ -27,28 +38,55 @@ const ScheduleMeeting = () => {
       }));
       setCompanies(exhibitorData);
 
-      // If we have scheduled slots from previous state, restore them
-      if (location.state.scheduledMeetings && location.state.scheduledMeetings.length > 0) {
-        setSelectedSlots(location.state.scheduledMeetings);
-      } else if (location.state.meetings) {
-        // Convert meetings format from ThankYou page back to our format when returning
-        const convertedMeetings = location.state.meetings.map(meeting => ({
-          day: meeting.day,
-          date: meeting.date,
-          dayOfWeek: meeting.dayOfWeek,
-          time: convertTimeRangeToSimpleTime(meeting.time),
-          company: meeting.exhibitor,
-          boothNumber: meeting.boothNumber
-        }));
-        setSelectedSlots(convertedMeetings);
+      // Get the set of currently selected company names
+      const currentlySelectedCompanies = new Set(exhibitorData.map(company => company.name));
+
+      // Filter stored slots to keep only those for currently selected companies
+      const filteredSlots = storedSlots.filter(slot =>
+        currentlySelectedCompanies.has(slot.company)
+      );
+
+      // Update localStorage with filtered slots
+      localStorage.setItem('selectedMeetingSlots', JSON.stringify(filteredSlots));
+
+      if (filteredSlots.length > 0) {
+        console.log("Loading filtered slots from localStorage:", filteredSlots);
+        setSelectedSlots(filteredSlots);
+      } else {
+        // Handle scheduled meetings from route state if localStorage is now empty
+        if (location.state.scheduledMeetings && location.state.scheduledMeetings.length > 0) {
+          const filteredMeetings = location.state.scheduledMeetings.filter(
+            meeting => currentlySelectedCompanies.has(meeting.company)
+          );
+          setSelectedSlots(filteredMeetings);
+          localStorage.setItem('selectedMeetingSlots', JSON.stringify(filteredMeetings));
+        } else if (location.state.meetings && location.state.meetings.length > 0) {
+          // Convert meetings format from ThankYou page back to our format
+          const convertedMeetings = location.state.meetings
+            .map(meeting => ({
+              day: meeting.day,
+              date: meeting.date,
+              dayOfWeek: meeting.dayOfWeek,
+              time: convertTimeRangeToSimpleTime(meeting.time),
+              company: meeting.exhibitor,
+              boothNumber: meeting.boothNumber
+            }))
+            .filter(meeting => currentlySelectedCompanies.has(meeting.company));
+
+          setSelectedSlots(convertedMeetings);
+          localStorage.setItem('selectedMeetingSlots', JSON.stringify(convertedMeetings));
+        }
       }
 
       // Find the first company without a meeting scheduled
-      const scheduledMeetings = location.state.scheduledMeetings ||
-                               (location.state.meetings ? location.state.meetings.map(m => ({ company: m.exhibitor })) : []);
+      const scheduledCompanies = new Set();
 
+      // Use the selectedSlots that were filtered
+      selectedSlots.forEach(slot => scheduledCompanies.add(slot.company));
+
+      // Find first unscheduled company
       const unscheduledCompany = exhibitorData.find(company =>
-        !scheduledMeetings.some(slot => slot.company === company.name)
+        !scheduledCompanies.has(company.name)
       );
 
       // Set default selected company to the first unscheduled company, or the first company if all are scheduled
@@ -62,7 +100,10 @@ const ScheduleMeeting = () => {
       setCompanies([
         { name: "ABC Company", boothNumber: "A11" },
         { name: "XYZ Corporation", boothNumber: "B22" },
-        { name: "123 Industries", boothNumber: "C33" }
+        { name: "123 Industries", boothNumber: "C33" },
+        { name: "Global Solutions", boothNumber: "D44" },
+        { name: "Tech Innovators", boothNumber: "E55" },
+        { name: "Future Systems", boothNumber: "F66" }
       ]);
       setSelectedCompany("ABC Company");
     }
@@ -76,13 +117,31 @@ const ScheduleMeeting = () => {
     return `${hour} ${period}`;
   };
 
-  // Schedule data
-  const days = [
-    { day: 1, date: "2 June 2025", dayOfWeek: "Monday" },
-    { day: 2, date: "3 June 2025", dayOfWeek: "Tuesday" },
-    { day: 3, date: "4 June 2025", dayOfWeek: "Wednesday" },
-    { day: 4, date: "5 June 2025", dayOfWeek: "Thursday" },
-  ];
+  // Generate dates starting from tomorrow for the next 4 days
+  const generateDaysFromTomorrow = () => {
+    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1); // Start from tomorrow
+
+    const generatedDays = [];
+    for (let i = 0; i < 4; i++) { // Generate 4 days
+      const currentDate = new Date(tomorrow);
+      currentDate.setDate(tomorrow.getDate() + i);
+
+      generatedDays.push({
+        day: i + 1,
+        date: `${currentDate.getDate()} ${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`,
+        dayOfWeek: daysOfWeek[currentDate.getDay()]
+      });
+    }
+
+    return generatedDays;
+  };
+
+  // Schedule data with dynamic dates
+  const days = generateDaysFromTomorrow();
 
   const timeSlots = [
     "11 am",
@@ -92,18 +151,105 @@ const ScheduleMeeting = () => {
     "3 pm",
     "4 pm",
     "5 pm"
-  ];
+  ];;
 
-  // Unavailable slots (day, time)
-  const unavailableSlots = [
+  // Company-specific unavailable slots (company, day, time)
+const companyUnavailableSlots = {
+    // Company 1
+    "ABC Company": [
+        { day: 1, time: "11 am" },
+        { day: 2, time: "1 pm" },
+        { day: 4, time: "4 pm" },
+    ],
+    // Company 2
+    "HJ Company": [
+        { day: 1, time: "12 pm" },
+        { day: 3, time: "2 pm" },
+        { day: 4, time: "5 pm" },
+    ],
+    // Company 3
+    "AAA Company": [
+        { day: 2, time: "2 pm" },
+        { day: 3, time: "11 am" },
+        { day: 4, time: "1 pm" },
+    ],
+    // Company 4
+    "XYZ Company": [
+        { day: 1, time: "2 pm" },
+        { day: 2, time: "3 pm" },
+        { day: 4, time: "12 pm" },
+    ],
+    // Company 5
+    "Beauty Tech": [
+        { day: 1, time: "3 pm" },
+        { day: 2, time: "11 am" },
+        { day: 3, time: "5 pm" },
+    ],
+    // Company 6
+    "Glow Cosmetics": [
+        { day: 1, time: "5 pm" },
+        { day: 3, time: "12 pm" },
+        { day: 4, time: "3 pm" },
+    ],
+    // Company 7
+    "Natural Beauty": [
+        { day: 1, time: "4 pm" },
+        { day: 2, time: "12 pm" },
+        { day: 3, time: "1 pm" },
+    ],
+    // Company 8
+    "Luxury Skin": [
+        { day: 2, time: "4 pm" },
+        { day: 3, time: "3 pm" },
+        { day: 4, time: "11 am" },
+    ],
+    // Company 9
+    "Color Pop": [
+        { day: 1, time: "1 pm" },
+        { day: 2, time: "5 pm" },
+        { day: 3, time: "4 pm" },
+    ],
+    // Company 10
+    "Pure Elements": [
+        { day: 1, time: "11 am" },
+        { day: 2, time: "2 pm" },
+        { day: 4, time: "5 pm" },
+    ],
+    // Company 11
+    "Green Beauty": [
+        { day: 1, time: "12 pm" },
+        { day: 3, time: "2 pm" },
+        { day: 4, time: "3 pm" },
+    ],
+    // Company 12
+    "Skin Science": [
+        { day: 1, time: "3 pm" },
+        { day: 2, time: "4 pm" },
+        { day: 3, time: "11 am" },
+    ]
+};
+
+  // Default unavailable slots for companies not explicitly listed
+  const defaultUnavailableSlots = [
     { day: 1, time: "11 am" },
-    { day: 1, time: "12 pm" },
-    { day: 2, time: "1 pm" },
     { day: 4, time: "2 pm" },
   ];
 
   const isSlotUnavailable = (day, time) => {
-    return unavailableSlots.some(slot => slot.day === day && slot.time === time);
+    // Get the unavailable slots for the currently selected company
+    const companySlots = companyUnavailableSlots[selectedCompany] || defaultUnavailableSlots;
+
+    // Check if this slot is unavailable for the selected company
+    return companySlots.some(slot => slot.day === day && slot.time === time);
+  };
+
+  // Also check if the slot is already taken by another company
+  const isSlotTakenByOtherCompany = (day, time) => {
+    return selectedSlots.some(slot =>
+      slot.day === day &&
+      slot.time === time &&
+      slot.company !== selectedCompany
+    );
   };
 
   const isSlotSelected = (day, time) => {
@@ -120,16 +266,42 @@ const ScheduleMeeting = () => {
     return slot ? slot.company : null;
   };
 
-  const handleSlotClick = (day, time) => {
-    if (isSlotUnavailable(day, time)) return;
+  // Check if any company has this slot selected (used for highlighting cells)
+  const isAnyCompanySlotSelected = (day, time) => {
+    return selectedSlots.some(slot => slot.day === day && slot.time === time);
+  };
 
-    // Remove multipleMode check and related code
-    // Original single company code
+  const handleSlotClick = (day, time) => {
+    // First check if this is the current company's slot (for cancellation)
+    const existingSlot = selectedSlots.find(slot =>
+      slot.day === day.day &&
+      slot.time === time &&
+      slot.company === selectedCompany
+    );
+
+    if (existingSlot) {
+      // This is the current company's slot - show cancellation modal
+      setSlotToCancel(existingSlot);
+      setShowCancelModal(true);
+      return;
+    }
+
+    // Check both if the slot is unavailable for this company or taken by another company
+    if (isSlotUnavailable(day, time) || isSlotTakenByOtherCompany(day, time)) {
+      if (isSlotTakenByOtherCompany(day, time)) {
+        const occupyingCompany = getSlotCompany(day, time);
+        // Replace alert with modal
+        showMessage(`This slot is already scheduled for ${occupyingCompany}. Please select a different time.`);
+      }
+      return;
+    }
+
+    // Original single company code for adding a new booking
     const existingSlotIndex = selectedSlots.findIndex(slot =>
       slot.day === day.day && slot.time === time
     );
 
-    // If this slot is already selected
+    // If this slot is already selected by another company
     if (existingSlotIndex !== -1) {
       const existingSlot = selectedSlots[existingSlotIndex];
 
@@ -139,8 +311,8 @@ const ScheduleMeeting = () => {
         setIsUpdating(true);
         setShowConfirmModal(true);
       } else {
-        // Optionally show an alert that this slot belongs to another company
-        alert(`This slot is already scheduled for ${existingSlot.company}. Please select a different time.`);
+        // Replace alert with modal
+        showMessage(`This slot is already scheduled for ${existingSlot.company}. Please select a different time.`);
       }
       return;
     }
@@ -148,8 +320,8 @@ const ScheduleMeeting = () => {
     // Check if company already has a meeting scheduled
     const companyHasMeeting = selectedSlots.some(slot => slot.company === selectedCompany);
     if (companyHasMeeting && !isUpdating) {
-      // If trying to schedule a second meeting for the same company
-      alert(`${selectedCompany} already has a scheduled meeting. Please select a different company or remove their existing meeting first.`);
+      // Replace alert with modal
+      showMessage(`${selectedCompany} already has a scheduled meeting. Please select a different company/time or remove their existing meeting first.`);
       return;
     }
 
@@ -164,14 +336,35 @@ const ScheduleMeeting = () => {
     setShowConfirmModal(true);
   };
 
+  // Handler for cancelling a booking
+  const handleCancelBooking = () => {
+    if (!slotToCancel) return;
+
+    // Remove the slot from selected slots
+    const updatedSlots = selectedSlots.filter(slot =>
+      !(slot.day === slotToCancel.day &&
+        slot.time === slotToCancel.time &&
+        slot.company === slotToCancel.company)
+    );
+
+    setSelectedSlots(updatedSlots);
+    localStorage.setItem('selectedMeetingSlots', JSON.stringify(updatedSlots));
+    setShowCancelModal(false);
+    setSlotToCancel(null);
+  };
+
+  // Close the cancel modal
+  const handleCancelModalClose = () => {
+    setShowCancelModal(false);
+    setSlotToCancel(null);
+  };
+
   const handleCancel = () => {
     setShowConfirmModal(false);
     setIsUpdating(false);
   };
 
   const handleConfirm = () => {
-    // Remove multipleMode check and related code
-
     // Original single company logic
     if (isUpdating) {
       // Remove the old slot for this company
@@ -180,7 +373,12 @@ const ScheduleMeeting = () => {
     }
 
     // Add the selected slot to the list of selected slots
-    setSelectedSlots([...selectedSlots.filter(slot => slot.company !== selectedCompany), selectedSlot]);
+    const updatedSlots = [...selectedSlots.filter(slot => slot.company !== selectedCompany), selectedSlot];
+    setSelectedSlots(updatedSlots);
+
+    // Save to localStorage
+    localStorage.setItem('selectedMeetingSlots', JSON.stringify(updatedSlots));
+
     setShowConfirmModal(false);
 
     // Automatically switch to next unscheduled company
@@ -193,16 +391,14 @@ const ScheduleMeeting = () => {
   };
 
   const handleCompanyChange = (e) => {
-    // Remove multipleMode check and related code
     setSelectedCompany(e.target.value);
   };
-
-  // Remove toggleMultipleMode function as it's no longer needed
 
   const handleNextClick = () => {
     // Only allow next if all companies have meetings scheduled
     if (selectedSlots.length < companies.length) {
-      alert("Please schedule meetings for all companies before proceeding.");
+      // Replace alert with modal
+      showMessage("Please schedule meetings for all companies before proceeding.");
       return;
     }
 
@@ -220,9 +416,12 @@ const ScheduleMeeting = () => {
     navigate('/business/thankyou', {
       state: {
         meetings,
-        selectedExhibitors: companies // Pass the companies to preserve data when returning
+        selectedExhibitors: companies, // Pass the companies to preserve data when returning
+        scheduledMeetings: selectedSlots // Add this to explicitly preserve the original slot format
       }
     });
+
+    // Keep the localStorage data for returning to this page
   };
 
   // Format the time range for display (e.g., "3 pm" becomes "3.00pm-4.00pm")
@@ -249,6 +448,12 @@ const ScheduleMeeting = () => {
     });
   };
 
+  // Add a function to clear meeting data
+  const clearMeetingData = () => {
+    localStorage.removeItem('selectedMeetingSlots');
+    setSelectedSlots([]);
+  };
+
   return (
     <div className="form-container">
       {/* Header */}
@@ -268,8 +473,6 @@ const ScheduleMeeting = () => {
         <div className='flex justify-between align-bottom'>
           <div className="mb-4">
             <div className="relative inline-block w-64 mb-2">
-              {/* Remove multiple selection checkbox */}
-
               {/* Improved dropdown design */}
               <select
                 value={selectedCompany}
@@ -287,7 +490,7 @@ const ScheduleMeeting = () => {
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 pointer-events-none">
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"></path>
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 011.414 1.414l-4 4a1 1 01-1.414 0l-4-4a1 1 010-1.414z" clipRule="evenodd"></path>
                 </svg>
               </div>
             </div>
@@ -321,6 +524,10 @@ const ScheduleMeeting = () => {
             <div className="w-4 h-4 mr-2 bg-green-400 rounded-full"></div>
             <span className="text-sm">Selected</span>
           </div>
+          <div className="flex items-center">
+            <div className="w-4 h-4 mr-2 bg-orange-400 rounded-full"></div>
+            <span className="text-sm">Booked by Others</span>
+          </div>
         </div>
 
         {/* Schedule table */}
@@ -347,27 +554,31 @@ const ScheduleMeeting = () => {
                   <td className="p-2 text-center border border-gray-300">{time}</td>
                   {days.map((day) => {
                     const unavailable = isSlotUnavailable(day.day, time);
-                    const isSelected = selectedSlots.some(slot =>
-                      slot.day === day.day && slot.time === time
-                    );
+                    const isSelected = isAnyCompanySlotSelected(day.day, time);
                     const slotCompany = getSlotCompany(day.day, time);
                     const isOwnedByCurrentCompany = slotCompany === selectedCompany;
+                    const isTakenByOther = isSlotTakenByOtherCompany(day.day, time);
 
                     let cellClass = "p-2 border border-gray-300 text-center cursor-pointer";
                     if (unavailable) {
-                      cellClass += " bg-[#9c0c40]";
-                    } else if (isSelected) {
-                      cellClass += " bg-green-400 relative"; // Always make it relative for displaying the company name
+                      cellClass += " bg-[#9c0c40]"; // Company's unavailable slot
+                    } else if (isTakenByOther) {
+                      cellClass += " bg-orange-400 relative"; // Taken by another company
+                    } else if (isSelected && isOwnedByCurrentCompany) {
+                      cellClass += " bg-green-400 relative"; // Current company's selected slot
                     }
 
                     return (
                       <td
                         key={`${day.day}-${time}`}
                         className={cellClass}
-                        onClick={() => !unavailable && handleSlotClick(day, time)}
+                        onClick={() => handleSlotClick(day, time)}
+                        title={isOwnedByCurrentCompany ? "Click to cancel booking" :
+                               unavailable ? "Unavailable" :
+                               isTakenByOther ? `Booked by ${slotCompany}` : "Click to book"}
                       >
                         {isSelected && (
-                          <span className="absolute text-xs font-medium -translate-x-1/2 left-1/2 -top-3 bg-white px-1 rounded">
+                          <span className="absolute px-1 text-xs font-medium -translate-x-1/2 bg-white rounded left-1/2 -top-3">
                             {slotCompany}
                           </span>
                         )}
@@ -417,7 +628,6 @@ const ScheduleMeeting = () => {
               </h2>
               <hr className='w-full h-0.5'/>
               <div className="w-full p-10 text-center">
-                {/* Remove multipleMode check */}
                 <p className="text-lg font-medium">Day {selectedSlot.day}</p>
                 <p className="text-base">Date: {selectedSlot.date} ({selectedSlot.dayOfWeek})</p>
                 <p className="text-base">Time: {formatTimeRange(selectedSlot.time)}</p>
@@ -437,6 +647,85 @@ const ScheduleMeeting = () => {
                   className="px-5 py-1.5 text-sm bg-[#40033f] text-white rounded-full"
                 >
                   Confirm
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Cancellation Modal */}
+      {showCancelModal && slotToCancel && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(88, 64, 88, 0.7)' }}>
+          <div className="relative w-full max-w-md mx-4 bg-white shadow-lg rounded-xl">
+            {/* Close button */}
+            <button
+              onClick={handleCancelModalClose}
+              className="modal-close"
+            >
+              ×
+            </button>
+
+            <div className="flex flex-col items-center py-2 pb-5">
+              <h2 className="my-6 text-xl font-semibold text-center">
+                Cancel Meeting Booking
+              </h2>
+              <hr className='w-full h-0.5'/>
+              <div className="w-full p-10 text-center">
+                <p className="text-lg font-medium">Are you sure you want to cancel this meeting?</p>
+                <p className="mt-4 text-base">Day {slotToCancel.day}</p>
+                <p className="text-base">Date: {slotToCancel.date} ({slotToCancel.dayOfWeek})</p>
+                <p className="text-base">Time: {formatTimeRange(slotToCancel.time)}</p>
+                <p className="text-base">Company: {slotToCancel.company}</p>
+                <p className="text-base">Booth: {slotToCancel.boothNumber}</p>
+              </div>
+
+              <div className="flex justify-center gap-4 p-4">
+                <button
+                  onClick={handleCancelModalClose}
+                  className="px-5 py-1.5 text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full"
+                >
+                  Keep Booking
+                </button>
+                <button
+                  onClick={handleCancelBooking}
+                  className="px-5 py-1.5 text-sm bg-[#9c0c40] text-white rounded-full"
+                >
+                  Cancel Booking
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Message Modal */}
+      {showMessageModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(88, 64, 88, 0.7)' }}>
+          <div className="relative w-full max-w-md mx-4 bg-white shadow-lg rounded-xl">
+            {/* Close button */}
+            <button
+              onClick={() => setShowMessageModal(false)}
+              className="modal-close"
+            >
+              ×
+            </button>
+
+            <div className="flex flex-col items-center py-2 pb-5">
+              <h2 className="my-6 text-xl font-semibold text-center">
+                Information
+              </h2>
+              <hr className='w-full h-0.5'/>
+              <div className="w-full p-10 text-center">
+                <p className="text-base">{messageModalContent}</p>
+              </div>
+
+              <div className="flex justify-center gap-4 p-4">
+                <button
+                  onClick={() => setShowMessageModal(false)}
+                  className="px-5 py-1.5 text-sm bg-[#40033f] text-white rounded-full"
+                >
+                  OK
                 </button>
               </div>
             </div>
