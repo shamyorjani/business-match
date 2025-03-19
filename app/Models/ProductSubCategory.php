@@ -15,13 +15,19 @@ class ProductSubCategory extends Model
         'description'
     ];
 
+    /**
+     * Get the category that owns the sub category.
+     */
     public function category()
     {
         return $this->belongsTo(ProductCategory::class, 'product_category_id');
     }
 
+    /**
+     * Get the child categories for the sub category.
+     */
     public function childCategories()
     {
-        return $this->hasMany(ProductChildCategory::class, 'product_sub_category_id');
+        return $this->hasMany(ProductChildCategory::class);
     }
 }

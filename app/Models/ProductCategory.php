@@ -20,6 +20,9 @@ class ProductCategory extends Model
         return $this->belongsTo(ExhibitorCompanyInfo::class, 'company_id');
     }
 
+    /**
+     * Get the sub-categories for the category.
+     */
     public function subCategories()
     {
         return $this->hasMany(ProductSubCategory::class);
