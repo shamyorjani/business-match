@@ -1,10 +1,26 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 const ExhibitorMatching = () => {
-  const [selectedExhibitors, setSelectedExhibitors] = useState(['ABC Company']);
+  const navigate = useNavigate();
+  const [selectedExhibitors, setSelectedExhibitors] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [currentProduct, setCurrentProduct] = useState(null);
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
+  const [displayCount, setDisplayCount] = useState(5);
+
+  // Load selected exhibitors from localStorage when component mounts
+  useEffect(() => {
+    const savedExhibitors = localStorage.getItem('selectedExhibitors');
+    if (savedExhibitors) {
+      setSelectedExhibitors(JSON.parse(savedExhibitors));
+    }
+  }, []);
+
+  // Save selected exhibitors to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('selectedExhibitors', JSON.stringify(selectedExhibitors));
+  }, [selectedExhibitors]);
 
   const toggleSelection = (companyName) => {
     if (selectedExhibitors.includes(companyName)) {
@@ -63,6 +79,24 @@ const ExhibitorMatching = () => {
     setCurrentProduct(companyProducts[nextIndex]);
   };
 
+  const loadMore = () => {
+    setDisplayCount(prevCount => prevCount + 5);
+  };
+
+  const handleScheduleMeeting = () => {
+    // Find the full exhibitor objects for the selected exhibitors
+    const selectedExhibitorData = exhibitors.filter(exhibitor => 
+      selectedExhibitors.includes(exhibitor.name)
+    );
+    
+    // Navigate to schedule meeting page with selected exhibitor data
+    navigate('/business/schedule', { 
+      state: { 
+        selectedExhibitors: selectedExhibitorData 
+      } 
+    });
+  };
+
   const exhibitors = [
     {
       id: 1,
@@ -95,8 +129,75 @@ const ExhibitorMatching = () => {
       country: 'Thailand',
       productProfile: 'Foundations, Concealers, Blush, Highlighters, Powders',
       description: 'We XYZ Company are top 20 manufacturer of Makeup products in Thailand. We specialise in...'
+    },
+    {
+      id: 5,
+      name: 'Beauty Tech',
+      boothNumber: 'E 55',
+      country: 'Singapore',
+      productProfile: 'Skincare, Serums, Moisturizers, Cleansers',
+      description: 'Beauty Tech is a leading skincare innovator in Singapore. Our products combine natural ingredients with cutting-edge technology.'
+    },
+    {
+      id: 6,
+      name: 'Glow Cosmetics',
+      boothNumber: 'F 61',
+      country: 'Vietnam',
+      productProfile: 'Lip products, Eye shadows, Mascara, Eyeliners',
+      description: 'Glow Cosmetics specializes in vibrant, long-lasting makeup products that are cruelty-free and environmentally conscious.'
+    },
+    {
+      id: 7,
+      name: 'Natural Beauty',
+      boothNumber: 'G 77',
+      country: 'Philippines',
+      productProfile: 'Organic makeup, Natural ingredients, Vegan products',
+      description: 'Natural Beauty creates makeup from 100% plant-based ingredients, catering to environmentally conscious consumers.'
+    },
+    {
+      id: 8,
+      name: 'Luxury Skin',
+      boothNumber: 'H 83',
+      country: 'Japan',
+      productProfile: 'Premium skincare, Anti-aging, Luxury treatments',
+      description: 'Luxury Skin provides high-end skincare solutions inspired by traditional Japanese beauty rituals and modern science.'
+    },
+    {
+      id: 9,
+      name: 'Color Pop',
+      boothNumber: 'I 92',
+      country: 'South Korea',
+      productProfile: 'Bright pigments, K-beauty, Trendy cosmetics',
+      description: 'Color Pop is known for bold, trendy colors and innovative formulas that have revolutionized the K-beauty scene.'
+    },
+    {
+      id: 10,
+      name: 'Pure Elements',
+      boothNumber: 'J 105',
+      country: 'Australia',
+      productProfile: 'Mineral makeup, Sunscreens, Natural protection',
+      description: 'Pure Elements harnesses Australian minerals and botanicals to create effective, skin-friendly beauty products.'
+    },
+    {
+      id: 11,
+      name: 'Green Beauty',
+      boothNumber: 'K 118',
+      country: 'New Zealand',
+      productProfile: 'Eco-friendly packaging, Sustainable beauty, Clean ingredients',
+      description: 'Green Beauty is committed to sustainability in every aspect of their production, from ingredients to packaging.'
+    },
+    {
+      id: 12,
+      name: 'Skin Science',
+      boothNumber: 'L 124',
+      country: 'Taiwan',
+      productProfile: 'Dermatological solutions, Clinical formulas, Problem-solving products',
+      description: 'Skin Science combines dermatological expertise with advanced technology to address specific skin concerns.'
     }
   ];
+
+  // Get the current exhibitors to display based on the displayCount
+  const visibleExhibitors = exhibitors.slice(0, displayCount);
 
   return (
     <div className="form-container">
@@ -111,20 +212,22 @@ const ExhibitorMatching = () => {
       {/* Content */}
       <div className="content">
         <div className="info-bar">
-            <p className="info-counter">Showing {exhibitors.length} out of {exhibitors.length} matches</p>
+            <p className="info-counter">Showing {visibleExhibitors.length} out of {exhibitors.length} matches</p>
             <div className="flex items-center gap-4">
                 <p className="selected-counter">{selectedExhibitors.length} Exhibitor(s) selected</p>
-                <button
-                    className="btn-primary"
-                    onClick={() => window.location.href = '/business/schedule'}
-                >
-                    Schedule meeting
-                </button>
+                {selectedExhibitors.length > 0 && (
+                    <button
+                        className="btn-primary"
+                        onClick={handleScheduleMeeting}
+                    >
+                        Schedule meeting
+                    </button>
+                )}
             </div>
         </div>
 
         <div className="exhibitor-list">
-          {exhibitors.map((exhibitor) => (
+          {visibleExhibitors.map((exhibitor) => (
             <div key={exhibitor.id} className="exhibitor-card">
               <div className="exhibitor-flex">
                 {/* Logo */}
@@ -181,12 +284,14 @@ const ExhibitorMatching = () => {
           ))}
         </div>
 
-        {/* Back to Top Button */}
-        <div className="flex justify-end mt-8">
-          <button className="btn-primary btn-lg">
-            Show More
-          </button>
-        </div>
+        {/* Show More Button (only shown if there are more exhibitors to display) */}
+        {displayCount < exhibitors.length && (
+          <div className="flex justify-end mt-8">
+            <button className="btn-primary btn-lg" onClick={loadMore}>
+              Show More
+            </button>
+          </div>
+        )}
       </div>
 
       {/* Product Modal */}

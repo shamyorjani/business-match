@@ -1,17 +1,80 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const ScheduleMeeting = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [selectedCompany, setSelectedCompany] = useState("ABC Company");
+  const [selectedCompany, setSelectedCompany] = useState("");
   const [selectedSlots, setSelectedSlots] = useState([]);
+  // Track if we're updating an existing slot
+  const [isUpdating, setIsUpdating] = useState(false);
 
-  // Company data
-  const companies = [
-    { name: "ABC Company", boothNumber: "A11" },
-    { name: "XYZ Corporation", boothNumber: "B22" },
-    { name: "123 Industries", boothNumber: "C33" }
-  ];
+  // Remove multiple mode state
+  // const [selectedCompanies, setSelectedCompanies] = useState([]);
+  // const [multipleMode, setMultipleMode] = useState(false);
+
+  // Get selected exhibitors from navigation state
+  const [companies, setCompanies] = useState([]);
+
+  useEffect(() => {
+    if (location.state && location.state.selectedExhibitors) {
+      // Process exhibitor data from navigation state
+      const exhibitorData = location.state.selectedExhibitors.map(exhibitor => ({
+        name: exhibitor.name,
+        boothNumber: exhibitor.boothNumber
+      }));
+      setCompanies(exhibitorData);
+
+      // If we have scheduled slots from previous state, restore them
+      if (location.state.scheduledMeetings && location.state.scheduledMeetings.length > 0) {
+        setSelectedSlots(location.state.scheduledMeetings);
+      } else if (location.state.meetings) {
+        // Convert meetings format from ThankYou page back to our format when returning
+        const convertedMeetings = location.state.meetings.map(meeting => ({
+          day: meeting.day,
+          date: meeting.date,
+          dayOfWeek: meeting.dayOfWeek,
+          time: convertTimeRangeToSimpleTime(meeting.time),
+          company: meeting.exhibitor,
+          boothNumber: meeting.boothNumber
+        }));
+        setSelectedSlots(convertedMeetings);
+      }
+
+      // Find the first company without a meeting scheduled
+      const scheduledMeetings = location.state.scheduledMeetings ||
+                               (location.state.meetings ? location.state.meetings.map(m => ({ company: m.exhibitor })) : []);
+
+      const unscheduledCompany = exhibitorData.find(company =>
+        !scheduledMeetings.some(slot => slot.company === company.name)
+      );
+
+      // Set default selected company to the first unscheduled company, or the first company if all are scheduled
+      if (unscheduledCompany) {
+        setSelectedCompany(unscheduledCompany.name);
+      } else if (exhibitorData.length > 0) {
+        setSelectedCompany(exhibitorData[0].name);
+      }
+    } else {
+      // Fallback data if no companies were passed
+      setCompanies([
+        { name: "ABC Company", boothNumber: "A11" },
+        { name: "XYZ Corporation", boothNumber: "B22" },
+        { name: "123 Industries", boothNumber: "C33" }
+      ]);
+      setSelectedCompany("ABC Company");
+    }
+  }, [location]);
+
+  // Convert time range back to simple time (e.g., "3.00pm-4.00pm" becomes "3 pm")
+  const convertTimeRangeToSimpleTime = (timeRange) => {
+    const startTime = timeRange.split('-')[0].trim();
+    const hour = parseInt(startTime);
+    const period = startTime.includes('am') ? 'am' : 'pm';
+    return `${hour} ${period}`;
+  };
 
   // Schedule data
   const days = [
@@ -44,34 +107,122 @@ const ScheduleMeeting = () => {
   };
 
   const isSlotSelected = (day, time) => {
-    return selectedSlots.some(slot => slot.day === day && slot.time === time);
+    return selectedSlots.some(slot =>
+      slot.day === day &&
+      slot.time === time &&
+      slot.company === selectedCompany
+    );
+  };
+
+  // Find which company has this slot scheduled
+  const getSlotCompany = (day, time) => {
+    const slot = selectedSlots.find(slot => slot.day === day && slot.time === time);
+    return slot ? slot.company : null;
   };
 
   const handleSlotClick = (day, time) => {
-    if (!isSlotUnavailable(day, time)) {
-      setSelectedSlot({
-        day: day.day,
-        dayOfWeek: day.dayOfWeek,
-        date: day.date,
-        time: time
-      });
-      setShowConfirmModal(true);
+    if (isSlotUnavailable(day, time)) return;
+
+    // Remove multipleMode check and related code
+    // Original single company code
+    const existingSlotIndex = selectedSlots.findIndex(slot =>
+      slot.day === day.day && slot.time === time
+    );
+
+    // If this slot is already selected
+    if (existingSlotIndex !== -1) {
+      const existingSlot = selectedSlots[existingSlotIndex];
+
+      // Only allow changing slots for the currently selected company
+      if (existingSlot.company === selectedCompany) {
+        setSelectedSlot(existingSlot);
+        setIsUpdating(true);
+        setShowConfirmModal(true);
+      } else {
+        // Optionally show an alert that this slot belongs to another company
+        alert(`This slot is already scheduled for ${existingSlot.company}. Please select a different time.`);
+      }
+      return;
     }
+
+    // Check if company already has a meeting scheduled
+    const companyHasMeeting = selectedSlots.some(slot => slot.company === selectedCompany);
+    if (companyHasMeeting && !isUpdating) {
+      // If trying to schedule a second meeting for the same company
+      alert(`${selectedCompany} already has a scheduled meeting. Please select a different company or remove their existing meeting first.`);
+      return;
+    }
+
+    setSelectedSlot({
+      day: day.day,
+      dayOfWeek: day.dayOfWeek,
+      date: day.date,
+      time: time,
+      company: selectedCompany,
+      boothNumber: companies.find(c => c.name === selectedCompany)?.boothNumber
+    });
+    setShowConfirmModal(true);
   };
 
   const handleCancel = () => {
     setShowConfirmModal(false);
+    setIsUpdating(false);
   };
 
   const handleConfirm = () => {
+    // Remove multipleMode check and related code
+
+    // Original single company logic
+    if (isUpdating) {
+      // Remove the old slot for this company
+      setSelectedSlots(selectedSlots.filter(slot => slot.company !== selectedCompany));
+      setIsUpdating(false);
+    }
+
     // Add the selected slot to the list of selected slots
-    setSelectedSlots([...selectedSlots, selectedSlot]);
+    setSelectedSlots([...selectedSlots.filter(slot => slot.company !== selectedCompany), selectedSlot]);
     setShowConfirmModal(false);
+
+    // Automatically switch to next unscheduled company
+    const companiesWithMeetings = new Set([...selectedSlots.map(slot => slot.company), selectedCompany]);
+    const nextUnscheduledCompany = companies.find(company => !companiesWithMeetings.has(company.name));
+
+    if (nextUnscheduledCompany) {
+      setSelectedCompany(nextUnscheduledCompany.name);
+    }
   };
 
   const handleCompanyChange = (e) => {
-    const selected = companies.find(company => company.name === e.target.value);
-    setSelectedCompany(selected.name);
+    // Remove multipleMode check and related code
+    setSelectedCompany(e.target.value);
+  };
+
+  // Remove toggleMultipleMode function as it's no longer needed
+
+  const handleNextClick = () => {
+    // Only allow next if all companies have meetings scheduled
+    if (selectedSlots.length < companies.length) {
+      alert("Please schedule meetings for all companies before proceeding.");
+      return;
+    }
+
+    // Format the meeting data for the ThankYou page
+    const meetings = selectedSlots.map(slot => ({
+      day: slot.day,
+      date: slot.date,
+      dayOfWeek: slot.dayOfWeek,
+      time: formatTimeRange(slot.time),
+      exhibitor: slot.company,
+      boothNumber: slot.boothNumber
+    }));
+
+    // Navigate to thank you page with scheduled meetings data
+    navigate('/business/thankyou', {
+      state: {
+        meetings,
+        selectedExhibitors: companies // Pass the companies to preserve data when returning
+      }
+    });
   };
 
   // Format the time range for display (e.g., "3 pm" becomes "3.00pm-4.00pm")
@@ -88,6 +239,16 @@ const ScheduleMeeting = () => {
     return `${formattedStart}-${formattedEnd}`;
   };
 
+  const handleBack = () => {
+    // Pass back selected exhibitors and scheduled meetings
+    navigate('/business/exhibitor-matching', {
+      state: {
+        selectedExhibitors: companies.map(c => c.name),
+        scheduledMeetings: selectedSlots
+      }
+    });
+  };
+
   return (
     <div className="form-container">
       {/* Header */}
@@ -102,29 +263,48 @@ const ScheduleMeeting = () => {
       </div>
 
       {/* Content */}
-      <div className="py-4 px-14 white ">
+      <div className="py-4 px-14 white">
         {/* Company details */}
-       <div className='flex justify-between align-bottom'>
-       <div className="mb-4">
-          <div className="relative inline-block w-56 mb-2">
-            <select
-              value={selectedCompany}
-              onChange={handleCompanyChange}
-              className="block appearance-none w-full bg-white border border-black px-2 py-0 pr-8 rounded-4xl shadow-sm focus:outline-none focus:ring-1 ring-black text-[16px] text-black font-medium"
-            >
-              {companies.map(company => (
-                <option key={company.name} value={company.name}>
-                  {company.name}
-                </option>
-              ))}
-            </select>
-            <div className="absolute inset-y-0 right-0 flex items-center px-2 text-black pointer-events-none">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
-              </svg>
+        <div className='flex justify-between align-bottom'>
+          <div className="mb-4">
+            <div className="relative inline-block w-64 mb-2">
+              {/* Remove multiple selection checkbox */}
+
+              {/* Improved dropdown design */}
+              <select
+                value={selectedCompany}
+                onChange={handleCompanyChange}
+                className="block appearance-none w-full bg-white border-2 border-gray-300 px-4 py-2 pr-8 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-[16px] text-black font-medium"
+              >
+                {companies.map(company => {
+                  const hasScheduled = selectedSlots.some(slot => slot.company === company.name);
+                  return (
+                    <option key={company.name} value={company.name}>
+                      {company.name} {hasScheduled ? "(Scheduled)" : ""}
+                    </option>
+                  );
+                })}
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 pointer-events-none">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                  <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd"></path>
+                </svg>
+              </div>
             </div>
+
+            <p className="text-sm font-medium">Booth Number: {companies.find(company => company.name === selectedCompany)?.boothNumber}</p>
+
+            {selectedSlots.some(slot => slot.company === selectedCompany) && (
+              <p className="text-sm text-green-600">Meeting scheduled for this company</p>
+            )}
           </div>
-          <p className="text-sm font-medium">Booth Number: {companies.find(company => company.name === selectedCompany)?.boothNumber}</p>
+
+          {/* Selected meetings counter */}
+          <div className="flex items-center">
+            <span className="text-sm font-medium">
+              {selectedSlots.length} of {companies.length} Meeting{companies.length !== 1 ? 's' : ''} Scheduled
+            </span>
+          </div>
         </div>
 
         {/* Legend */}
@@ -142,7 +322,6 @@ const ScheduleMeeting = () => {
             <span className="text-sm">Selected</span>
           </div>
         </div>
-       </div>
 
         {/* Schedule table */}
         <div className="overflow-x-auto">
@@ -168,13 +347,17 @@ const ScheduleMeeting = () => {
                   <td className="p-2 text-center border border-gray-300">{time}</td>
                   {days.map((day) => {
                     const unavailable = isSlotUnavailable(day.day, time);
-                    const selected = isSlotSelected(day.day, time);
+                    const isSelected = selectedSlots.some(slot =>
+                      slot.day === day.day && slot.time === time
+                    );
+                    const slotCompany = getSlotCompany(day.day, time);
+                    const isOwnedByCurrentCompany = slotCompany === selectedCompany;
 
                     let cellClass = "p-2 border border-gray-300 text-center cursor-pointer";
                     if (unavailable) {
                       cellClass += " bg-[#9c0c40]";
-                    } else if (selected) {
-                      cellClass += " bg-green-400";
+                    } else if (isSelected) {
+                      cellClass += " bg-green-400 relative"; // Always make it relative for displaying the company name
                     }
 
                     return (
@@ -183,7 +366,11 @@ const ScheduleMeeting = () => {
                         className={cellClass}
                         onClick={() => !unavailable && handleSlotClick(day, time)}
                       >
-                        {/* Empty cell with background color for status */}
+                        {isSelected && (
+                          <span className="absolute text-xs font-medium -translate-x-1/2 left-1/2 -top-3 bg-white px-1 rounded">
+                            {slotCompany}
+                          </span>
+                        )}
                       </td>
                     );
                   })}
@@ -193,10 +380,21 @@ const ScheduleMeeting = () => {
           </table>
         </div>
 
-        {/* Back button */}
-        <div className="flex justify-end mt-8">
-          <button className="px-8 py-2 btn-secondary">
+        {/* Action buttons */}
+        <div className="flex justify-between mt-8">
+          <button
+            className="px-8 py-2 btn-secondary"
+            onClick={handleBack}
+          >
             Back to Previous
+          </button>
+
+          <button
+            className="px-8 py-2 bg-[#40033f] text-white rounded-md disabled:opacity-50"
+            onClick={handleNextClick}
+            disabled={selectedSlots.length < companies.length}
+          >
+            Next
           </button>
         </div>
       </div>
@@ -214,12 +412,17 @@ const ScheduleMeeting = () => {
             </button>
 
             <div className="flex flex-col items-center py-2 pb-5">
-              <h2 className="my-6 text-xl font-semibold text-center">Selected Date and Time</h2>
+              <h2 className="my-6 text-xl font-semibold text-center">
+                {isUpdating ? "Update Meeting Time" : "Confirm Meeting Time"}
+              </h2>
               <hr className='w-full h-0.5'/>
               <div className="w-full p-10 text-center">
+                {/* Remove multipleMode check */}
                 <p className="text-lg font-medium">Day {selectedSlot.day}</p>
                 <p className="text-base">Date: {selectedSlot.date} ({selectedSlot.dayOfWeek})</p>
                 <p className="text-base">Time: {formatTimeRange(selectedSlot.time)}</p>
+                <p className="text-base">Company: {selectedSlot.company}</p>
+                <p className="text-base">Booth: {selectedSlot.boothNumber}</p>
               </div>
 
               <div className="flex justify-center gap-4 p-4">
@@ -237,7 +440,6 @@ const ScheduleMeeting = () => {
                 </button>
               </div>
             </div>
-
           </div>
         </div>
       )}
