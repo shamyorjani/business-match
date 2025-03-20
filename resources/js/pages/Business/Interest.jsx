@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../services/api'; // Import the API service
 
 const CompanyInfo = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({});
     const [selectedInterests, setSelectedInterests] = useState([]);
+    const [categories, setCategories] = useState([]); // State for categories
+    const [openCategoryIndex, setOpenCategoryIndex] = useState(null); // Track which category is expanded
+    const [searchTerm, setSearchTerm] = useState(''); // Track the search term
 
     // Load selected interests from local storage on component mount
     useEffect(() => {
@@ -12,6 +16,37 @@ const CompanyInfo = () => {
         if (savedInterests) {
             setSelectedInterests(JSON.parse(savedInterests));
         }
+    }, []);
+
+    // Fetch categories and subcategories from the API
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                const response = await api.get('/categories');
+                const categoriesData = response.data;
+
+                if (Array.isArray(categoriesData)) {
+                    // Fetch subcategories for each category
+                    const categoriesWithSubcategories = await Promise.all(
+                        categoriesData.map(async (category) => {
+                            const subcategoriesResponse = await api.get(`/categories/${category.id}/subcategories`);
+                            return {
+                                ...category,
+                                subCategories: subcategoriesResponse.data
+                            };
+                        })
+                    );
+
+                    setCategories(categoriesWithSubcategories);
+                } else {
+                    console.error('Unexpected response format:', categoriesData);
+                }
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+            }
+        };
+
+        fetchCategories();
     }, []);
 
     const handleSubmit = (e) => {
@@ -32,44 +67,6 @@ const CompanyInfo = () => {
         localStorage.setItem('selectedInterests', JSON.stringify(selectedInterests));
         navigate('/business/company');
     };
-
-    const [openCategoryIndex, setOpenCategoryIndex] = useState(null); // Track which category is expanded
-    const [openSubCategoryIndex, setOpenSubCategoryIndex] = useState(null); // Track which subcategory is expanded
-    const [searchTerm, setSearchTerm] = useState(''); // Track the search term
-
-    const categories = [
-        {
-            name: 'Professional Beauty salon & Skincare solutions',
-            subCategories: []
-        },
-        {
-            name: 'Haircare Product, Tools & Accessories',
-            subCategories: [
-                {
-                    name: 'Lip Makeup'
-                }
-            ]
-        },
-        {
-            name: 'Cosmetics',
-            subCategories: [
-                {
-                    name: 'Face Makeup'
-                },
-                {
-                    name: 'Eye Makeup'
-                },
-                {
-                    name: 'Lip Makeup'
-                }
-            ]
-        },
-    ];
-
-    // Filter categories based on search term
-    const filteredCategories = categories.filter(category =>
-        category.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
 
     const handleSearchChange = (e) => {
         setSearchTerm(e.target.value);
@@ -100,6 +97,11 @@ const CompanyInfo = () => {
     const handleClickSubCategory = (categoryName, subCategoryName) => {
         toggleSubCategorySelection(categoryName, subCategoryName);
     };
+
+    // Filter categories based on search term
+    const filteredCategories = categories.filter(category =>
+        category.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
 
     return (
         <div className="form-container">

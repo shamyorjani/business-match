@@ -9,22 +9,17 @@ class ProductCategory extends Model
 {
     use HasFactory;
 
-    protected $fillable = [
-        'company_id',
-        'name',
-        'description'
-    ];
-
-    public function company()
-    {
-        return $this->belongsTo(ExhibitorCompanyInfo::class, 'company_id');
-    }
-
-    /**
-     * Get the sub-categories for the category.
-     */
+    // Define the subCategories relationship
     public function subCategories()
     {
         return $this->hasMany(ProductSubCategory::class);
     }
+
+    // Define the company relationship
+    public function company()
+    {
+        return $this->belongsTo(ExhibitorCompanyInfo::class);
+    }
+
+    // ...existing code...
 }
