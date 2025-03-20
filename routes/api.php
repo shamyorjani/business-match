@@ -7,6 +7,7 @@ use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductSubCategoryController;
+use App\Http\Controllers\ExhibitorController;
 
 Route::get('/test', function () {
     Log::info('Test endpoint hit');
@@ -28,3 +29,7 @@ Route::get('/user', function () {
 });
 Route::get('/categories', [ProductCategoryController::class, 'index']);
 Route::get('/categories/{id}/subcategories', [ProductSubCategoryController::class, 'index']);
+
+// Routes for exhibitor matching
+Route::post('/exhibitors/search', [ExhibitorController::class, 'searchBySubcategories']);
+Route::get('/exhibitors/{exhibitor}/products', [ExhibitorController::class, 'getProducts']);

@@ -19,7 +19,9 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->string('region_country');
             $table->string('logo')->nullable();
-            ;
+            $table->json('categories')->nullable()->comment('JSON array of category IDs [1, 2, 3]');
+            $table->json('sub_categories')->nullable()->comment('JSON array of sub-category IDs [1, 2, 3, 9, 12]');
+            $table->json('child_categories')->nullable()->comment('JSON array of child category IDs [1, 2, 3, 9, 12]');
             $table->timestamps();
         });
     }
