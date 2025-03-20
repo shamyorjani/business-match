@@ -2,10 +2,12 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../services/api'; // Import API service
 import { getCompanyLogo, getProductImage } from '../../utils/imageUtils'; // Import image utility functions
+import { loadExhibitorSelections, saveExhibitorSelections, clearAllExhibitorSelections } from '../../utils/selectionUtils';
 
 const ExhibitorMatching = () => {
   const navigate = useNavigate();
   const [selectedExhibitors, setSelectedExhibitors] = useState([]);
+  const [validSelectedExhibitors, setValidSelectedExhibitors] = useState([]);
   const [showModal, setShowModal] = useState(false);
   const [currentProduct, setCurrentProduct] = useState(null);
   const [currentProductIndex, setCurrentProductIndex] = useState(0);
@@ -15,14 +17,52 @@ const ExhibitorMatching = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [subcategories, setSubcategories] = useState([]);
+  const [currentInterests, setCurrentInterests] = useState([]);
 
   // Load selected exhibitors from localStorage when component mounts
   useEffect(() => {
-    const savedExhibitors = localStorage.getItem('selectedExhibitors');
-    if (savedExhibitors) {
-      setSelectedExhibitors(JSON.parse(savedExhibitors));
-    }
+    const fetchSelectedExhibitors = async () => {
+      try {
+        // Get selected interests - only use current ones from localStorage
+        const savedInterests = localStorage.getItem('selectedInterests');
+        if (!savedInterests) return;
+
+        const interests = JSON.parse(savedInterests);
+        // Store the full interest objects
+        setCurrentInterests(interests);
+
+        // Extract just the subcategory names
+        const currentSubcategories = interests.map(interest => interest.subCategory);
+        setSubcategories(currentSubcategories);
+
+        // Use the utility function to load selections based on these subcategories
+        const savedSelections = loadExhibitorSelections(currentSubcategories);
+        if (savedSelections && savedSelections.length > 0) {
+          setSelectedExhibitors(savedSelections);
+        }
+      } catch (error) {
+        console.error('Error loading selected exhibitors:', error);
+      }
+    };
+
+    fetchSelectedExhibitors();
   }, []);
+
+  // Update valid selections whenever exhibitors or selected exhibitors change
+  useEffect(() => {
+    // Filter selected exhibitors to only include those that are currently in the exhibitors list
+    const currentValidSelections = selectedExhibitors.filter(
+      selectedName => exhibitors.some(exhibitor => exhibitor.company_name === selectedName)
+    );
+
+    setValidSelectedExhibitors(currentValidSelections);
+
+    // Only update storage with valid selections if we have exhibitors loaded
+    if (exhibitors.length > 0 && currentValidSelections.length !== selectedExhibitors.length) {
+      setSelectedExhibitors(currentValidSelections);
+    }
+  }, [exhibitors, selectedExhibitors]);
 
   // Fetch exhibitors based on selected interests
   useEffect(() => {
@@ -31,18 +71,24 @@ const ExhibitorMatching = () => {
         setLoading(true);
         setError(null); // Clear any previous errors
 
-        // Get selected interests from localStorage
-        const savedInterests = localStorage.getItem('selectedInterests');
+        // Get current interests directly from state instead of localStorage
+        if (currentInterests.length === 0) {
+          // If no interests in state yet, get from localStorage
+          const savedInterests = localStorage.getItem('selectedInterests');
+          if (!savedInterests) {
+            setLoading(false);
+            return;
+          }
 
-        if (!savedInterests) {
-          setLoading(false);
-          return;
+          const interests = JSON.parse(savedInterests);
+          setCurrentInterests(interests);
+
+          // Extract just the subcategory names
+          const subcats = interests.map(interest => interest.subCategory);
+          setSubcategories(subcats);
         }
 
-        const interests = JSON.parse(savedInterests);
-        // Extract just the subcategory names
-        const subcategories = interests.map(interest => interest.subCategory);
-
+        // Use subcategories from state
         if (subcategories.length === 0) {
           setLoading(false);
           return;
@@ -65,9 +111,54 @@ const ExhibitorMatching = () => {
             setExhibitors([]);
             setFilteredExhibitors([]);
           } else {
+            // Get exhibitors data
             const exhibitorsData = Array.isArray(response.data) ? response.data : [];
-            setExhibitors(exhibitorsData);
-            setFilteredExhibitors(exhibitorsData); // Initialize filtered exhibitors with all exhibitors
+
+            // Enhanced deduplication logic that checks booth numbers and company names
+            const uniqueExhibitors = [];
+            const seenCompanyBoothPairs = new Set();
+
+            exhibitorsData.forEach(exhibitor => {
+              // Create a unique key combining company name and booth number
+              // This handles cases where the same company appears with slightly different data
+              const companyBoothKey = `${exhibitor.company_name}-${exhibitor.booth_number}`.toLowerCase();
+
+              if (!seenCompanyBoothPairs.has(companyBoothKey)) {
+                seenCompanyBoothPairs.add(companyBoothKey);
+                uniqueExhibitors.push(exhibitor);
+              } else {
+                // If we find a duplicate, we might want to merge product profiles to ensure
+                // we're not losing any information when removing duplicates
+                const existingIndex = uniqueExhibitors.findIndex(ex =>
+                  `${ex.company_name}-${ex.booth_number}`.toLowerCase() === companyBoothKey
+                );
+
+                if (existingIndex !== -1) {
+                  const existing = uniqueExhibitors[existingIndex];
+
+                  // If the duplicate has a longer product profile, use that instead
+                  if (exhibitor.product_profile &&
+                      (!existing.product_profile ||
+                       exhibitor.product_profile.length > existing.product_profile.length)) {
+                    uniqueExhibitors[existingIndex].product_profile = exhibitor.product_profile;
+                  }
+
+                  // Same for description
+                  if (exhibitor.description &&
+                      (!existing.description ||
+                       exhibitor.description.length > existing.description.length)) {
+                    uniqueExhibitors[existingIndex].description = exhibitor.description;
+                  }
+                }
+
+                console.log(`Duplicate exhibitor found and merged: ${exhibitor.company_name} (Booth: ${exhibitor.booth_number})`);
+              }
+            });
+
+            console.log(`Filtered ${exhibitorsData.length - uniqueExhibitors.length} duplicate exhibitors`);
+
+            setExhibitors(uniqueExhibitors);
+            setFilteredExhibitors(uniqueExhibitors); // Initialize filtered exhibitors with deduplicated exhibitors
           }
         }
 
@@ -92,7 +183,7 @@ const ExhibitorMatching = () => {
     };
 
     fetchExhibitors();
-  }, []);
+  }, [currentInterests]);
 
   // Filter exhibitors whenever search term changes
   useEffect(() => {
@@ -115,8 +206,11 @@ const ExhibitorMatching = () => {
 
   // Save selected exhibitors to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('selectedExhibitors', JSON.stringify(selectedExhibitors));
-  }, [selectedExhibitors]);
+    if (selectedExhibitors.length >= 0 && subcategories.length > 0) {
+      // Use the utility function to save selections
+      saveExhibitorSelections(selectedExhibitors, subcategories);
+    }
+  }, [selectedExhibitors, subcategories]);
 
   const goBack = () => {
     navigate('/business/interest'); // Navigate specifically to interest page
@@ -222,7 +316,7 @@ const ExhibitorMatching = () => {
   const handleScheduleMeeting = () => {
     // Find the full exhibitor objects for the selected exhibitors
     const selectedExhibitorData = exhibitors.filter(exhibitor =>
-      selectedExhibitors.includes(exhibitor.company_name)
+      validSelectedExhibitors.includes(exhibitor.company_name)
     );
 
     // Navigate to schedule meeting page with selected exhibitor data
@@ -231,6 +325,12 @@ const ExhibitorMatching = () => {
         selectedExhibitors: selectedExhibitorData
       }
     });
+  };
+
+  // Clear all saved selections for current subcategories
+  const clearAllSelections = () => {
+    // Only clear the current selections, not all selections
+    setSelectedExhibitors([]);
   };
 
   // Get the current exhibitors to display based on the displayCount and filtered results
@@ -251,36 +351,61 @@ const ExhibitorMatching = () => {
       {/* Header */}
       <div className="header">
         <h1 className="header-title">Top Matches
-        <p className="header-subtitle">Kindly select one or more exhibitors to match and schedule a meeting</p>
+          <p className="header-subtitle">Kindly select one or more exhibitors to match and schedule a meeting</p>
         </h1>
       </div>
 
       {/* Content */}
       <div className="content">
-        {/* Search bar */}
+        {/* Search and selection info */}
         <div className="mb-4">
-          <input
-            type="text"
-            placeholder="Search by company name, products, region..."
-            className="w-full px-4 py-2 border border-gray-300 rounded-md"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <div className="flex items-center justify-between">
+            <input
+              type="text"
+              placeholder="Search by company name, products, region..."
+              className="w-full px-4 py-2 border border-gray-300 rounded-md"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+
+            {validSelectedExhibitors.length > 0 && (
+              <button
+                className="px-3 py-2 ml-4 text-sm text-red-600 bg-white border border-red-300 rounded-md hover:bg-red-50"
+                onClick={clearAllSelections}
+              >
+                Clear Selections
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="info-bar">
-            <p className="info-counter">Showing {visibleExhibitors.length} out of {filteredExhibitors.length} matches</p>
-            <div className="flex items-center gap-4">
-                <p className="selected-counter">{selectedExhibitors.length} Exhibitor(s) selected</p>
-                {selectedExhibitors.length > 0 && (
-                    <button
-                        className="btn-primary"
-                        onClick={handleScheduleMeeting}
-                    >
-                        Schedule meeting
-                    </button>
-                )}
+        {/* Selected subcategories display - Only show current subcategories */}
+        {subcategories.length > 0 && (
+          <div className="px-4 py-2 mb-4 bg-gray-100 rounded-md">
+            <p className="font-semibold">Filtering by:</p>
+            <div className="flex flex-wrap gap-2 mt-1">
+              {subcategories.map((subcat, index) => (
+                <span key={index} className="px-2 py-1 text-sm bg-gray-200 rounded">
+                  {subcat}
+                </span>
+              ))}
             </div>
+          </div>
+        )}
+
+        <div className="info-bar">
+          <p className="info-counter">Showing {visibleExhibitors.length} out of {filteredExhibitors.length} matches</p>
+          <div className="flex items-center gap-4">
+            <p className="selected-counter">{validSelectedExhibitors.length} Exhibitor(s) selected</p>
+            {validSelectedExhibitors.length > 0 && (
+              <button
+                className="btn-primary"
+                onClick={handleScheduleMeeting}
+              >
+                Schedule meeting
+              </button>
+            )}
+          </div>
         </div>
 
         {error && (
