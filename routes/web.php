@@ -9,21 +9,6 @@ use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductSubCategoryController;
 use Illuminate\Support\Facades\Log;
 
-// API Routes for Authentication
-Route::prefix('api')->group(function () {
-    Route::post('/register', [RegisterController::class, 'register']);
-    Route::post('/login', [LoginController::class, 'login']);
-    Route::post('/logout', [LoginController::class, 'logout']);
-    Route::get('/user', function () {
-        if (Auth::check()) {
-            return response()->json(Auth::user());
-        }
-        return response()->json(null, 401);
-    });
-    Route::get('/categories', [ProductCategoryController::class, 'index']);
-    Route::get('/categories/{id}/subcategories', [ProductSubCategoryController::class, 'index']);
-});
-
 // Laravel's default authentication routes
 Auth::routes();
 
@@ -50,4 +35,4 @@ Route::fallback(function(){
             '/api/categories/{id}/subcategories'
         ]
     ], 404);
-});
+})->where('any', '^(?!api).*$');
