@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\ProductSubCategory;
+use App\Models\ProductCategory;
+use App\Models\CompanyProduct;
 use Illuminate\Support\Facades\Log;
 
 class ExhibitorCompanyInfo extends Model
@@ -32,6 +34,11 @@ class ExhibitorCompanyInfo extends Model
     public function productCategories()
     {
         return $this->hasMany(ProductCategory::class, 'company_id');
+    }
+
+    public function products()
+    {
+        return $this->hasMany(CompanyProduct::class, 'company_id');
     }
 
     // Get the product profile by joining the subcategory names
