@@ -427,24 +427,23 @@ const ExhibitorMatching = () => {
             {visibleExhibitors.map((exhibitor) => (
               <div key={exhibitor.id} className="exhibitor-card">
                 <div className="exhibitor-flex">
-                  {/* Logo - Now using the image util function */}
-                  <div className="company-logo">
+                <div className="company-logo">
                     {exhibitor.logo ? (
-                      <img src={exhibitor.logo} alt={`${exhibitor.company_name} logo`} className="object-contain w-full h-full" />
+                        <img src={`/assets/images/${exhibitor.logo}`} alt={`${exhibitor.company_name} logo`} className="object-contain w-full h-full" />
                     ) : (
-                      <img
-                        src={getCompanyLogo(exhibitor.company_name) || '/images/placeholder-logo.png'}
-                        alt={`${exhibitor.company_name} logo`}
-                        className="object-contain w-full h-full"
-                        onError={(e) => {
-                          e.target.onerror = null;
-                          e.target.src = '/images/placeholder-logo.png';
-                        }}
-                      />
+                        <img
+                            src={getCompanyLogo(exhibitor.company_name) || '/images/placeholder-logo.png'}
+                            alt={`${exhibitor.company_name} logo`}
+                            className="object-contain w-full h-full"
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = '/images/placeholder-logo.png';
+                            }}
+                        />
                     )}
-                  </div>
+                </div>
 
-                  {/* Content */}
+                {/* Content */}
                   <div className="card-content">
                     <div className="card-grid">
                       <div>
@@ -523,24 +522,23 @@ const ExhibitorMatching = () => {
             </button>
 
             <div className="modal-content">
-              {/* Product Image - Now using the image util function */}
-              <div className="product-logo">
+            <div className="product-logo">
                 {currentProduct.image ? (
-                  <img src={currentProduct.image} alt={currentProduct.name} className="object-contain w-full h-full" />
+                    <img src={`/assets/images/${currentProduct.image}`} alt={currentProduct.name} className="object-contain w-full h-full" />
                 ) : (
-                  <img
-                    src={getProductImage(currentProduct.company_name || '', currentProduct.name) || '/images/placeholder-product.png'}
-                    alt={currentProduct.name}
-                    className="object-contain w-full h-full"
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src = '/images/placeholder-product.png';
-                    }}
-                  />
+                    <img
+                        src={getProductImage(currentProduct.company_name || '', currentProduct.name) || '/images/placeholder-product.png'}
+                        alt={currentProduct.name}
+                        className="object-contain w-full h-full"
+                        onError={(e) => {
+                            e.target.onerror = null;
+                            e.target.src = '/assets/images/logo1.jpg';
+                        }}
+                    />
                 )}
-              </div>
+            </div>
 
-              {/* Product Details */}
+            {/* Product Details */}
               <div className="w-[90%]">
                 <h3 className="modal-title">Product Name: {currentProduct.name}</h3>
 
