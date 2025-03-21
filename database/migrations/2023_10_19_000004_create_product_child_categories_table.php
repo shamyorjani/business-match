@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('product_sub_category_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->text('description')->nullable();
+            $table->tinyInteger('status')->default(1)->comment('0: Inactive, 1: Active');
             $table->timestamps();
         });
     }

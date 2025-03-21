@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('company_id')->constrained('exhibitor_company_infos')->onDelete('cascade');
             $table->string('name');
             $table->text('description')->nullable();
+            $table->tinyInteger('status')->default(1)->comment('0: Inactive, 1: Active');
             $table->timestamps();
         });
     }

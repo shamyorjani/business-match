@@ -319,10 +319,16 @@ const ExhibitorMatching = () => {
       validSelectedExhibitors.includes(exhibitor.company_name)
     );
 
+    // Format the exhibitor data properly for ScheduleMeeting component
+    const formattedExhibitors = selectedExhibitorData.map(exhibitor => ({
+      name: exhibitor.company_name,
+      boothNumber: exhibitor.booth_number || 'N/A'
+    }));
+
     // Navigate to schedule meeting page with selected exhibitor data
     navigate('/business/schedule', {
       state: {
-        selectedExhibitors: selectedExhibitorData
+        selectedExhibitors: formattedExhibitors
       }
     });
   };

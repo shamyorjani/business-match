@@ -32,10 +32,7 @@ const ScheduleMeeting = () => {
 
     if (location.state && location.state.selectedExhibitors) {
       // Process exhibitor data from navigation state
-      const exhibitorData = location.state.selectedExhibitors.map(exhibitor => ({
-        name: exhibitor.name,
-        boothNumber: exhibitor.boothNumber
-      }));
+      const exhibitorData = location.state.selectedExhibitors;
       setCompanies(exhibitorData);
 
       // Get the set of currently selected company names
@@ -81,8 +78,8 @@ const ScheduleMeeting = () => {
       // Find the first company without a meeting scheduled
       const scheduledCompanies = new Set();
 
-      // Use the selectedSlots that were filtered
-      selectedSlots.forEach(slot => scheduledCompanies.add(slot.company));
+      // Use the filtered slots
+      filteredSlots.forEach(slot => scheduledCompanies.add(slot.company));
 
       // Find first unscheduled company
       const unscheduledCompany = exhibitorData.find(company =>
