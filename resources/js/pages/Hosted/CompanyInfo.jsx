@@ -27,6 +27,13 @@ const [formData, setFormData] = useState({
 });
 const [showCountryDropdown, setShowCountryDropdown] = useState(false);
 
+const handleFileUpload = (e) => {
+    // Handle file upload logic
+    const files = Array.from(e.target.files);
+    setDocuments(files);
+    console.log('Files uploaded:', files);
+};
+
 const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prevState => ({
@@ -63,7 +70,6 @@ return (
             <h2 className="step-indicator">STEP 2</h2>
             <div className="flex">
                 <svg width="326" height="34" viewBox="0 0 400 40">
-                    <polygon points="240,0 340,0 360,20 340,40 240,40 260,20" fill="#E5E7EB" />
                     <polygon points="120,0 220,0 240,20 220,40 120,40 140,20" fill="#6f0f55" />
                     <polygon points="0,0 100,0 120,20 100,40 0,40" fill="#40033f" />
                 </svg>
@@ -201,6 +207,37 @@ return (
                             </div>
                         </div>
                     </div>
+
+                    <div className="mt-6">
+                <label className="block mb-1 text-sm font-medium text-gray-700">Documents Submission:</label>
+                <p className="mb-2 text-xs text-gray-500">(in PDF, JPG, or PNG format, less than 2000kb per file)</p>
+
+                <ol className="pl-5 mb-4 text-sm list-decimal">
+                    <li>Softcopy of Business Card</li>
+                    <li>Softcopy of Company / Business Registration Certificate</li>
+                    <li>Softcopy of Passport</li>
+                </ol>
+
+                <div className="mt-2">
+                    <button
+                        type="button"
+                        className="flex items-center px-4 py-2 border border-gray-300 rounded-2xl focus:outline-none"
+                        onClick={() => document.getElementById('fileUpload').click()}
+                    >
+                        <span>Click Here to Upload</span>
+                        <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0l-4 4m4-4v12"></path>
+                        </svg>
+                    </button>
+                    <input
+                        id="fileUpload"
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={handleFileUpload}
+                    />
+                </div>
+            </div>
                 </div>
             </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from "react-router-dom";
 import FormInput from '../../components/form/FormInput';
 import PhoneInput from '../../components/form/PhoneInput';
@@ -19,6 +19,17 @@ const Registration = () => {
   const [errors, setErrors] = useState({});
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  // Load saved data when component mounts
+  useEffect(() => {
+    const savedData = JSON.parse(localStorage.getItem('hostedRegistration') || '{}');
+    if (Object.keys(savedData).length > 0) {
+      setFormData(prevState => ({
+        ...prevState,
+        ...savedData
+      }));
+    }
+  }, []);
+
   const handleNext = () => {
     setIsSubmitted(true);
 
@@ -28,7 +39,14 @@ const Registration = () => {
 
     // Only navigate if there are no errors
     if (Object.keys(validationErrors).length === 0) {
+      // Save form data to localStorage
+      localStorage.setItem('hostedRegistration', JSON.stringify(formData));
       navigate("/hosted/company");
+    } else {
+      // Focus on first error field
+      const firstErrorField = Object.keys(validationErrors)[0];
+      const errorElement = document.getElementById(firstErrorField);
+      if (errorElement) errorElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
   };
 
@@ -61,7 +79,7 @@ const Registration = () => {
     }));
 
     // Clear error for this field when user starts typing
-    if (isSubmitted) {
+    if (errors[name]) {
       setErrors({
         ...errors,
         [name]: ''
