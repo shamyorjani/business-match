@@ -36,4 +36,20 @@ class ScheduleMeeting extends Model
         'day' => 'integer',
         'status' => 'integer',
     ];
+
+    /**
+     * Get the user associated with the schedule meeting.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the visitor company associated with the schedule meeting.
+     */
+    public function visitorCompany()
+    {
+        return $this->belongsTo(VisitorCompanyInfo::class, 'visitor_company_id');
+    }
 }

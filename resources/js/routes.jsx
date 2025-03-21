@@ -17,6 +17,8 @@ import HostedThankYouPage from './pages/Hosted/ThankYouPage';
 
 // Import Organizer components
 import OrganizerDashboard from './pages/organizer/OrganizerDashboard';
+import BusinessMatching from './pages/organizer/BusinessMatching';
+import HostedBuyerProgram from './pages/organizer/HostedBuyerProgram';
 
 // Create and export the router
 const router = createBrowserRouter([
@@ -80,6 +82,20 @@ const router = createBrowserRouter([
   {
     path: '/dashboard',
     element: <OrganizerDashboard />,
+    children: [
+      {
+        path: 'business-matching',
+        element: <BusinessMatching />
+      },
+      {
+        path: 'hosted-buyer-program',
+        element: <HostedBuyerProgram />
+      },
+      {
+        path: '',
+        element: <BusinessMatching />
+      }
+    ]
   }
 ]);
 

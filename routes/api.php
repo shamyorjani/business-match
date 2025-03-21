@@ -10,6 +10,7 @@ use App\Http\Controllers\ProductSubCategoryController;
 use App\Http\Controllers\ExhibitorController;
 use App\Http\Controllers\VisitorRegistrationController;
 use App\Http\Controllers\RegistrationController;
+use App\Http\Controllers\ScheduleMeetingController;
 
 // Test endpoints for troubleshooting
 Route::get('/test', function () {
@@ -45,3 +46,6 @@ Route::get('/exhibitors/{exhibitor}/products', [ExhibitorController::class, 'get
 Route::post('/visitor/register', [RegistrationController::class, 'register']);
 Route::get('/visitor/test', [VisitorRegistrationController::class, 'test']);
 Route::post('/visitor/echo', [VisitorRegistrationController::class, 'echo']);
+
+// Schedule Meetings Routes
+Route::get('/schedule-meetings/business', [ScheduleMeetingController::class, 'getBusinessMeetings']);
