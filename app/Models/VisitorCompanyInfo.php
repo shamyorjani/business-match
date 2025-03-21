@@ -22,7 +22,6 @@ class VisitorCompanyInfo extends Model
      * @var array
      */
     protected $fillable = [
-        'registration_id',
         'user_id',
         'company_website',
         'company_phone_number',
@@ -34,14 +33,6 @@ class VisitorCompanyInfo extends Model
         'country',
         'company_document',
     ];
-
-    /**
-     * Get the registration associated with the company info.
-     */
-    public function registration()
-    {
-        return $this->belongsTo(Registration::class);
-    }
 
     /**
      * Get the user associated with the company info.

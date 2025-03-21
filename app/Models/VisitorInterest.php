@@ -16,11 +16,11 @@ class VisitorInterest extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'registration_id',
+        'user_id',
         'visitor_company_id',
-        'product_category_id',
-        'product_sub_category_id',
-        'product_child_category_id',
+        'product_categories',
+        'product_sub_categories',
+        'product_child_categories',
         'status',
     ];
 
@@ -30,17 +30,17 @@ class VisitorInterest extends Model
      * @var array<string, string>
      */
     protected $casts = [
-        'product_category_id' => 'integer',
-        'product_sub_category_id' => 'integer',
-        'product_child_category_id' => 'integer',
+        'product_categories' => 'array',
+        'product_sub_categories' => 'array',
+        'product_child_categories' => 'array',
     ];
 
     /**
-     * Get the registration associated with the interest.
+     * Get the user associated with the interest.
      */
-    public function registration(): BelongsTo
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(Registration::class);
+        return $this->belongsTo(User::class);
     }
 
     /**
@@ -49,29 +49,5 @@ class VisitorInterest extends Model
     public function visitorCompany(): BelongsTo
     {
         return $this->belongsTo(VisitorCompanyInfo::class, 'visitor_company_id');
-    }
-
-    /**
-     * Get the product category associated with the interest.
-     */
-    public function productCategory(): BelongsTo
-    {
-        return $this->belongsTo(ProductCategory::class);
-    }
-
-    /**
-     * Get the product subcategory associated with the interest.
-     */
-    public function productSubCategory(): BelongsTo
-    {
-        return $this->belongsTo(ProductSubCategory::class);
-    }
-
-    /**
-     * Get the product child category associated with the interest.
-     */
-    public function productChildCategory(): BelongsTo
-    {
-        return $this->belongsTo(ProductChildCategory::class);
     }
 }

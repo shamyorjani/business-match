@@ -443,25 +443,83 @@ const companyUnavailableSlots = {
       meetings: meetings
     };
 
-    // Submit all data to the backend
-    api.post('/visitor/register', finalData)
-      .then(response => {
-        console.log('Registration successful:', response.data);
+    // Check for missing required fields
+    if (!finalData.registration.name || !finalData.registration.email ||
+        !finalData.registration.phoneNumber || !finalData.registration.companyName) {
+      showMessage("Missing required registration information. Please go back and complete the registration form.");
+      return;
+    }
 
-        // Navigate to thank you page with scheduled meetings data
-        navigate('/business/thankyou', {
-          state: {
-            meetings,
-            selectedExhibitors: companies,
-            scheduledMeetings: selectedSlots,
-            registrationComplete: true
-          }
-        });
+    // Submit all data to the backend
+    console.log('Submitting registration data:', finalData);
+
+    // First test the API connection with a simple GET request
+    api.get('/visitor/test')
+      .then(response => {
+        console.log('API test successful:', response.data);
+
+        // Use a simpler echo endpoint first to check data is received properly
+        api.post('/visitor/echo', finalData)
+          .then(echoResponse => {
+            console.log('Echo endpoint response:', echoResponse.data);
+
+            // If echo works, proceed with actual registration
+            api.post('/visitor/register', finalData)
+              .then(registrationResponse => {
+                console.log('Registration successful:', registrationResponse.data);
+
+                // Navigate to thank you page
+                navigate('/business/thankyou', {
+                  state: {
+                    meetings,
+                    selectedExhibitors: companies,
+                    scheduledMeetings: selectedSlots,
+                    registrationComplete: true
+                  }
+                });
+              })
+              .catch(error => handleRegistrationError(error));
+          })
+          .catch(error => {
+            console.error('Echo endpoint failed:', error);
+            // Display detailed echo error
+            let errorMessage = "Data validation failed. Please check your information and try again.";
+            if (error.response?.data?.message) {
+              errorMessage = error.response.data.message;
+            }
+            showMessage(errorMessage);
+          });
       })
       .catch(error => {
-        console.error('Registration failed:', error);
-        showMessage("Registration failed. Please try again or contact support.");
+        console.error('API test failed:', error);
+        showMessage("Connection to server failed. Please try again later or contact support.");
       });
+  };
+
+  const handleRegistrationError = (error) => {
+    console.error('Registration failed:', error);
+
+    // Enhanced error logging
+    if (error.response) {
+      console.error('Error response data:', error.response.data);
+      console.error('Error response status:', error.response.status);
+      console.error('Error response headers:', error.response.headers);
+    } else if (error.request) {
+      console.error('Error request:', error.request);
+    } else {
+      console.error('Error message:', error.message);
+    }
+
+    let errorMessage = "Registration failed. Please try again or contact support.";
+
+    // Try to extract meaningful error message from response
+    if (error.response?.data?.message) {
+      errorMessage = error.response.data.message;
+    } else if (error.response?.data?.error) {
+      errorMessage = error.response.data.error;
+    }
+
+    showMessage(errorMessage);
   };
 
   const handleBack = () => {

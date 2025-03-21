@@ -10,6 +10,7 @@ use App\Http\Controllers\ProductSubCategoryController;
 use App\Http\Controllers\ExhibitorController;
 use App\Http\Controllers\VisitorRegistrationController;
 
+// Test endpoints for troubleshooting
 Route::get('/test', function () {
     Log::info('Test endpoint hit');
     return response()->json([
@@ -17,6 +18,8 @@ Route::get('/test', function () {
         'timestamp' => now()->toDateTimeString()
     ]);
 });
+
+Route::get('/visitor/test', [VisitorRegistrationController::class, 'test']);
 
 // API Routes for Authentication
 Route::post('/register', [RegisterController::class, 'register']);
@@ -28,6 +31,8 @@ Route::get('/user', function () {
     }
     return response()->json(null, 401);
 });
+
+// Product categories and subcategories
 Route::get('/categories', [ProductCategoryController::class, 'index']);
 Route::get('/categories/{id}/subcategories', [ProductSubCategoryController::class, 'index']);
 
@@ -35,5 +40,8 @@ Route::get('/categories/{id}/subcategories', [ProductSubCategoryController::clas
 Route::post('/exhibitors/search', [ExhibitorController::class, 'searchBySubcategories']);
 Route::get('/exhibitors/{exhibitor}/products', [ExhibitorController::class, 'getProducts']);
 
-// Visitor Registration Routes
+// Visitor Registration Routes - add additional debugging endpoints
 Route::post('/visitor/register', [VisitorRegistrationController::class, 'register']);
+
+// Add echo endpoint for debugging
+Route::post('/visitor/echo', [VisitorRegistrationController::class, 'echo']);
