@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use App\Models\VisitorCompanyInfo;
 use App\Models\VisitorInterest;
+use App\Models\ScheduleMeeting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -84,8 +85,25 @@ class RegistrationController extends Controller
                 Log::info('Created interest record', ['id' => $visitorInterest->id]);
             }
 
-            // Step 4: Save meeting data if needed in the future
-            // This would be implemented in a separate method/controller
+            // Step 4: Save meeting data if provided
+            if (!empty($meetingsData)) {
+                foreach ($meetingsData as $meeting) {
+                    ScheduleMeeting::create([
+                        'user_id' => $registration->id,
+                        'visitor_company_id' => $companyInfo->id,
+                        'interest_id' => $visitorInterest->id ?? null,
+                        'booth_number' => $meeting['boothNumber'] ?? null,
+                        'date' => $meeting['date'] ?? null,
+                        'day' => $meeting['day'] ?? null,
+                        'day_of_week' => $meeting['dayOfWeek'] ?? null,
+                        'exhibitor' => $meeting['exhibitor'] ?? null,
+                        'time' => $meeting['time'] ?? null,
+                        'status' => 2, // Default active status
+                    ]);
+                }
+
+                Log::info('Created meeting records', ['count' => count($meetingsData)]);
+            }
 
             // Commit the transaction
             DB::commit();

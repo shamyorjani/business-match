@@ -17,27 +17,27 @@ enum StatusEnum: int
      *
      * @return array
      */
-    // public static function getOptions(): array
-    // {
-    //     return [
-    //         self::INACTIVE->value => 'Inactive',
-    //         self::ACTIVE->value => 'Active',
-    //         self::PENDING->value => 'Pending',
-    //         self::REJECTED->value => 'Rejected',
-    //         self::APPROVED->value => 'Approved',
-    //         self::ARCHIVED->value => 'Archived',
-    //         self::DELETED->value => 'Deleted',
-    //     ];
-    // }
+    public static function getOptions(): array
+    {
+        return [
+            self::INACTIVE->value => 'Inactive',
+            self::ACTIVE->value => 'Active',
+            self::PENDING->value => 'Pending',
+            self::REJECTED->value => 'Rejected',
+            self::APPROVED->value => 'Approved',
+            self::ARCHIVED->value => 'Archived',
+            self::DELETED->value => 'Deleted',
+        ];
+    }
 
-    // /**
-    //  * Get the label for a status value.
-    //  *
-    //  * @param int $value
-    //  * @return string
-    //  */
-    // public static function getLabel(int $value): string
-    // {
-    //     return self::getOptions()[$value] ?? 'Unknown';
-    // }
+    /**
+     * Get the label for a status value.
+     *
+     * @param int $value
+     * @return string
+     */
+    public static function getLabel(int $value): string
+    {
+        return self::getOptions()[$value] ?? 'Unknown';
+    }
 }
