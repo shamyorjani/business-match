@@ -15,7 +15,7 @@ return new class extends Migration
         if (!Schema::hasTable('visitor_company_infos')) {
             Schema::create('visitor_company_infos', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+                $table->bigInteger('user_id')->nullable();
                 $table->string('company_website');
                 $table->string('company_phone_number');
                 $table->string('address_line_1');
@@ -27,6 +27,10 @@ return new class extends Migration
                 $table->string('company_document')->nullable();
                 $table->timestamps();
             });
+        } else if (!Schema::hasColumn('visitor_company_infos', 'registration_id')) {
+            Schema::table('visitor_company_infos', function (Blueprint $table) {
+                $table->foreignId('registration_id')->nullable()->after('user_id')->constrained('registrations')->cascadeOnDelete();
+            });
         }
     }
 
@@ -35,6 +39,13 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('visitor_company_infos');
+        if (Schema::hasColumn('visitor_company_infos', 'registration_id')) {
+            Schema::table('visitor_company_infos', function (Blueprint $table) {
+                $table->dropForeign(['registration_id']);
+                $table->dropColumn('registration_id');
+            });
+        } else {
+            Schema::dropIfExists('visitor_company_infos');
+        }
     }
 };

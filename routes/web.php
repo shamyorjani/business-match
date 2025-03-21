@@ -24,6 +24,16 @@ Route::get('/log-test', function () {
     return 'Log entry created';
 });
 
+// Add this route to view registrations (for admin access)
+Route::get('/admin/registrations', function () {
+    $registrations = \App\Models\User::where('registration_type', 'business')
+        ->with(['visitorCompanyInfo', 'visitorInterests'])
+        ->latest()
+        ->paginate(20);
+
+    return view('admin.registrations', compact('registrations'));
+})->middleware(['auth', 'admin']);
+
 // Catch all undefined API routes
 Route::fallback(function(){
     Log::warning('Fallback route hit');

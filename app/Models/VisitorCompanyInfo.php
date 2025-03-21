@@ -35,7 +35,15 @@ class VisitorCompanyInfo extends Model
     ];
 
     /**
-     * Get the user associated with the company info.
+     * Get the registration that owns the company info.
+     */
+    public function registration()
+    {
+        return $this->belongsTo(Registration::class);
+    }
+
+    /**
+     * Get the user that owns the company info.
      */
     public function user()
     {
@@ -47,6 +55,6 @@ class VisitorCompanyInfo extends Model
      */
     public function visitorInterests()
     {
-        return $this->hasMany(VisitorInterest::class);
+        return $this->hasMany(VisitorInterest::class, 'visitor_company_id');
     }
 }

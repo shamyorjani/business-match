@@ -427,10 +427,17 @@ const companyUnavailableSlots = {
       boothNumber: slot.boothNumber
     }));
 
-    // Get all saved registration data
+    // Get all saved registration data from localStorage
     const businessData = JSON.parse(localStorage.getItem('businessRegistration') || '{}');
     const companyData = JSON.parse(localStorage.getItem('companyInfoData') || '{}');
     const selectedInterests = JSON.parse(localStorage.getItem('selectedInterests') || '[]');
+
+    // Show loading indicator in the button
+    const submitButton = document.querySelector('button[type="submit"]');
+    if (submitButton) {
+      submitButton.disabled = true;
+      submitButton.innerHTML = 'Submitting...';
+    }
 
     // Prepare the final data for submission
     const finalData = {
@@ -443,56 +450,32 @@ const companyUnavailableSlots = {
       meetings: meetings
     };
 
-    // Check for missing required fields
-    if (!finalData.registration.name || !finalData.registration.email ||
-        !finalData.registration.phoneNumber || !finalData.registration.companyName) {
-      showMessage("Missing required registration information. Please go back and complete the registration form.");
-      return;
-    }
-
-    // Submit all data to the backend
     console.log('Submitting registration data:', finalData);
 
-    // First test the API connection with a simple GET request
-    api.get('/visitor/test')
+    // Submit all data to the backend
+    api.post('/visitor/register', finalData)
       .then(response => {
-        console.log('API test successful:', response.data);
+        console.log('Registration successful:', response.data);
 
-        // Use a simpler echo endpoint first to check data is received properly
-        api.post('/visitor/echo', finalData)
-          .then(echoResponse => {
-            console.log('Echo endpoint response:', echoResponse.data);
-
-            // If echo works, proceed with actual registration
-            api.post('/visitor/register', finalData)
-              .then(registrationResponse => {
-                console.log('Registration successful:', registrationResponse.data);
-
-                // Navigate to thank you page
-                navigate('/business/thankyou', {
-                  state: {
-                    meetings,
-                    selectedExhibitors: companies,
-                    scheduledMeetings: selectedSlots,
-                    registrationComplete: true
-                  }
-                });
-              })
-              .catch(error => handleRegistrationError(error));
-          })
-          .catch(error => {
-            console.error('Echo endpoint failed:', error);
-            // Display detailed echo error
-            let errorMessage = "Data validation failed. Please check your information and try again.";
-            if (error.response?.data?.message) {
-              errorMessage = error.response.data.message;
-            }
-            showMessage(errorMessage);
-          });
+        // Navigate to thank you page with scheduled meetings data
+        navigate('/business/thankyou', {
+          state: {
+            meetings,
+            selectedExhibitors: companies,
+            scheduledMeetings: selectedSlots,
+            registrationComplete: true,
+            registrationId: response.data.registration_id || null
+          }
+        });
       })
       .catch(error => {
-        console.error('API test failed:', error);
-        showMessage("Connection to server failed. Please try again later or contact support.");
+        console.error('Registration failed:', error);
+        // Enable the button again
+        if (submitButton) {
+          submitButton.disabled = false;
+          submitButton.innerHTML = 'Submit';
+        }
+        handleRegistrationError(error);
       });
   };
 

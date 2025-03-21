@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class User extends Authenticatable
+class User extends Model
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -18,9 +20,8 @@ class User extends Authenticatable
      */
     protected $fillable = [
         'name',
-        'email',
-        'password',
         'designation',
+        'email',
         'phone_number',
         'company_name',
         'company_nature',
@@ -29,21 +30,21 @@ class User extends Authenticatable
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
-     * @var array<int, string>
+     * Get the visitor company info associated with the registration.
      */
-    protected $hidden = [
-        'password',
-        'remember_token',
-    ];
+    public function visitorCompanyInfo()
+    {
+        return $this->hasOne(VisitorCompanyInfo::class);
+    }
 
     /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
+     * Get the user that owns the registration.
      */
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    /**
+     * Get the visitor interests associated with the registration.
+     */
+    public function visitorInterests()
+    {
+        return $this->hasMany(VisitorInterest::class);
+    }
 }

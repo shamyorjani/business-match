@@ -9,6 +9,7 @@ use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductSubCategoryController;
 use App\Http\Controllers\ExhibitorController;
 use App\Http\Controllers\VisitorRegistrationController;
+use App\Http\Controllers\RegistrationController;
 
 // Test endpoints for troubleshooting
 Route::get('/test', function () {
@@ -40,8 +41,7 @@ Route::get('/categories/{id}/subcategories', [ProductSubCategoryController::clas
 Route::post('/exhibitors/search', [ExhibitorController::class, 'searchBySubcategories']);
 Route::get('/exhibitors/{exhibitor}/products', [ExhibitorController::class, 'getProducts']);
 
-// Visitor Registration Routes - add additional debugging endpoints
-Route::post('/visitor/register', [VisitorRegistrationController::class, 'register']);
-
-// Add echo endpoint for debugging
+// Visitor Registration Routes
+Route::post('/visitor/register', [RegistrationController::class, 'register']);
+Route::get('/visitor/test', [VisitorRegistrationController::class, 'test']);
 Route::post('/visitor/echo', [VisitorRegistrationController::class, 'echo']);

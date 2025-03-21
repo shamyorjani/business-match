@@ -14,13 +14,17 @@ return new class extends Migration
         if (!Schema::hasTable('visitor_interests')) {
             Schema::create('visitor_interests', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-                $table->foreignId('visitor_company_id')->constrained('visitor_company_infos')->cascadeOnDelete();
+                $table->bigInteger('user_id')->nullable();
+                $table->bigInteger('visitor_company_id');
                 $table->json('product_categories')->nullable()->comment('JSON array of category IDs');
                 $table->json('product_sub_categories')->nullable()->comment('JSON array of subcategory IDs');
                 $table->json('product_child_categories')->nullable()->comment('JSON array of child category IDs');
                 $table->tinyInteger('status')->default(1)->comment('0: Inactive, 1: Active');
                 $table->timestamps();
+            });
+        } else if (!Schema::hasColumn('visitor_interests', 'registration_id')) {
+            Schema::table('visitor_interests', function (Blueprint $table) {
+                $table->foreignId('registration_id')->nullable()->after('user_id')->constrained('registrations')->cascadeOnDelete();
             });
         }
     }
@@ -30,6 +34,13 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('visitor_interests');
+        if (Schema::hasColumn('visitor_interests', 'registration_id')) {
+            Schema::table('visitor_interests', function (Blueprint $table) {
+                $table->dropForeign(['registration_id']);
+                $table->dropColumn('registration_id');
+            });
+        } else {
+            Schema::dropIfExists('visitor_interests');
+        }
     }
 };

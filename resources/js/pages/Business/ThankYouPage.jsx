@@ -12,18 +12,24 @@ const ThankYouPage = () => {
     if (location.state && location.state.registrationComplete) {
       setRegistrationComplete(true);
 
+      // Store registration ID if available
+      const registrationId = location.state.registrationId;
+      if (registrationId) {
+        localStorage.setItem('registrationId', registrationId);
+      }
+
       // Clear localStorage data after successful registration
       localStorage.removeItem('businessRegistration');
       localStorage.removeItem('companyInfoData');
       localStorage.removeItem('selectedInterests');
       localStorage.removeItem('selectedMeetingSlots');
+
+      // Display registration success message
+      console.log('Registration completed successfully');
     }
 
     // Get meetings data from navigation state
     if (location.state && location.state.meetings && location.state.meetings.length > 0) {
-      setConfirmedMeetings(location.state.meetings);
-    } else {
-      // Fallback sample data if no meetings were passed
       setConfirmedMeetings([
         {
           day: 3,
@@ -62,6 +68,11 @@ const ThankYouPage = () => {
         {registrationComplete ? (
           <p className="thank-you-message">
             Your registration is complete! You have successfully matched with {confirmedMeetings.length} exhibitor(s).
+            {location.state && location.state.registrationId && (
+              <span className="block mt-2 font-semibold">
+                Your registration ID: {location.state.registrationId}
+              </span>
+            )}
             Once the meetings schedule is confirmed, you will be notified via email.
           </p>
         ) : (
