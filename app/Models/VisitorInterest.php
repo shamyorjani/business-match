@@ -16,7 +16,7 @@ class VisitorInterest extends Model
      * @var array<int, string>
      */
     protected $fillable = [
-        'visitor_id',
+        'registration_id',
         'visitor_company_id',
         'product_category_id',
         'product_sub_category_id',
@@ -36,19 +36,19 @@ class VisitorInterest extends Model
     ];
 
     /**
-     * Get the visitor that owns the interest.
+     * Get the registration associated with the interest.
      */
-    public function visitor(): BelongsTo
+    public function registration(): BelongsTo
     {
-        return $this->belongsTo(Visitor::class);
+        return $this->belongsTo(Registration::class);
     }
 
     /**
-     * Get the visitor company that owns the interest.
+     * Get the visitor company associated with the interest.
      */
     public function visitorCompany(): BelongsTo
     {
-        return $this->belongsTo(VisitorCompany::class, 'visitor_company_id');
+        return $this->belongsTo(VisitorCompanyInfo::class, 'visitor_company_id');
     }
 
     /**

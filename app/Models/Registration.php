@@ -41,4 +41,12 @@ class Registration extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+    /**
+     * Get the visitor interests associated with the registration.
+     */
+    public function visitorInterests()
+    {
+        return $this->hasMany(VisitorInterest::class);
+    }
 }

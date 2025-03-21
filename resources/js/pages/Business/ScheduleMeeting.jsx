@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import api from '../../services/api'; // Import the API service
 
 const ScheduleMeeting = () => {
   const location = useLocation();
@@ -112,6 +113,23 @@ const ScheduleMeeting = () => {
     const hour = parseInt(startTime);
     const period = startTime.includes('am') ? 'am' : 'pm';
     return `${hour} ${period}`;
+  };
+
+  // Format the time range for display (e.g., "3 pm" becomes "3.00pm-4.00pm")
+  const formatTimeRange = (timeString) => {
+    const hour = parseInt(timeString.split(' ')[0]);
+    const period = timeString.split(' ')[1];
+
+    const startHour = period === 'am' ? hour : (hour === 12 ? 12 : hour);
+    const endHour = startHour + 1;
+
+    const endPeriod = endHour >= 12 && period === 'pm' ? 'pm' :
+                      startHour === 11 && period === 'am' ? 'pm' : period;
+
+    const formattedStart = `${startHour}.00${period}`;
+    const formattedEnd = `${endHour > 12 ? endHour - 12 : endHour}.00${endPeriod}`;
+
+    return `${formattedStart}-${formattedEnd}`;
   };
 
   // Generate dates starting from tomorrow for the next 4 days
@@ -392,14 +410,14 @@ const companyUnavailableSlots = {
   };
 
   const handleNextClick = () => {
-    // Only allow next if all companies have meetings scheduled
+    // Only allow submit if all companies have meetings scheduled
     if (selectedSlots.length < companies.length) {
       // Replace alert with modal
       showMessage("Please schedule meetings for all companies before proceeding.");
       return;
     }
 
-    // Format the meeting data for the ThankYou page
+    // Format the meeting data for submission
     const meetings = selectedSlots.map(slot => ({
       day: slot.day,
       date: slot.date,
@@ -409,30 +427,41 @@ const companyUnavailableSlots = {
       boothNumber: slot.boothNumber
     }));
 
-    // Navigate to thank you page with scheduled meetings data
-    navigate('/business/thankyou', {
-      state: {
-        meetings,
-        selectedExhibitors: companies, // Pass the companies to preserve data when returning
-        scheduledMeetings: selectedSlots // Add this to explicitly preserve the original slot format
-      }
-    });
+    // Get all saved registration data
+    const businessData = JSON.parse(localStorage.getItem('businessRegistration') || '{}');
+    const companyData = JSON.parse(localStorage.getItem('companyInfoData') || '{}');
+    const selectedInterests = JSON.parse(localStorage.getItem('selectedInterests') || '[]');
 
-    // Keep the localStorage data for returning to this page
-  };
+    // Prepare the final data for submission
+    const finalData = {
+      registration: {
+        ...businessData,
+        registration_type: 'business'
+      },
+      companyInfo: companyData,
+      interests: selectedInterests,
+      meetings: meetings
+    };
 
-  // Format the time range for display (e.g., "3 pm" becomes "3.00pm-4.00pm")
-  const formatTimeRange = (timeString) => {
-    const hour = parseInt(timeString.split(' ')[0]);
-    const period = timeString.split(' ')[1];
+    // Submit all data to the backend
+    api.post('/visitor/register', finalData)
+      .then(response => {
+        console.log('Registration successful:', response.data);
 
-    const startHour = period === 'am' ? hour : hour + 12;
-    const endHour = startHour + 1;
-
-    const formattedStart = `${startHour > 12 ? startHour - 12 : startHour}.00${period}`;
-    const formattedEnd = `${endHour > 12 ? endHour - 12 : endHour}.00${endHour >= 12 ? 'pm' : 'am'}`;
-
-    return `${formattedStart}-${formattedEnd}`;
+        // Navigate to thank you page with scheduled meetings data
+        navigate('/business/thankyou', {
+          state: {
+            meetings,
+            selectedExhibitors: companies,
+            scheduledMeetings: selectedSlots,
+            registrationComplete: true
+          }
+        });
+      })
+      .catch(error => {
+        console.error('Registration failed:', error);
+        showMessage("Registration failed. Please try again or contact support.");
+      });
   };
 
   const handleBack = () => {
@@ -602,7 +631,7 @@ const companyUnavailableSlots = {
             onClick={handleNextClick}
             disabled={selectedSlots.length < companies.length}
           >
-            Next
+            Submit
           </button>
         </div>
       </div>

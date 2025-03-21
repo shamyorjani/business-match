@@ -23,7 +23,7 @@ class CreateRegistrationsTable extends Migration
             $table->string('company_name');
             $table->string('company_nature');
             $table->string('company_size');
-            $table->string('registration_type'); // e.g., 'business matching', 'hosted buyer'
+            $table->string('registration_type'); 
             $table->timestamps();
         });
     }

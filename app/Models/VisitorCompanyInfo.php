@@ -10,6 +10,13 @@ class VisitorCompanyInfo extends Model
     use HasFactory;
 
     /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'visitor_company_infos';
+
+    /**
      * The attributes that are mass assignable.
      *
      * @var array
@@ -29,7 +36,7 @@ class VisitorCompanyInfo extends Model
     ];
 
     /**
-     * Get the registration that owns the company info.
+     * Get the registration associated with the company info.
      */
     public function registration()
     {
@@ -37,10 +44,18 @@ class VisitorCompanyInfo extends Model
     }
 
     /**
-     * Get the user that owns the company info.
+     * Get the user associated with the company info.
      */
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * Get the visitor interests for this company.
+     */
+    public function visitorInterests()
+    {
+        return $this->hasMany(VisitorInterest::class);
     }
 }

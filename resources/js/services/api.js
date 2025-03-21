@@ -7,11 +7,10 @@ const api = axios.create({
     'Content-Type': 'application/json',
     'Accept': 'application/json',
     'X-Requested-With': 'XMLHttpRequest'
-  },
-  withCredentials: true // This ensures cookies are sent with requests
+  }
 });
 
-// Add request interceptor to include authentication token
+// Add request interceptor to include authentication token and CSRF token
 api.interceptors.request.use(
   config => {
     // Get token from localStorage or cookie

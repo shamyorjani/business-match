@@ -5,8 +5,20 @@ const ThankYouPage = () => {
   const location = useLocation();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [confirmedMeetings, setConfirmedMeetings] = useState([]);
+  const [registrationComplete, setRegistrationComplete] = useState(false);
 
   useEffect(() => {
+    // Check if registration is complete from navigation state
+    if (location.state && location.state.registrationComplete) {
+      setRegistrationComplete(true);
+
+      // Clear localStorage data after successful registration
+      localStorage.removeItem('businessRegistration');
+      localStorage.removeItem('companyInfoData');
+      localStorage.removeItem('selectedInterests');
+      localStorage.removeItem('selectedMeetingSlots');
+    }
+
     // Get meetings data from navigation state
     if (location.state && location.state.meetings && location.state.meetings.length > 0) {
       setConfirmedMeetings(location.state.meetings);
@@ -47,10 +59,17 @@ const ThankYouPage = () => {
       {/* Thank You Message */}
       <div className='flex flex-col items-center'>
         <h1 className="thank-you-title">Thank You !</h1>
-        <p className="thank-you-message">
-          You have successfully matched with {confirmedMeetings.length} exhibitor(s). Once the
-          meetings schedule is confirmed, you will be notified via email.
-        </p>
+        {registrationComplete ? (
+          <p className="thank-you-message">
+            Your registration is complete! You have successfully matched with {confirmedMeetings.length} exhibitor(s).
+            Once the meetings schedule is confirmed, you will be notified via email.
+          </p>
+        ) : (
+          <p className="thank-you-message">
+            You have successfully matched with {confirmedMeetings.length} exhibitor(s). Once the
+            meetings schedule is confirmed, you will be notified via email.
+          </p>
+        )}
       </div>
 
       {/* Meetings Schedule Section */}
