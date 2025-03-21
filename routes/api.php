@@ -47,5 +47,8 @@ Route::post('/visitor/register', [RegistrationController::class, 'register']);
 Route::get('/visitor/test', [VisitorRegistrationController::class, 'test']);
 Route::post('/visitor/echo', [VisitorRegistrationController::class, 'echo']);
 
+// Hosted Buyer Registration endpoint
+Route::post('/hosted-registration', [App\Http\Controllers\HostedRegistrationController::class, 'register']);
+
 // Schedule Meetings Routes
 Route::get('/schedule-meetings/business', [ScheduleMeetingController::class, 'getBusinessMeetings']);
