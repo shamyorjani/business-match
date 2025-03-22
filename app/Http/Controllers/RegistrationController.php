@@ -68,21 +68,36 @@ class RegistrationController extends Controller
 
             // Step 3: Save interests if provided
             if (!empty($interestsData)) {
-                // We're only storing subcategories for now as requested
-                $subCategoryNames = array_map(function($interest) {
-                    return $interest['subCategory'];
+                // Extract both category and subcategory IDs
+                $categoryIds = array_map(function($interest) {
+                    return $interest['categoryId'] ?? null;
                 }, $interestsData);
+
+                // Filter out any null values
+                $categoryIds = array_filter($categoryIds);
+
+                // Extract subcategory IDs
+                $subCategoryIds = array_map(function($interest) {
+                    return $interest['subCategoryId'] ?? null;
+                }, $interestsData);
+
+                // Filter out any null values
+                $subCategoryIds = array_filter($subCategoryIds);
 
                 $visitorInterest = VisitorInterest::create([
                     'registration_id' => $registration->id,
                     'visitor_company_id' => $companyInfo->id,
-                    'product_categories' => [], // Empty for now as requested
-                    'product_sub_categories' => $subCategoryNames,
+                    'product_categories' => $categoryIds, // Store category IDs
+                    'product_sub_categories' => $subCategoryIds, // Store subcategory IDs
                     'product_child_categories' => [], // Empty for now as requested
                     'status' => 1,
                 ]);
 
-                Log::info('Created interest record', ['id' => $visitorInterest->id]);
+                Log::info('Created interest record', [
+                    'id' => $visitorInterest->id,
+                    'categories' => $categoryIds,
+                    'subcategories' => $subCategoryIds
+                ]);
             }
 
             // Step 4: Save meeting data if provided

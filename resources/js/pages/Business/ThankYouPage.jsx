@@ -31,24 +31,12 @@ const ThankYouPage = () => {
 
     // Get meetings data from navigation state
     if (location.state && location.state.meetings && location.state.meetings.length > 0) {
-      setConfirmedMeetings([
-        {
-          day: 3,
-          date: "04 June 2025",
-          dayOfWeek: "Thursday",
-          time: "3.00pm-4.00pm",
-          exhibitor: "ABC Company",
-          boothNumber: "A11"
-        },
-        {
-          day: 4,
-          date: "05 June 2025",
-          dayOfWeek: "Friday",
-          time: "2.00pm-3.00pm",
-          exhibitor: "XYZ Corporation",
-          boothNumber: "B22"
-        }
-      ]);
+      // Use the real meeting data passed from ScheduleMeeting.jsx
+      setConfirmedMeetings(location.state.meetings);
+      console.log('Meetings loaded:', location.state.meetings);
+    } else {
+      console.log('No meeting data available');
+      // You could set a default or empty state here if needed
     }
   }, [location]);
 
