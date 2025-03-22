@@ -457,6 +457,9 @@ const companyUnavailableSlots = {
       .then(response => {
         console.log('Registration successful:', response.data);
 
+        // Clear all exhibitor selections from localStorage
+        clearAllSelectedExhibitors();
+
         // Navigate to thank you page with scheduled meetings data
         navigate('/business/thankyou', {
           state: {
@@ -477,6 +480,30 @@ const companyUnavailableSlots = {
         }
         handleRegistrationError(error);
       });
+  };
+
+  // Add this new function to clear all exhibitor selections
+  const clearAllSelectedExhibitors = () => {
+    // Clear meeting slots
+    localStorage.removeItem('selectedMeetingSlots');
+
+    // Get current interests
+    const savedInterests = localStorage.getItem('selectedInterests');
+    if (savedInterests) {
+      const interests = JSON.parse(savedInterests);
+      const subcategoriesList = interests.map(interest => interest.subCategory);
+
+      // Clear selections for each subcategory
+      subcategoriesList.forEach(subcategory => {
+        localStorage.removeItem(`selectedExhibitors_${subcategory}`);
+      });
+
+      // Also clear the combined selection key if it exists
+      if (subcategoriesList && subcategoriesList.length > 0) {
+        const sortedKey = [...subcategoriesList].sort().join('_');
+        localStorage.removeItem(`selectedExhibitors_${sortedKey}`);
+      }
+    }
   };
 
   const handleRegistrationError = (error) => {
