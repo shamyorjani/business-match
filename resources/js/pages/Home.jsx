@@ -138,7 +138,7 @@ const HostedBuyerProgram = () => {
           icon: (
             <img src="/images/fill-up.svg" alt="" />
           ),
-          url: "/business/registration"
+          url: "/hosted/registration"
         },
         {
           id: 2,
@@ -147,7 +147,7 @@ const HostedBuyerProgram = () => {
           icon: (
             <img src="/images/deposit.svg" alt="" />
           ),
-          url: "/deposit"
+          url: "/hosted/payment"
         },
         {
           id: 3,
@@ -156,7 +156,7 @@ const HostedBuyerProgram = () => {
           icon: (
             <img src="/images/search.svg" alt="" />
           ),
-          url: "/matchmaking"
+          url: "/hosted/interest"
         },
         {
           id: 4,
@@ -190,7 +190,7 @@ const HostedBuyerProgram = () => {
             </nav>
 
             {/* Authentication buttons */}
-            {loading ? (
+            {/* {loading ? (
               <div className="w-20 h-8 bg-gray-300 rounded-full animate-pulse"></div>
             ) : user ? (
               <div className="flex items-center space-x-2">
@@ -217,13 +217,8 @@ const HostedBuyerProgram = () => {
                   Register
                 </button>
               </div>
-            )}
+            )} */}
 
-            <div className="p-2 text-white">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-9 h-9" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-            </div>
           </div>
         </div>
       </header>
@@ -235,12 +230,29 @@ const HostedBuyerProgram = () => {
       {/* Hero Image with Title */}
       <div className="relative h-48 md:h-64">
         <div className="absolute inset-0 bg-center bg-cover" style={{ backgroundImage: "url('/images/bg-img.png')" }}></div>
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center ">
           <h1 className="font-serif text-4xl font-bold text-white md:text-7xl drop-shadow-lg">
             Hosted Buyer Program
           </h1>
+          <div className="z-20 flex justify-center mt-6 space-x-6">
+            <button
+              className="text-lg font-bold primary-btn"
+              onClick={() => window.location.href = '/hosted/registration'}
+            >
+              Hosted Buyer
+            </button>
+            <button
+              className="text-lg font-bold primary-btn"
+              onClick={() => window.location.href = '/business/registration'}
+            >
+              Business Matching
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Buttons below hero section */}
+
 
       {/* Main Content */}
       <div className="flex-grow py-12 bg-white">
@@ -318,8 +330,7 @@ const HostedBuyerProgram = () => {
         {steps.map((step) => (
           <div
             key={step.id}
-            className="cursor-pointer rounded-md overflow-hidden bg-gradient-to-r from-[#40033f] to-[#9c0c40] text-white hover:shadow-lg transition-all duration-300"
-            onClick={() => window.location.href = step.url}
+            className="rounded-md overflow-hidden bg-gradient-to-r from-[#40033f] to-[#9c0c40] text-white hover:shadow-lg transition-all duration-300"
           >
             <div className="p-6 text-center">
               <div className="flex flex-col items-center mb-4">
@@ -372,10 +383,10 @@ const HostedBuyerProgram = () => {
     </div>
 
       {/* Footer */}
-      <footer className="relative w-full">
-        <img className="absolute bottom-0 z-0 w-full" src="/images/first.svg" alt="" />
-        <img className="absolute bottom-0 z-0 w-full" src="/images/second.svg" alt="" />
-        <img className='absolute bottom-0 z-0 w-full' src="/images/last.svg" alt="" />
+      <footer className="relative w-full mt-140">
+        <img className="absolute bottom-[-160px] z-0 w-full" src="/images/first.svg" alt="" />
+        <img className="absolute bottom-[-160px] z-0 w-full" src="/images/second.svg" alt="" />
+        <img className='absolute bottom-0 w-full z-1' src="/images/last.svg" alt="" />
       </footer>
     </div>
   );

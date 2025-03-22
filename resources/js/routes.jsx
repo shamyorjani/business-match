@@ -3,10 +3,11 @@ import { createBrowserRouter } from 'react-router-dom';
 import Registration from './pages/Business/Registration';
 import CompanyInfo from './pages/Business/CompanyInfo';
 import ExhibitorMatching from './pages/Business/ExhibitorMatching';
-import Home from './layouts/Home';
+import Home from './pages/Home';
 import ScheduleMeeting from './pages/Business/ScheduleMeeting';
 import ThankYouPage from './pages/Business/ThankYouPage';
 import Interest from './pages/Business/Interest';
+import BusinessLayout from './layouts/BusinessLayout';
 
 // Import Hosted components
 import HostedRegistration from './pages/Hosted/Registration';
@@ -26,56 +27,68 @@ const router = createBrowserRouter([
     path: '/',
     element: <Home />
   },
-  // Business routes
+  // Business routes with shared layout
   {
-    path: '/business/registration',
-    element: <Registration />
-  },
-  {
-    path: '/business/company',
-    element: <CompanyInfo />
-  },
-  {
-    path: '/business/interest',
-    element: <Interest />
-  },
-  {
-    path: '/business/exhibitor-matching',
-    element: <ExhibitorMatching />
-  },
-  {
-    path: '/business/schedule',
-    element: <ScheduleMeeting />,
-  },
-  {
-    path: '/business/thank-you',
-    element: <ThankYouPage />,
-  },
-  {
-    path: '/business/thankyou',
-    element: <ThankYouPage />,  // Add route without hyphen pointing to the same component
+    path: '/business',
+    element: <BusinessLayout />,
+    children: [
+      {
+        path: 'registration',
+        element: <Registration />
+      },
+      {
+        path: 'company',
+        element: <CompanyInfo />
+      },
+      {
+        path: 'interest',
+        element: <Interest />
+      },
+      {
+        path: 'exhibitor-matching',
+        element: <ExhibitorMatching />
+      },
+      {
+        path: 'schedule',
+        element: <ScheduleMeeting />,
+      },
+      {
+        path: 'thank-you',
+        element: <ThankYouPage />,
+      },
+      {
+        path: 'thankyou',
+        element: <ThankYouPage />, // Add route without hyphen pointing to the same component
+      }
+    ]
   },
 
-  // Hosted routes
+  // Hosted routes with BusinessLayout
   {
-    path: '/hosted/registration',
-    element: <HostedRegistration />,
-  },
-  {
-    path: '/hosted/company',
-    element: <HostedCompanyInfo />,
-  },
-  {
-    path: '/hosted/payments',
-    element: <PaymentGateway />,
-  },
-  {
-    path: '/hosted/payment-card',
-    element: <PaymentCard />,
-  },
-  {
-    path: '/hosted/thank-you',
-    element: <HostedThankYouPage />,
+    path: '/hosted',
+    element: <BusinessLayout />,
+    children: [
+      {
+        path: 'registration',
+        element: <HostedRegistration />,
+      },
+      {
+        path: 'company',
+        element: <HostedCompanyInfo />,
+      },
+      {
+        path: 'payment',
+        element: <PaymentGateway />,
+      },
+      {
+        path: 'payment-card',
+        element: <PaymentCard />,
+      },
+      {
+        path: 'thank-you',
+        element: <HostedThankYouPage />,
+      },
+    ]
   },
 
   // Organizer routes
