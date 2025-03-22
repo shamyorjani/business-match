@@ -382,11 +382,11 @@ const HostedBuyerProgram = () => {
       </button>
     </div>
 
-      {/* Footer */}
-      <footer className="relative w-full mt-140">
-        <img className="absolute bottom-[-160px] z-0 w-full" src="/images/first.svg" alt="" />
-        <img className="absolute bottom-[-160px] z-0 w-full" src="/images/second.svg" alt="" />
-        <img className='absolute bottom-0 w-full z-1' src="/images/last.svg" alt="" />
+      {/* Simple Copyright Footer */}
+      <footer className="py-6 text-center text-gray-600 bg-gray-100">
+        <div className="container mx-auto">
+          <p>© {new Date().getFullYear()} IBE - International Beauty Expo. All rights reserved.</p>
+        </div>
       </footer>
     </div>
   );

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ScheduleMeeting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use App\Enums\StatusEnum;
 
 class ScheduleMeetingController extends Controller
 {
@@ -59,7 +60,8 @@ class ScheduleMeetingController extends Controller
                     'company' => $firstMeeting->user->company_name ?? 'Unknown', // Get from user model
                     'companySize' => $firstMeeting->user->company_size ?? 'Unknown', // Get from user model
                     'documents' => !empty($firstMeeting->visitorCompany->company_document), // Check if document exists
-                    'status' => $firstMeeting->status === 1 ? 'Approved' : 'Pending',
+                    'status' => $firstMeeting->status === StatusEnum::APPROVED->value ? 'Approved' :
+                               ($firstMeeting->status === StatusEnum::REJECTED->value ? 'Rejected' : 'Pending'),
                     'phoneNumber' => $firstMeeting->user->phone_number ?? 'Unknown',
                     'registrationNumber' => '', // No direct field available
                     'businessNature' => $firstMeeting->user->company_nature ?? 'Unknown',
@@ -95,6 +97,145 @@ class ScheduleMeetingController extends Controller
                     'line' => $e->getLine(),
                 ] : null
             ], 500);
+        }
+    }
+
+    /**
+     * Approve a single meeting
+     */
+    public function approveMeeting(Request $request, $id)
+    {
+        Log::info('Approve meeting request received');
+        try {
+            $meeting = ScheduleMeeting::findOrFail($id);
+            $meeting->status = StatusEnum::APPROVED->value;
+            $meeting->save();
+
+            // Removed email sending functionality
+
+            return response()->json(['success' => true, 'message' => 'Meeting approved successfully']);
+        } catch (\Throwable $e) {
+            Log::error('Error approving meeting: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to approve meeting', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Reject a single meeting
+     */
+    public function rejectMeeting(Request $request, $id)
+    {
+        try {
+            $meeting = ScheduleMeeting::findOrFail($id);
+            $meeting->status = StatusEnum::REJECTED->value;
+            $meeting->save();
+
+            return response()->json(['success' => true, 'message' => 'Meeting rejected successfully']);
+        } catch (\Throwable $e) {
+            Log::error('Error rejecting meeting: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to reject meeting', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Check if all meetings for a user-company pair are processed
+     */
+    public function checkAllMeetingsProcessed(Request $request)
+    {
+        try {
+            $userId = $request->input('user_id');
+            $visitorCompanyId = $request->input('visitor_company_id');
+
+            $pendingMeetings = ScheduleMeeting::where('user_id', $userId)
+                ->where('visitor_company_id', $visitorCompanyId)
+                ->where('status', StatusEnum::PENDING->value)
+                ->count();
+
+            $allProcessed = $pendingMeetings === 0;
+
+            return response()->json([
+                'allProcessed' => $allProcessed,
+                'pendingCount' => $pendingMeetings
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Error checking meetings status: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to check meetings status', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Approve all meetings for a user-company pair
+     */
+    public function approveAllMeetings(Request $request)
+    {
+        try {
+            $userId = $request->input('user_id');
+            $visitorCompanyId = $request->input('visitor_company_id');
+
+            $meetings = ScheduleMeeting::where('user_id', $userId)
+                ->where('visitor_company_id', $visitorCompanyId)
+                ->where('status', StatusEnum::PENDING->value)
+                ->get();
+
+            foreach ($meetings as $meeting) {
+                $meeting->status = StatusEnum::APPROVED->value;
+                $meeting->save();
+            }
+
+            // Removed email sending functionality
+
+            return response()->json([
+                'success' => true,
+                'message' => 'All meetings approved successfully',
+                'count' => $meetings->count()
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Error approving all meetings: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to approve all meetings', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Reject all meetings for a user-company pair
+     */
+    public function rejectAllMeetings(Request $request)
+    {
+        try {
+            $userId = $request->input('user_id');
+            $visitorCompanyId = $request->input('visitor_company_id');
+
+            $meetings = ScheduleMeeting::where('user_id', $userId)
+                ->where('visitor_company_id', $visitorCompanyId)
+                ->where('status', StatusEnum::PENDING->value)
+                ->get();
+
+            foreach ($meetings as $meeting) {
+                $meeting->status = StatusEnum::REJECTED->value;
+                $meeting->save();
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'All meetings rejected successfully',
+                'count' => $meetings->count()
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Error rejecting all meetings: ' . $e->getMessage());
+            return response()->json(['error' => 'Failed to reject all meetings', 'message' => $e->getMessage()], 500);
+        }
+    }
+
+    /**
+     * Get a single meeting by ID
+     */
+    public function getMeeting($id)
+    {
+        try {
+            $meeting = ScheduleMeeting::findOrFail($id);
+            return response()->json($meeting);
+        } catch (\Throwable $e) {
+            Log::error('Error getting meeting: ' . $e->getMessage());
+            return response()->json(['error' => 'Meeting not found', 'message' => $e->getMessage()], 404);
         }
     }
 }

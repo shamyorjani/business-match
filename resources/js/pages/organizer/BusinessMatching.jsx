@@ -10,6 +10,13 @@ const BusinessMatching = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // New state variables for approval features
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const [warningMessage, setWarningMessage] = useState('');
+  const [currentAction, setCurrentAction] = useState(null);
+  const [processing, setProcessing] = useState(false);
+  const [refreshData, setRefreshData] = useState(false);
+
   useEffect(() => {
     // Fetch business meetings data
     const fetchBusinessMeetings = async () => {
@@ -39,7 +46,7 @@ const BusinessMatching = () => {
     };
 
     fetchBusinessMeetings();
-  }, []);
+  }, [refreshData]);
 
   // Filter data based on search query
   const filteredData = businessData.filter(item => {
@@ -77,6 +84,169 @@ const BusinessMatching = () => {
         prev === 0 ? selectedItem.schedules.length - 1 : prev - 1
       );
     }
+  };
+
+  // New functions for meeting approval/rejection
+
+  // Approve a single meeting (no email)
+  const approveMeeting = async (id) => {
+    try {
+      setProcessing(true);
+      const response = await axios.post(`/api/meetings/${id}/approve`);
+
+      // Update the data in the state
+      const updatedData = businessData.map(item => {
+        if (item.id === id) {
+          return { ...item, status: 'Approved' };
+        }
+        return item;
+      });
+
+      setBusinessData(updatedData);
+      setProcessing(false);
+      setRefreshData(prev => !prev); // Trigger refresh
+      return response.data;
+    } catch (error) {
+      console.error('Error approving meeting:', error);
+      setProcessing(false);
+      return null;
+    }
+  };
+
+  // Reject a single meeting
+  const rejectMeeting = async (id) => {
+    try {
+      setProcessing(true);
+      const response = await axios.post(`/api/meetings/${id}/reject`);
+
+      // Update the data in the state
+      const updatedData = businessData.map(item => {
+        if (item.id === id) {
+          return { ...item, status: 'Rejected' };
+        }
+        return item;
+      });
+
+      setBusinessData(updatedData);
+      setProcessing(false);
+      setRefreshData(prev => !prev); // Trigger refresh
+      return response.data;
+    } catch (error) {
+      console.error('Error rejecting meeting:', error);
+      setProcessing(false);
+      return null;
+    }
+  };
+
+  // Check if all meetings for a user-company pair are processed
+  const checkAllProcessed = async (userId, visitorCompanyId) => {
+    try {
+      const response = await axios.post('/api/meetings/check-processed', {
+        user_id: userId,
+        visitor_company_id: visitorCompanyId
+      });
+
+      return response.data;
+    } catch (error) {
+      console.error('Error checking meetings status:', error);
+      return { allProcessed: false, pendingCount: 0 };
+    }
+  };
+
+  // Approve all meetings for a user-company pair
+  const approveAllMeetings = async (item) => {
+    try {
+      if (!item || !item.schedules || item.schedules.length === 0) {
+        return;
+      }
+
+      // Extract user_id and visitor_company_id from the first schedule
+      const firstSchedule = item.schedules[0];
+      const meeting = await axios.get(`/api/meetings/${firstSchedule.id}`);
+      const userId = meeting.data.user_id;
+      const visitorCompanyId = meeting.data.visitor_company_id;
+
+      const response = await axios.post('/api/meetings/approve-all', {
+        user_id: userId,
+        visitor_company_id: visitorCompanyId
+      });
+
+      // Update UI
+      setRefreshData(prev => !prev);
+      return response.data;
+    } catch (error) {
+      console.error('Error approving all meetings:', error);
+      return null;
+    }
+  };
+
+  // Handle click on table approve button (send email)
+  const handleApproveClick = async (item) => {
+    if (item.status === 'Approved' || item.status === 'Rejected') {
+      alert('This meeting has already been ' + item.status.toLowerCase());
+      return;
+    }
+
+    await approveMeeting(item.id);
+  };
+
+  // Handle click on table reject button
+  const handleRejectClick = async (item) => {
+    if (item.status === 'Approved' || item.status === 'Rejected') {
+      alert('This meeting has already been ' + item.status.toLowerCase());
+      return;
+    }
+
+    await rejectMeeting(item.id);
+  };
+
+  // Handle click on modal approve button
+  const handleModalApprove = async () => {
+    if (!selectedItem) return;
+
+    try {
+      const response = await axios.post(`/api/meetings/${selectedItem.id}/approve`);
+
+      setRefreshData(prev => !prev);
+      closeModal();
+    } catch (error) {
+      console.error('Error approving in modal:', error);
+    }
+  };
+
+  // Handle click on "Approve All" button
+  const handleApproveAll = async () => {
+    if (!selectedItem) return;
+
+    // Check if all meetings are processed first
+    const firstSchedule = selectedItem.schedules[0];
+    const meeting = await axios.get(`/api/meetings/${firstSchedule.id}`);
+    const userId = meeting.data.user_id;
+    const visitorCompanyId = meeting.data.visitor_company_id;
+
+    const checkResult = await checkAllProcessed(userId, visitorCompanyId);
+
+    if (!checkResult.allProcessed) {
+      // Show warning modal
+      setWarningMessage(`You have ${checkResult.pendingCount} pending meetings. Do you want to approve them all?`);
+      setCurrentAction('approve-all');
+      setShowWarningModal(true);
+      return;
+    }
+
+    // If we get here, all meetings are already processed
+    alert('All meetings have already been processed.');
+  };
+
+  // Handle confirmation from warning modal
+  const handleConfirmAction = async () => {
+    if (currentAction === 'approve-all') {
+      await approveAllMeetings(selectedItem);
+    }
+
+    setShowWarningModal(false);
+    setRefreshData(prev => !prev);
+    closeModal();
   };
 
   if (loading) {
@@ -185,18 +355,29 @@ const BusinessMatching = () => {
                   </a>
                 </td>
                 <td className="px-4 py-4">
-                  <span className={item.status === 'Approved' ? 'text-green-600' : ''}>
+                  <span className={
+                    item.status === 'Approved' ? 'text-green-600' :
+                    item.status === 'Rejected' ? 'text-red-600' : ''
+                  }>
                     {item.status}
                   </span>
                 </td>
                 <td className="flex items-center gap-2 px-4 py-4">
-                  <button className="px-2 py-1 text-white bg-green-500 rounded-full hover:bg-green-700">
+                  <button
+                    className="px-2 py-1 text-white bg-green-500 rounded-full hover:bg-green-700"
+                    onClick={() => handleApproveClick(item)}
+                    disabled={processing || item.status === 'Approved' || item.status === 'Rejected'}
+                  >
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
                   </button>
 
-                  <button className="px-2 py-1 text-white bg-red-500 rounded-full hover:bg-red-700">
+                  <button
+                    className="px-2 py-1 text-white bg-red-500 rounded-full hover:bg-red-700"
+                    onClick={() => handleRejectClick(item)}
+                    disabled={processing || item.status === 'Approved' || item.status === 'Rejected'}
+                  >
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
@@ -291,13 +472,64 @@ const BusinessMatching = () => {
                 <button className="px-5 py-1.5 text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full">
                   Edit
                 </button>
-                <button className="px-5 py-1.5 text-sm bg-[#40033f] text-white rounded-full">
+                <button
+                  className="px-5 py-1.5 text-sm bg-[#40033f] text-white rounded-full"
+                  onClick={handleModalApprove}
+                  disabled={selectedItem.status === 'Approved' || selectedItem.status === 'Rejected'}
+                >
                   Approve
                 </button>
-                <button className="px-5 py-1.5 text-sm bg-[#9c0c40] text-white rounded-full">
+                <button
+                  className="px-5 py-1.5 text-sm bg-[#9c0c40] text-white rounded-full"
+                  onClick={handleApproveAll}
+                >
                   Approve All
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Warning Modal for Approve/Reject All */}
+      {showWarningModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(88, 64, 88, 0.7)' }}>
+          <div className="relative w-full max-w-md p-6 mx-4 bg-white shadow-lg rounded-xl">
+            <button
+              onClick={() => setShowWarningModal(false)}
+              className="absolute text-gray-500 top-2 right-2 hover:text-gray-700"
+            >
+              ×
+            </button>
+
+            <h3 className="mb-4 text-lg font-medium text-center">Attention</h3>
+
+            <p className="mb-6 text-center">{warningMessage}</p>
+
+            <div className="flex justify-center gap-4">
+              <button
+                className="px-5 py-2 text-sm text-white bg-[#40033f] rounded-full"
+                onClick={handleConfirmAction}
+              >
+                Approve All
+              </button>
+
+              <button
+                className="px-5 py-2 text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full"
+                onClick={() => setShowWarningModal(false)}
+              >
+                Cancel
+              </button>
+
+              <button
+                className="px-5 py-2 text-sm text-white bg-[#9c0c40] rounded-full"
+                onClick={() => {
+                  setShowWarningModal(false);
+                  // Keep the main modal open
+                }}
+              >
+                View
+              </button>
             </div>
           </div>
         </div>

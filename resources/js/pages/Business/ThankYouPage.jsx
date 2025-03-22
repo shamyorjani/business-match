@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 
 const ThankYouPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const [currentSlide, setCurrentSlide] = useState(0);
   const [confirmedMeetings, setConfirmedMeetings] = useState([]);
   const [registrationComplete, setRegistrationComplete] = useState(false);
@@ -55,6 +56,10 @@ const ThankYouPage = () => {
     setCurrentSlide((prev) => (prev + 1) % confirmedMeetings.length);
   };
 
+  const goToHomePage = () => {
+    navigate('/');
+  };
+
   return (
     <div className="thank-you-card">
       {/* Success Check Icon */}
@@ -68,17 +73,11 @@ const ThankYouPage = () => {
         {registrationComplete ? (
           <p className="thank-you-message">
             Your registration is complete! You have successfully matched with {confirmedMeetings.length} exhibitor(s).
-            {location.state && location.state.registrationId && (
-              <span className="block mt-2 font-semibold">
-                Your registration ID: {location.state.registrationId}
-              </span>
-            )}
-            Once the meetings schedule is confirmed, you will be notified via email.
+            One the meetings schedule is confirmed, ypu will be notified via email.
           </p>
         ) : (
           <p className="thank-you-message">
-            You have successfully matched with {confirmedMeetings.length} exhibitor(s). Once the
-            meetings schedule is confirmed, you will be notified via email.
+            You have successfully matched with {confirmedMeetings.length} exhibitor(s). One the meetings schedule is confirmed, ypu will be notified via email.
           </p>
         )}
       </div>
@@ -142,6 +141,16 @@ const ThankYouPage = () => {
         For more information or any updates, kindly contact pr@elite.com.my or WhatsApp,<br />
         +6016-704 8058
       </p>
+
+      {/* Back to Home Button */}
+      <div className="flex justify-center mt-6 rounded">
+        <button
+          onClick={goToHomePage}
+          className="px-6 py-2 text-white bg-[#40033f] rounded-4xl hover:bg-[#6f0f55] transition-colors"
+        >
+          Back to Home
+        </button>
+      </div>
     </div>
   );
 };

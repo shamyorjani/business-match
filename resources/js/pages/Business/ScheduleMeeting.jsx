@@ -18,6 +18,9 @@ const ScheduleMeeting = () => {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageModalContent, setMessageModalContent] = useState("");
 
+  // Add a new state for submission loading
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   // Function to show message modal instead of alert
   const showMessage = (message) => {
     setMessageModalContent(message);
@@ -432,12 +435,8 @@ const companyUnavailableSlots = {
     const companyData = JSON.parse(localStorage.getItem('companyInfoData') || '{}');
     const selectedInterests = JSON.parse(localStorage.getItem('selectedInterests') || '[]');
 
-    // Show loading indicator in the button
-    const submitButton = document.querySelector('button[type="submit"]');
-    if (submitButton) {
-      submitButton.disabled = true;
-      submitButton.innerHTML = 'Submitting...';
-    }
+    // Set loading state to true
+    setIsSubmitting(true);
 
     // Prepare the final data for submission
     const finalData = {
@@ -473,11 +472,8 @@ const companyUnavailableSlots = {
       })
       .catch(error => {
         console.error('Registration failed:', error);
-        // Enable the button again
-        if (submitButton) {
-          submitButton.disabled = false;
-          submitButton.innerHTML = 'Submit';
-        }
+        // Set loading state back to false on error
+        setIsSubmitting(false);
         handleRegistrationError(error);
       });
   };
@@ -690,16 +686,27 @@ const companyUnavailableSlots = {
           <button
             className="px-8 py-2 btn-secondary"
             onClick={handleBack}
+            disabled={isSubmitting}
           >
             Back to Previous
           </button>
 
           <button
-            className="px-8 py-2 bg-[#40033f] text-white rounded-md disabled:opacity-50"
+            className="px-8 py-2 bg-[#40033f] text-white rounded-4xl disabled:opacity-50"
             onClick={handleNextClick}
-            disabled={selectedSlots.length < companies.length}
+            disabled={selectedSlots.length < companies.length || isSubmitting}
           >
-            Submit
+            {isSubmitting ? (
+              <span className="flex items-center justify-center">
+                <svg className="w-5 h-5 mr-2 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Submitting...
+              </span>
+            ) : (
+              "Submit"
+            )}
           </button>
         </div>
       </div>

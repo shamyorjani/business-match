@@ -52,3 +52,12 @@ Route::post('/hosted-registration', [App\Http\Controllers\HostedRegistrationCont
 
 // Schedule Meetings Routes
 Route::get('/schedule-meetings/business', [ScheduleMeetingController::class, 'getBusinessMeetings']);
+
+// Meeting approval routes
+Route::get('/business-meetings', [ScheduleMeetingController::class, 'getBusinessMeetings']);
+Route::post('/meetings/{id}/approve', [ScheduleMeetingController::class, 'approveMeeting']);
+Route::post('/meetings/{id}/reject', [ScheduleMeetingController::class, 'rejectMeeting']);
+Route::post('/meetings/check-processed', [ScheduleMeetingController::class, 'checkAllMeetingsProcessed']);
+Route::post('/meetings/approve-all', [ScheduleMeetingController::class, 'approveAllMeetings']);
+Route::post('/meetings/reject-all', [ScheduleMeetingController::class, 'rejectAllMeetings']);
+Route::get('/meetings/{id}', [ScheduleMeetingController::class, 'getMeeting']);

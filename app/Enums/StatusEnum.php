@@ -17,7 +17,7 @@ enum StatusEnum: int
      *
      * @return array
      */
-    public static function getOptions(): array
+    public static function asArray(): array
     {
         return [
             self::INACTIVE->value => 'Inactive',
@@ -31,13 +31,18 @@ enum StatusEnum: int
     }
 
     /**
-     * Get the label for a status value.
-     *
-     * @param int $value
-     * @return string
+     * Get status label
      */
-    public static function getLabel(int $value): string
+    public function label(): string
     {
-        return self::getOptions()[$value] ?? 'Unknown';
+        return match($this) {
+            self::INACTIVE => 'Inactive',
+            self::ACTIVE => 'Active',
+            self::PENDING => 'Pending',
+            self::REJECTED => 'Rejected',
+            self::APPROVED => 'Approved',
+            self::ARCHIVED => 'Archived',
+            self::DELETED => 'Deleted',
+        };
     }
 }
