@@ -1,9 +1,243 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../services/api'; // Import the API service
 
 const CompanyInfo = () => {
     const navigate = useNavigate();
     const [formData, setFormData] = useState({});
+    const [selectedInterests, setSelectedInterests] = useState([]);
+    const [categories, setCategories] = useState([]); // State for categories
+    const [openCategoryIndex, setOpenCategoryIndex] = useState(null); // Track which category is expanded
+    const [searchTerm, setSearchTerm] = useState(''); // Track the search term
+    const [loading, setLoading] = useState(true); // State for loading
+    const [loadingMore, setLoadingMore] = useState(false); // State for loading more when scrolling
+    const [lastFetchTime, setLastFetchTime] = useState(0);
+    const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
+    const [lastLoadedIds, setLastLoadedIds] = useState([]); // Track IDs of loaded categories
+
+    // Load selected interests from local storage on component mount
+    useEffect(() => {
+        const savedInterests = localStorage.getItem('selectedInterests');
+        if (savedInterests) {
+            setSelectedInterests(JSON.parse(savedInterests));
+        }
+    }, []);
+
+    // Check if cached categories data exists and is still valid
+    const getCachedCategories = () => {
+        const cachedData = localStorage.getItem('categoriesCache');
+        if (cachedData) {
+            try {
+                const { timestamp, categories, loadedIds } = JSON.parse(cachedData);
+                const now = Date.now();
+                if (now - timestamp < CACHE_DURATION) {
+                    // Set the list of already loaded IDs
+                    if (loadedIds) {
+                        setLastLoadedIds(loadedIds);
+                    } else {
+                        // For backward compatibility with previous cache format
+                        setLastLoadedIds(categories.map(cat => cat.id));
+                    }
+                    return categories;
+                }
+            } catch (error) {
+                console.error('Error parsing cached categories:', error);
+            }
+        }
+        return null;
+    };
+
+    // Fetch categories and subcategories from the API or use cached data
+    useEffect(() => {
+        const fetchCategories = async () => {
+            try {
+                // Check if we have valid cached data
+                const cachedCategories = getCachedCategories();
+
+                if (cachedCategories) {
+                    console.log('Using cached categories data');
+                    setCategories(cachedCategories);
+                    setLoading(false);
+
+                    // Now check for any new categories since the last load
+                    await fetchNewCategories(cachedCategories);
+                    return;
+                }
+
+                // No valid cache, proceed with full API fetch
+                setLoading(true);
+                await performFullFetch();
+            } catch (error) {
+                console.error('Error fetching categories:', error);
+                setLoading(false);
+            }
+        };
+
+        fetchCategories();
+    }, []);
+
+    // Function to fetch only new categories not in the cache
+    const fetchNewCategories = async (existingCategories) => {
+        try {
+            setLoadingMore(true);
+            // Get all categories to find new ones
+            const response = await api.get('/categories');
+            const allCategoriesData = response.data;
+
+            if (!Array.isArray(allCategoriesData)) {
+                console.error('Unexpected response format:', allCategoriesData);
+                setLoadingMore(false);
+                return;
+            }
+
+            // Find categories that aren't in our cache
+            const newCategories = allCategoriesData.filter(
+                category => !lastLoadedIds.includes(category.id)
+            );
+
+            if (newCategories.length === 0) {
+                console.log('No new categories found');
+                setLoadingMore(false);
+                return;
+            }
+
+            console.log(`Found ${newCategories.length} new categories`);
+
+            // Fetch subcategories for each new category
+            const newCategoriesWithSubcategories = await Promise.all(
+                newCategories.map(async (category) => {
+                    try {
+                        const subcategoriesResponse = await api.get(`/categories/${category.id}/subcategories`);
+                        return {
+                            ...category,
+                            subCategories: subcategoriesResponse.data
+                        };
+                    } catch (error) {
+                        console.error(`Error fetching subcategories for category ${category.id}:`, error);
+                        return {
+                            ...category,
+                            subCategories: []
+                        };
+                    }
+                })
+            );
+
+            // Filter out categories without subcategories
+            const filteredNewCategories = newCategoriesWithSubcategories.filter(
+                category => category.subCategories && category.subCategories.length > 0
+            );
+
+            if (filteredNewCategories.length === 0) {
+                setLoadingMore(false);
+                return;
+            }
+
+            // Combine existing categories with new ones
+            const updatedCategories = [...existingCategories, ...filteredNewCategories];
+
+            // Update the list of loaded IDs
+            const updatedLoadedIds = [...lastLoadedIds, ...filteredNewCategories.map(cat => cat.id)];
+            setLastLoadedIds(updatedLoadedIds);
+
+            // Update the cache
+            localStorage.setItem('categoriesCache', JSON.stringify({
+                timestamp: Date.now(),
+                categories: updatedCategories,
+                loadedIds: updatedLoadedIds
+            }));
+
+            // Update state with combined data
+            setCategories(updatedCategories);
+            setLastFetchTime(Date.now());
+            setLoadingMore(false);
+
+        } catch (error) {
+            console.error('Error fetching new categories:', error);
+            setLoadingMore(false);
+        }
+    };
+
+    // Function to perform a full fetch of all categories
+    const performFullFetch = async () => {
+        try {
+            const response = await api.get('/categories');
+            const categoriesData = response.data;
+
+            if (Array.isArray(categoriesData)) {
+                // Fetch subcategories for each category
+                setLoadingMore(true);
+                const categoriesWithSubcategories = await Promise.all(
+                    categoriesData.map(async (category) => {
+                        try {
+                            const subcategoriesResponse = await api.get(`/categories/${category.id}/subcategories`);
+                            return {
+                                ...category,
+                                subCategories: subcategoriesResponse.data
+                            };
+                        } catch (error) {
+                            console.error(`Error fetching subcategories for category ${category.id}:`, error);
+                            return {
+                                ...category,
+                                subCategories: []
+                            };
+                        }
+                    })
+                );
+
+                // Filter out categories without subcategories
+                const filteredCategories = categoriesWithSubcategories.filter(
+                    category => category.subCategories && category.subCategories.length > 0
+                );
+
+                const categoryIds = filteredCategories.map(cat => cat.id);
+                setLastLoadedIds(categoryIds);
+
+                // Cache the filtered categories data
+                localStorage.setItem('categoriesCache', JSON.stringify({
+                    timestamp: Date.now(),
+                    categories: filteredCategories,
+                    loadedIds: categoryIds
+                }));
+                setLastFetchTime(Date.now());
+
+                setCategories(filteredCategories);
+                setLoadingMore(false);
+                setLoading(false);
+            } else {
+                console.error('Unexpected response format:', categoriesData);
+                setLoading(false);
+            }
+        } catch (error) {
+            console.error('Error in full fetch:', error);
+            setLoading(false);
+        }
+    };
+
+    // Handle scroll events to implement lazy loading
+    useEffect(() => {
+        const handleScroll = () => {
+            if (loading || loadingMore) return;
+
+            // You would implement actual lazy loading logic here if needed
+            // This is a placeholder for demonstration
+            const scrollPosition = window.innerHeight + window.scrollY;
+            const pageHeight = document.body.offsetHeight;
+
+            if (scrollPosition >= pageHeight - 300) {
+                // Load more categories if needed (this is just a simulation)
+                // In a real implementation, you would fetch the next page of categories
+                setLoadingMore(true);
+                setTimeout(() => {
+                    setLoadingMore(false);
+                }, 1000);
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, [loading, loadingMore]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
@@ -11,59 +245,84 @@ const CompanyInfo = () => {
     };
 
     const handleNext = () => {
-        navigate('/business/exhibitors');
+        // Save selected interests to local storage
+        localStorage.setItem('selectedInterests', JSON.stringify(selectedInterests));
+
+        // Pass along the selected interests with navigation
+        navigate('/business/exhibitor-matching', { state: { selectedInterests, ...formData } });
     };
 
     const handleBack = () => {
+        // Save selected interests to local storage before going back
+        localStorage.setItem('selectedInterests', JSON.stringify(selectedInterests));
         navigate('/business/company');
     };
 
-    const [openCategoryIndex, setOpenCategoryIndex] = useState(null); // Track which category is expanded
-    const [openSubCategoryIndex, setOpenSubCategoryIndex] = useState(null); // Track which subcategory is expanded
-    const [searchTerm, setSearchTerm] = useState(''); // Track the search term
+    const handleSearchChange = (e) => {
+        setSearchTerm(e.target.value);
+    };
 
-    const categories = [
-        {
-            name: 'Professional Beauty salon & Skincare solutions',
-            subCategories: []
-        },
-        {
-            name: 'Haircare Product, Tools & Accessories',
-            subCategories: [
-                {
-                    name: 'Lip Makeup'
-                }
-            ]
-        },
-        {
-            name: 'Cosmetics',
-            subCategories: [
-                {
-                    name: 'Face Makeup'
-                },
-                {
-                    name: 'Eye Makeup'
-                },
-                {
-                    name: 'Lip Makeup'
-                }
-            ]
-        },
-    ];
+    // Check if a subcategory is selected
+    const isSelected = (categoryName, subCategoryName) => {
+        return selectedInterests.some(
+            interest => interest.category === categoryName && interest.subCategory === subCategoryName
+        );
+    };
+
+    // Toggle selection of a subcategory
+    const toggleSubCategorySelection = (categoryName, subCategoryName) => {
+        const interestKey = JSON.stringify({ category: categoryName, subCategory: subCategoryName });
+
+        if (isSelected(categoryName, subCategoryName)) {
+            // Remove if already selected
+            setSelectedInterests(selectedInterests.filter(
+                interest => !(interest.category === categoryName && interest.subCategory === subCategoryName)
+            ));
+        } else {
+            // Add if not selected
+            setSelectedInterests([...selectedInterests, { category: categoryName, subCategory: subCategoryName }]);
+        }
+    };
+
+    const handleClickSubCategory = (categoryName, subCategoryName) => {
+        toggleSubCategorySelection(categoryName, subCategoryName);
+    };
 
     // Filter categories based on search term
     const filteredCategories = categories.filter(category =>
         category.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
-    };
+    // Filter selected interests to only show those available in the subcategories from the database
+    const availableSelectedInterests = selectedInterests.filter(interest =>
+        categories.some(category =>
+            category.name === interest.category &&
+            category.subCategories.some(subCategory => subCategory.name === interest.subCategory)
+        )
+    );
 
-    const handleClickSubCategory = (subCategoryIndex) => {
-        // Toggle the display of items for the selected subcategory
-        setOpenSubCategoryIndex(openSubCategoryIndex === subCategoryIndex ? null : subCategoryIndex);
-    };
+    // Skeleton loader component for categories
+    const CategorySkeletonLoader = () => (
+        <>
+            {[1, 2, 3, 4].map((item) => (
+                <div key={item} className="animate-pulse">
+                    <div className="w-full border-t-[1px] border-[#D9D9D9] py-[16px] px-[48px] bg-[#FBFBFB]">
+                        <div className="w-3/4 h-5 bg-gray-200 rounded"></div>
+                    </div>
+                    {item === 2 && (
+                        <>
+                            <div className="border-t-[1px] border-[#D9D9D9] py-[10px] px-[10%] bg-gray-50">
+                                <div className="w-1/2 h-4 bg-gray-200 rounded"></div>
+                            </div>
+                            <div className="border-t-[1px] border-[#D9D9D9] py-[10px] px-[10%] bg-gray-50">
+                                <div className="w-2/3 h-4 bg-gray-200 rounded"></div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            ))}
+        </>
+    );
 
     return (
         <div className="form-container">
@@ -88,105 +347,142 @@ const CompanyInfo = () => {
                     </div>
 
                     <div className='flex justify-center w-full align-items-center'>
-                                                    <div className="relative rounded-2xl w-[80%] md:w-[60%]">
-                                                        <input
-                                                            type="text"
-                                                            placeholder="Type Here to Search"
-                                                            className="w-full px-4 py-3 text-gray-700 bg-white border-0 shadow-2xl rounded-t-2xl focus:outline-none"
-                                                            style={{ padding: '21px 0 10px 48px', fontFamily: 'Instrument Sans', fontWeight: 700, fontSize: '18px' }}
-                                                            value={searchTerm}
-                                                            onChange={handleSearchChange} // Update search term
-                        />
+                        <div className="relative rounded-2xl w-[80%] md:w-[60%]">
+                            <input
+                                type="text"
+                                placeholder="Type Here to Search"
+                                className="w-full px-4 py-3 text-gray-700 bg-white border-0 shadow-2xl rounded-t-2xl focus:outline-none"
+                                style={{ padding: '21px 0 10px 48px', fontFamily: 'Instrument Sans', fontWeight: 700, fontSize: '18px' }}
+                                value={searchTerm}
+                                onChange={handleSearchChange} // Update search term
+                            />
 
-                        {/* Main Dropdown */}
-                        <div className="relative left-0 w-full overflow-y-auto bg-white shadow-2xl rounded-b-2xl max-h-70">
-                            <div className="">
-                                {searchTerm === '' ? (
-                                    // Show all categories if search term is empty
-                                    categories.map((category, categoryIndex) => (
-                                        <div key={categoryIndex} className="relative">
-                                            <div className="w-full">
-                                                <button
-                                                    className="flex items-center justify-between w-full text-left text-black border-t-[1px] border-[#D9D9D9] focus:outline-none py-[16px] px-[48px] bg-[#FBFBFB]"
-                                                    style={{ fontFamily: 'Instrument Sans', fontWeight: 700, fontSize: '15px' }}
-                                                    onClick={() =>
-                                                        setOpenCategoryIndex(openCategoryIndex === categoryIndex ? null : categoryIndex)
-                                                    }
-                                                >
-                                                    <span>{category.name}</span>
-                                                    {category.subCategories.length > 0 && (
-                                                        <svg className={`w-4 h-4 transform ${openCategoryIndex === categoryIndex ? 'rotate-270' : 'rotate-0'}`} fill="none" stroke="#6f0f55" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{ width: '29.140735626220703px', height: '31.879962921142578px' }}>
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                                        </svg>
-                                                    )}
-                                                </button>
-                                            </div>
+                            {/* Main Dropdown */}
+                            <div className="relative left-0 w-full overflow-y-auto bg-white shadow-2xl rounded-b-2xl max-h-70">
+                                <div className="">
+                                    {/* Remove the refresh button */}
 
-                                            {openCategoryIndex === categoryIndex && category.subCategories.length > 0 && (
-                                                <div className="">
-                                                    {category.subCategories.map((subCategory, subCategoryIndex) => (
-                                                        <div className='' key={subCategoryIndex}>
-                                                            <button
-                                                                className={`flex border-t-[1px] border-[#D9D9D9] items-center justify-between w-full px-[10%] py-[10px] text-left text-black hover:text-white hover:bg-[#6f0f55] focus:outline-none ${categoryIndex === categories.length - 1 && subCategoryIndex === category.subCategories.length - 1 ? 'rounded-b-2xl' : ''}`}
-                                                                style={{ fontFamily: 'Instrument Sans', fontWeight: 700, fontSize: '15px' }}
-                                                                onClick={() => handleClickSubCategory(subCategoryIndex)}
-                                                            >
-                                                                <span>{subCategory.name}</span>
-                                                            </button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))
-                                ) : (
-                                    // Show filtered categories when there is a search term
-                                    filteredCategories.length === 0 ? (
-                                        <div className="px-4 py-2 text-gray-500">No categories found</div>
-                                    ) : (
-                                        filteredCategories.map((category, categoryIndex) => (
-                                            <div key={categoryIndex} className="relative">
-                                                <div className="w-full">
-                                                    <button
-                                                        className="flex items-center justify-between w-full px-4 py-2 text-left text-purple-700 hover:bg-purple-50 focus:outline-none"
-                                                        onClick={() =>
-                                                            setOpenCategoryIndex(openCategoryIndex === categoryIndex ? null : categoryIndex)
-                                                        }
-                                                    >
-                                                        <span>{category.name}</span>
-                                                        {category.subCategories.length > 0 && (
-                                                            <svg className={`w-4 h-4 transform ${openCategoryIndex === categoryIndex ? 'rotate-270' : 'rotate-0'}`} fill="none" stroke="#6f0f55" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                                                            </svg>
-                                                        )}
-                                                    </button>
-                                                </div>
-
-                                                {/* Subcategory Dropdown */}
-                                                {openCategoryIndex === categoryIndex && category.subCategories.length > 0 && (
-                                                    <div className="pl-4 ml-4">
-                                                        {category.subCategories.map((subCategory, subCategoryIndex) => (
-                                                            <div key={subCategoryIndex}>
-                                                                <button
-                                                                    className="flex items-center justify-between w-full px-4 py-2 text-left text-purple-700 hover:bg-purple-50 focus:outline-none"
-                                                                    onClick={() => handleClickSubCategory(subCategoryIndex)}
-                                                                >
-                                                                    <span>{subCategory.name}</span>
-                                                                </button>
-                                                            </div>
-                                                        ))}
+                                    {loading ? (
+                                        <CategorySkeletonLoader />
+                                    ) : searchTerm === '' ? (
+                                        // Show all categories if search term is empty
+                                        filteredCategories.length > 0 ? (
+                                            filteredCategories.map((category, categoryIndex) => (
+                                                <div key={categoryIndex} className="relative">
+                                                    <div className="w-full">
+                                                        <button
+                                                            className="flex items-center justify-between w-full text-left text-black border-t-[1px] border-[#D9D9D9] focus:outline-none py-[16px] px-[48px] bg-[#FBFBFB]"
+                                                            style={{ fontFamily: 'Instrument Sans', fontWeight: 700, fontSize: '15px' }}
+                                                            onClick={() =>
+                                                                setOpenCategoryIndex(openCategoryIndex === categoryIndex ? null : categoryIndex)
+                                                            }
+                                                        >
+                                                            <span>{category.name}</span>
+                                                            {category.subCategories.length > 0 && (
+                                                                <svg className={`w-4 h-4 transform ${openCategoryIndex === categoryIndex ? 'rotate-270' : 'rotate-0'}`} fill="none" stroke="#6f0f55" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{ width: '29.140735626220703px', height: '31.879962921142578px' }}>
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                                                </svg>
+                                                            )}
+                                                        </button>
                                                     </div>
-                                                )}
+
+                                                    {openCategoryIndex === categoryIndex && category.subCategories.length > 0 && (
+                                                        <div className="">
+                                                            {category.subCategories.map((subCategory, subCategoryIndex) => (
+                                                                <div className='' key={subCategoryIndex}>
+                                                                    <button
+                                                                        className={`flex border-t-[1px] border-[#D9D9D9] items-center justify-between w-full px-[10%] py-[10px] text-left ${isSelected(category.name, subCategory.name) ? 'bg-[#6f0f55] text-white' : 'text-black hover:text-white hover:bg-[#6f0f55]'} focus:outline-none ${categoryIndex === filteredCategories.length - 1 && subCategoryIndex === category.subCategories.length - 1 ? 'rounded-b-2xl' : ''}`}
+                                                                        style={{ fontFamily: 'Instrument Sans', fontWeight: 700, fontSize: '15px' }}
+                                                                        onClick={() => handleClickSubCategory(category.name, subCategory.name)}
+                                                                    >
+                                                                        <span>{subCategory.name}</span>
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="px-4 py-2 text-center text-gray-500">No categories available</div>
+                                        )
+                                    ) : (
+                                        // Show filtered categories when there is a search term
+                                        filteredCategories.length === 0 ? (
+                                            <div className="px-4 py-2 text-center text-gray-500">No categories found</div>
+                                        ) : (
+                                            filteredCategories.map((category, categoryIndex) => (
+                                                <div key={categoryIndex} className="relative">
+                                                    <div className="w-full">
+                                                        <button
+                                                            className="flex items-center justify-between w-full text-left text-black border-t-[1px] border-[#D9D9D9] focus:outline-none py-[16px] px-[48px] bg-[#FBFBFB]"
+                                                            style={{ fontFamily: 'Instrument Sans', fontWeight: 700, fontSize: '15px' }}
+                                                            onClick={() =>
+                                                                setOpenCategoryIndex(openCategoryIndex === categoryIndex ? null : categoryIndex)
+                                                            }
+                                                        >
+                                                            <span>{category.name}</span>
+                                                            {category.subCategories.length > 0 && (
+                                                                <svg className={`w-4 h-4 transform ${openCategoryIndex === categoryIndex ? 'rotate-270' : 'rotate-0'}`} fill="none" stroke="#6f0f55" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style={{ width: '29.140735626220703px', height: '31.879962921142578px' }}>
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                                                </svg>
+                                                            )}
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Subcategory Dropdown */}
+                                                    {openCategoryIndex === categoryIndex && category.subCategories.length > 0 && (
+                                                        <div className="">
+                                                            {category.subCategories.map((subCategory, subCategoryIndex) => (
+                                                                <div className='' key={subCategoryIndex}>
+                                                                    <button
+                                                                        className={`flex border-t-[1px] border-[#D9D9D9] items-center justify-between w-full px-[10%] py-[10px] text-left ${isSelected(category.name, subCategory.name) ? 'bg-[#6f0f55] text-white' : 'text-black hover:text-white hover:bg-[#6f0f55]'} focus:outline-none ${categoryIndex === filteredCategories.length - 1 && subCategoryIndex === category.subCategories.length - 1 ? 'rounded-b-2xl' : ''}`}
+                                                                        style={{ fontFamily: 'Instrument Sans', fontWeight: 700, fontSize: '15px' }}
+                                                                        onClick={() => handleClickSubCategory(category.name, subCategory.name)}
+                                                                    >
+                                                                        <span>{subCategory.name}</span>
+                                                                    </button>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))
+                                        )
+                                    )}
+
+                                    {/* Loading more indicator */}
+                                    {loadingMore && (
+                                        <div className="py-4 text-center">
+                                            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[#6f0f55] border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
+                                                <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Loading...</span>
                                             </div>
-                                        ))
-                                    )
-                                )}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
-                                                         </div>
 
-
+                    {/* Selected Interests Display */}
+                    {availableSelectedInterests.length > 0 && (
+                        <div className="mt-6">
+                            <h4 className="mb-2 font-semibold text-md">Selected Interests:</h4>
+                            <div className="flex flex-wrap gap-2">
+                                {availableSelectedInterests.map((interest, index) => (
+                                    <div key={index} className="bg-[#6f0f55] text-white px-3 py-1 rounded-full text-sm flex items-center">
+                                        <span>{interest.subCategory}</span>
+                                        <button
+                                            className="ml-2 focus:outline-none"
+                                            onClick={() => toggleSubCategorySelection(interest.category, interest.subCategory)}
+                                        >
+                                            ×
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Required Fields Note */}
                     <div className="mt-6 text-sm text-red-600">*All fields are required to fill</div>

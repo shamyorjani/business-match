@@ -1,6 +1,73 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import Registration from '../components/Registration';
+import Login from '../components/Login';
+import axios from 'axios';
 
 const HostedBuyerProgram = () => {
+    const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
+    const [isLoginOpen, setIsLoginOpen] = useState(false);
+    const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    // Check if user is authenticated
+    useEffect(() => {
+      const checkAuth = async () => {
+        try {
+          const response = await axios.get('/api/user');
+          setUser(response.data);
+        } catch (error) {
+          setUser(null);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      checkAuth();
+    }, []);
+
+    // Add event listeners for modal coordination
+    useEffect(() => {
+      const handleOpenLogin = () => setIsLoginOpen(true);
+      const handleOpenRegistration = () => setIsRegistrationOpen(true);
+
+      document.addEventListener('open-login-modal', handleOpenLogin);
+      document.addEventListener('open-registration-modal', handleOpenRegistration);
+
+      return () => {
+        document.removeEventListener('open-login-modal', handleOpenLogin);
+        document.removeEventListener('open-registration-modal', handleOpenRegistration);
+      };
+    }, []);
+
+    const handleLogout = async () => {
+      try {
+        // Get CSRF token - use the sanctum/csrf-cookie endpoint first
+        await axios.get('/sanctum/csrf-cookie');
+
+        // Get the CSRF token from cookies or meta tag
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+        // Make the logout request with the token
+        await axios.post('/logout', {}, {
+          headers: {
+            'X-CSRF-TOKEN': csrfToken,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+
+        // Clear user state and reload page
+        setUser(null);
+
+        // Provide feedback
+        alert('Logged out successfully');
+        window.location.href = '/'; // Redirect to home page
+      } catch (error) {
+        console.error('Logout failed', error);
+        alert('Logout failed: ' + (error.response?.data?.message || error.message));
+      }
+    };
+
     const termsData = [
         {
           id: 1,
@@ -70,7 +137,8 @@ const HostedBuyerProgram = () => {
           description: "Apply and fill up your business details and requirements.",
           icon: (
             <img src="/images/fill-up.svg" alt="" />
-          )
+          ),
+          url: "/hosted/registration"
         },
         {
           id: 2,
@@ -78,7 +146,8 @@ const HostedBuyerProgram = () => {
           description: "Submit a refundable deposit to confirm your booking.",
           icon: (
             <img src="/images/deposit.svg" alt="" />
-          )
+          ),
+          url: "/hosted/payment"
         },
         {
           id: 3,
@@ -86,7 +155,8 @@ const HostedBuyerProgram = () => {
           description: "The Organizer will match you with exhibitor(s) based on your requirements and Present at IBE to meet up with the selected exhibitor(s).",
           icon: (
             <img src="/images/search.svg" alt="" />
-          )
+          ),
+          url: "/hosted/interest"
         },
         {
           id: 4,
@@ -94,7 +164,8 @@ const HostedBuyerProgram = () => {
           description: "Enjoy exclusive perks, including hotel accommodations, and make the most of your IBE experience.",
           icon: (
             <img src="/images/enjoy.svg" alt="" />
-          )
+          ),
+          url: "/benefits"
         }
       ];
   return (
@@ -117,27 +188,71 @@ const HostedBuyerProgram = () => {
               <a href="#" className="nav-menu">About us</a>
               <a href="#" className="nav-menu">Contact us</a>
             </nav>
-            <button className="bg-white text-[#40033f] px-6 py-2 rounded-full text-sm font-bold">
-              Sign In
-            </button>
-            <div className="p-2 text-white">
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-9 h-9" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-              </svg>
-            </div>
+
+            {/* Authentication buttons */}
+            {/* {loading ? (
+              <div className="w-20 h-8 bg-gray-300 rounded-full animate-pulse"></div>
+            ) : user ? (
+              <div className="flex items-center space-x-2">
+                <span className="text-white">Hi, {user.name}</span>
+                <button
+                  onClick={handleLogout}
+                  className="bg-white text-[#40033f] px-6 py-2 rounded-full text-sm font-bold"
+                >
+                  Log Out
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => setIsLoginOpen(true)}
+                  className="bg-white text-[#40033f] px-6 py-2 rounded-full text-sm font-bold"
+                >
+                  Sign In
+                </button>
+                <button
+                  onClick={() => setIsRegistrationOpen(true)}
+                  className="px-6 py-2 text-sm font-bold text-white bg-transparent border border-white rounded-full"
+                >
+                  Register
+                </button>
+              </div>
+            )} */}
+
           </div>
         </div>
       </header>
 
+      {/* Registration and Login Modals */}
+      <Registration isOpen={isRegistrationOpen} onClose={() => setIsRegistrationOpen(false)} />
+      <Login isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
+
       {/* Hero Image with Title */}
       <div className="relative h-48 md:h-64">
         <div className="absolute inset-0 bg-center bg-cover" style={{ backgroundImage: "url('/images/bg-img.png')" }}></div>
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center ">
           <h1 className="font-serif text-4xl font-bold text-white md:text-7xl drop-shadow-lg">
             Hosted Buyer Program
           </h1>
+          <div className="z-20 flex justify-center mt-6 space-x-6">
+            <button
+              className="text-lg font-bold primary-btn"
+              onClick={() => window.location.href = '/hosted/registration'}
+            >
+              Hosted Buyer
+            </button>
+            <button
+              className="text-lg font-bold primary-btn"
+              onClick={() => window.location.href = '/business/registration'}
+            >
+              Business Matching
+            </button>
+          </div>
         </div>
       </div>
+
+      {/* Buttons below hero section */}
+
 
       {/* Main Content */}
       <div className="flex-grow py-12 bg-white">
@@ -215,7 +330,7 @@ const HostedBuyerProgram = () => {
         {steps.map((step) => (
           <div
             key={step.id}
-            className="rounded-md overflow-hidden bg-gradient-to-r from-[#40033f] to-[#9c0c40] text-white "
+            className="rounded-md overflow-hidden bg-gradient-to-r from-[#40033f] to-[#9c0c40] text-white hover:shadow-lg transition-all duration-300"
           >
             <div className="p-6 text-center">
               <div className="flex flex-col items-center mb-4">
@@ -256,15 +371,22 @@ const HostedBuyerProgram = () => {
       ))}
     </div>
 
+    {/* Update the "Register Now" button at the bottom of the page to open registration modal if not logged in */}
     <div className="z-20 flex justify-center mt-6 py-9">
-            <button type="submit" className="primary-btn text-[24px] font-bold">Register Now</button>
-          </div>
+      <button
+        type="button"
+        className="primary-btn text-[24px] font-bold"
+        onClick={() => user ? alert("You're already registered!") : setIsRegistrationOpen(true)}
+      >
+        Register Now
+      </button>
+    </div>
 
       {/* Footer */}
-      <footer className="relative w-full">
-        <img className="absolute bottom-0 z-0 w-full" src="/images/first.svg" alt="" />
-        <img className="absolute bottom-0 z-0 w-full" src="/images/second.svg" alt="" />
-        <img className='absolute bottom-0 z-0 w-full' src="/images/last.svg" alt="" />
+      <footer className="relative w-full mt-140">
+        <img className="absolute bottom-[-160px] z-0 w-full" src="/images/first.svg" alt="" />
+        <img className="absolute bottom-[-160px] z-0 w-full" src="/images/second.svg" alt="" />
+        <img className='absolute bottom-0 w-full z-1' src="/images/last.svg" alt="" />
       </footer>
     </div>
   );
