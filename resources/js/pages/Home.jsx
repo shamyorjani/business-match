@@ -190,7 +190,7 @@ const HostedBuyerProgram = () => {
             </nav>
 
             {/* Authentication buttons */}
-            {/* {loading ? (
+            {loading ? (
               <div className="w-20 h-8 bg-gray-300 rounded-full animate-pulse"></div>
             ) : user ? (
               <div className="flex items-center space-x-2">
@@ -217,7 +217,7 @@ const HostedBuyerProgram = () => {
                   Register
                 </button>
               </div>
-            )} */}
+            )}
 
           </div>
         </div>

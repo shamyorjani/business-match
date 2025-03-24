@@ -3,91 +3,50 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\AuthenticatesUsers;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class LoginController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Login Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles authenticating users for the application and
-    | redirecting them to your home screen. The controller uses a trait
-    | to conveniently provide its functionality to your applications.
-    |
-    */
-
-    use AuthenticatesUsers;
-
     /**
-     * Where to redirect users after login.
-     *
-     * @var string
-     */
-    protected $redirectTo = '/home';
-
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->middleware('guest')->except('logout');
-    }
-
-    /**
-     * Handle a login request to the application.
+     * Handle a login request for the application.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function login(Request $request)
     {
-        $this->validateLogin($request);
+        $credentials = $request->only('email', 'password');
 
-        if ($this->attemptLogin($request)) {
-            $user = $this->guard()->user();
+        if (Auth::attempt($credentials)) {
+            $user = Auth::user();
+            $token = $user->createToken('API Token')->plainTextToken;
 
-            if ($request->wantsJson()) {
-                return response()->json([
-                    'user' => $user,
-                    'message' => 'Login successful'
-                ]);
-            }
+            // Log the successful login
+            Log::info('User logged in successfully', ['user' => $user]);
 
-            return $this->sendLoginResponse($request);
+            return response()->json(['message' => 'Login successful', 'token' => $token]);
         }
 
-        if ($request->wantsJson()) {
-            return response()->json([
-                'message' => 'The provided credentials do not match our records.'
-            ], 401);
-        }
+        // Log the failed login attempt
+        Log::warning('Login failed for user', ['email' => $request->email]);
 
-        return $this->sendFailedLoginResponse($request);
+        return response()->json(['message' => 'Unauthorized'], 401);
     }
 
     /**
-     * Log the user out of the application.
+     * Logout the user and invalidate the token.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function logout(Request $request)
     {
-        $this->guard()->logout();
+        // Revoke the user's token
+        Auth::user()->tokens->each(function ($token) {
+            $token->delete();
+        });
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        if ($request->wantsJson()) {
-            return response()->json(['message' => 'Logged out successfully']);
-        }
-
-        return $this->loggedOut($request) ?: redirect('/');
+        return response()->json(['message' => 'Logged out successfully']);
     }
 }

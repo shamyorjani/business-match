@@ -72,10 +72,13 @@ export const getUserData = async () => {
 
 export const register = async (userData) => {
   try {
+    console.log('Registering user:', userData); // Add logging for debugging
     const response = await api.post('/register', userData);
+    console.log('Registration response:', response); // Add logging for response
     return response.data;
   } catch (error) {
     console.error('Registration error:', error);
+    console.error('Error response data:', error.response?.data); // Add logging for error response data
     throw error;
   }
 };
