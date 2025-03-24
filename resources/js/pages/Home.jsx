@@ -8,6 +8,7 @@ const HostedBuyerProgram = () => {
     const [isLoginOpen, setIsLoginOpen] = useState(false);
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isMenuOpen, setIsMenuOpen] = useState(false); // State for hamburger menu
 
     // Check if user is authenticated
     useEffect(() => {
@@ -171,22 +172,29 @@ const HostedBuyerProgram = () => {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Header/Navigation Bar */}
-      <header className="bg-gradient-to-r from-[#40033f] to-[#9c0c40] text-white py-8 px-14">
+      <header className="bg-gradient-to-r from-[#40033f] to-[#9c0c40] text-white py-8 px-4 md:px-14 relative">
         <div className="container flex items-center justify-between mx-auto">
           <div className="flex items-center">
             {/* Logo */}
             <img className='main-logo' src="/images/logo.svg" alt="My Image" />
-
           </div>
 
-          {/* Sign In & Cart */}
-          <div className="flex items-center space-x-4 font-cardo">
-               {/* Navigation Links */}
-               <nav className="hidden space-x-12 md:flex">
-              <a href="#" className="nav-menu">Home</a>
-              <a href="#" className="nav-menu">Exhibitions</a>
-              <a href="#" className="nav-menu">About us</a>
-              <a href="#" className="nav-menu">Contact us</a>
+          {/* Hamburger Menu */}
+          <div className="md:hidden">
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white focus:outline-none">
+              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+              </svg>
+            </button>
+          </div>
+
+          <div className="hidden md:flex items-center space-x-4 font-cardo">
+            <nav className="flex flex-col sm:flex-row">
+              <a href="/" className="nav-menu text-white hover:text-pink-200 transition-colors duration-200 font-medium py-2 border-b-2 border-transparent hover:border-white">Home</a>
+              <a href="/exhibitions" className="nav-menu text-white hover:text-pink-200 transition-colors duration-200 font-medium py-2 border-b-2 border-transparent hover:border-white">Exhibitions</a>
+              <a href="/hosted/registration" className="nav-menu text-white hover:text-pink-200 transition-colors duration-200 font-medium py-2 border-b-2 border-transparent hover:border-white">Hosted Buyer</a>
+              <a href="/business/registration" className="nav-menu text-white hover:text-pink-200 transition-colors duration-200 font-medium py-2 border-b-2 border-transparent hover:border-white">Business Matching</a>
+              <a href="/about" className="nav-menu text-white hover:text-pink-200 transition-colors duration-200 font-medium py-2 border-b-2 border-transparent hover:border-white">About IBE</a>
             </nav>
 
             {/* Authentication buttons */}
@@ -218,9 +226,63 @@ const HostedBuyerProgram = () => {
                 </button>
               </div>
             )}
-
           </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {isMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 right-0 bg-gradient-to-r from-[#40033f] to-[#9c0c40] z-50 py-4 px-4 shadow-lg">
+            <nav className="flex flex-col space-y-4">
+              <a href="/" className="text-white py-3 px-4 border-b border-white/20 hover:bg-white/10 rounded-lg flex items-center">
+                <span className="mr-2">🏠</span> Home
+              </a>
+              <a href="/exhibitions" className="text-white py-3 px-4 border-b border-white/20 hover:bg-white/10 rounded-lg flex items-center">
+                <span className="mr-2">🎪</span> Exhibitions
+              </a>
+              <a href="/hosted/registration" className="text-white py-3 px-4 border-b border-white/20 hover:bg-white/10 rounded-lg flex items-center">
+                <span className="mr-2">🏨</span> Hosted Buyer
+              </a>
+              <a href="/business/registration" className="text-white py-3 px-4 border-b border-white/20 hover:bg-white/10 rounded-lg flex items-center">
+                <span className="mr-2">🤝</span> Business Matching
+              </a>
+              <a href="/about" className="text-white py-3 px-4 hover:bg-white/10 rounded-lg flex items-center">
+                <span className="mr-2">ℹ️</span> About IBE
+              </a>
+            </nav>
+
+            {/* Mobile Authentication buttons */}
+            <div className="mt-4 flex flex-col space-y-3">
+              {loading ? (
+                <div className="w-full h-10 bg-gray-300 rounded-full animate-pulse"></div>
+              ) : user ? (
+                <>
+                  <div className="text-white mb-2">Hi, {user.name}</div>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full bg-white text-[#40033f] px-6 py-3 rounded-full text-sm font-bold"
+                  >
+                    Log Out
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    onClick={() => setIsLoginOpen(true)}
+                    className="w-full bg-white text-[#40033f] px-6 py-3 rounded-full text-sm font-bold"
+                  >
+                    Sign In
+                  </button>
+                  <button
+                    onClick={() => setIsRegistrationOpen(true)}
+                    className="w-full px-6 py-3 text-sm font-bold text-white bg-transparent border border-white rounded-full"
+                  >
+                    Register
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
       </header>
 
       {/* Registration and Login Modals */}
@@ -228,21 +290,21 @@ const HostedBuyerProgram = () => {
       <Login isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
 
       {/* Hero Image with Title */}
-      <div className="relative h-48 md:h-64">
+      <div className="relative h-64 md:h-96 mb-12"> {/* Increased height and margin */}
         <div className="absolute inset-0 bg-center bg-cover" style={{ backgroundImage: "url('/images/bg-img.png')" }}></div>
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center ">
-          <h1 className="font-serif text-4xl font-bold text-white md:text-7xl drop-shadow-lg">
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+          <h1 className="font-serif text-4xl font-bold text-white md:text-7xl drop-shadow-lg mb-4">
             Hosted Buyer Program
           </h1>
-          <div className="z-20 flex justify-center mt-6 space-x-6">
+          <div className="z-20 flex flex-wrap justify-center mt-6 gap-4">
             <button
-              className="text-lg font-bold primary-btn"
+              className="text-lg font-bold primary-btn min-w-[180px]"
               onClick={() => window.location.href = '/hosted/registration'}
             >
               Hosted Buyer
             </button>
             <button
-              className="text-lg font-bold primary-btn"
+              className="text-lg font-bold primary-btn min-w-[180px]"
               onClick={() => window.location.href = '/business/registration'}
             >
               Business Matching
@@ -253,7 +315,6 @@ const HostedBuyerProgram = () => {
 
       {/* Buttons below hero section */}
 
-
       {/* Main Content */}
       <div className="flex-grow py-12 bg-white">
         <div className="container px-4 mx-auto">
@@ -263,7 +324,7 @@ const HostedBuyerProgram = () => {
               Why Hosted Buyer Program ?
             </h2>
 
-            <div className="grid max-w-6xl grid-cols-1 gap-8 p-6 mx-auto md:grid-cols-2">
+            <div className="grid max-w-6xl grid-cols-1 gap-8 p-3 sm:p-6 mx-auto md:grid-cols-2">
               {/* Feature 1 */}
               <div className="flex items-center p-4 space-x-4">
                 <div className="flex-shrink-0">
@@ -325,7 +386,6 @@ const HostedBuyerProgram = () => {
       </h1>
       <div className="max-w-6xl p-6 mx-auto">
 
-
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
         {steps.map((step) => (
           <div
@@ -337,13 +397,15 @@ const HostedBuyerProgram = () => {
                 <div className="mb-2 text-white">
                   {step.icon}
                 </div>
-                <h3 className="text-xl font-bold">
-                  {step.id}. {step.title}
-                </h3>
+                <h3 className="text-xl font-bold">{step.title}</h3>
+                <p className="mt-2">{step.description}</p>
               </div>
-              <p className="text-sm text-white">
-                {step.description}
-              </p>
+              <button
+                className="px-4 py-2 mt-4 text-sm font-bold text-white bg-transparent border border-white rounded-full"
+                onClick={() => window.location.href = step.url}
+              >
+                Learn More
+              </button>
             </div>
           </div>
         ))}
@@ -372,20 +434,28 @@ const HostedBuyerProgram = () => {
     </div>
 
     {/* Update the "Register Now" button at the bottom of the page to open registration modal if not logged in */}
-    <div className="z-20 flex justify-center mt-6 py-9">
+    <div className="z-20 flex justify-center my-12 py-6">
       <button
         type="button"
-        className="primary-btn text-[24px] font-bold"
+        className="primary-btn text-[24px] font-bold px-10 py-4 hover:shadow-lg transition-all duration-300"
         onClick={() => user ? alert("You're already registered!") : setIsRegistrationOpen(true)}
       >
         Register Now
       </button>
     </div>
 
-      {/* Simple Copyright Footer */}
-      <footer className="py-6 text-center text-gray-600 bg-gray-100">
-        <div className="container mx-auto">
-          <p>© {new Date().getFullYear()} IBE - International Beauty Expo. All rights reserved.</p>
+      {/* Enhanced Footer */}
+      <footer className="py-10 text-center text-gray-600 bg-gray-100 mt-auto">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col items-center">
+            <img className="w-32 mb-6" src="/images/logo.svg" alt="IBE Logo" />
+            <p className="mb-4">© {new Date().getFullYear()} IBE - International Beauty Expo. All rights reserved.</p>
+            <div className="flex space-x-6 mt-2">
+              <a href="#" className="text-gray-500 hover:text-[#40033f]">Privacy Policy</a>
+              <a href="#" className="text-gray-500 hover:text-[#40033f]">Terms & Conditions</a>
+              <a href="#" className="text-gray-500 hover:text-[#40033f]">Contact Us</a>
+            </div>
+          </div>
         </div>
       </footer>
     </div>

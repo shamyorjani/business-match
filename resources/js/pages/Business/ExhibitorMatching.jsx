@@ -403,13 +403,13 @@ const ExhibitorMatching = () => {
           </div>
         )}
 
-        <div className="info-bar">
-          <p className="info-counter">Showing {visibleExhibitors.length} out of {filteredExhibitors.length} matches</p>
-          <div className="flex items-center gap-4">
-            <p className="selected-counter">{validSelectedExhibitors.length} Exhibitor(s) selected</p>
+        <div className="info-bar flex flex-col md:flex-row justify-between items-start md:items-center gap-4 md:gap-0">
+          <p className="info-counter text-sm md:text-base">Showing {visibleExhibitors.length} out of {filteredExhibitors.length} matches</p>
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 w-full md:w-auto">
+            <p className="selected-counter text-sm md:text-base">{validSelectedExhibitors.length} Exhibitor(s) selected</p>
             {validSelectedExhibitors.length > 0 && (
               <button
-                className="btn-primary"
+                className="btn-primary w-full md:w-auto"
                 onClick={handleScheduleMeeting}
               >
                 Schedule meeting
@@ -433,18 +433,18 @@ const ExhibitorMatching = () => {
             </button>
           </div>
         ) : (
-          <div className="exhibitor-list">
+          <div className="exhibitor-list grid gap-4">
             {visibleExhibitors.map((exhibitor) => (
-              <div key={exhibitor.id} className="exhibitor-card">
-                <div className="exhibitor-flex">
-                <div className="company-logo">
+              <div key={exhibitor.id} className="exhibitor-card p-4 border rounded-lg">
+                <div className="exhibitor-flex flex-col md:flex-row gap-4">
+                  <div className="company-logo w-full md:w-40 h-32 md:h-40 mx-auto md:mx-0">
                     {exhibitor.logo ? (
-                        <img src={`/assets/images/${exhibitor.logo}`} alt={`${exhibitor.company_name} logo`} className="object-contain w-full h-full" />
+                        <img src={`/assets/images/${exhibitor.logo}`} alt={`${exhibitor.company_name} logo`} className="object-contain w-full h-full bg-white" />
                     ) : (
                         <img
                             src={getCompanyLogo(exhibitor.company_name) || '/images/placeholder-logo.png'}
                             alt={`${exhibitor.company_name} logo`}
-                            className="object-contain w-full h-full"
+                            className="object-contain w-full h-full bg-white"
                             onError={(e) => {
                                 e.target.onerror = null;
                                 e.target.src = '/images/placeholder-logo.png';
@@ -454,41 +454,41 @@ const ExhibitorMatching = () => {
                 </div>
 
                 {/* Content */}
-                  <div className="card-content">
-                    <div className="card-grid">
-                      <div>
-                        <span className="label">Company Name: </span>
+                  <div className="card-content flex-1">
+                    <div className="card-grid grid md:grid-cols-2 gap-2">
+                      <div className="break-words">
+                        <span className="label font-semibold">Company Name: </span>
                         {exhibitor.company_name}
                       </div>
                       <div>
-                        <span className="label">Booth Number: </span>
+                        <span className="label font-semibold">Booth Number: </span>
                         {exhibitor.booth_number}
                       </div>
-                      <div>
-                        <span className="label">Country/Region: </span>
+                      <div className="col-span-1 md:col-span-2">
+                        <span className="label font-semibold">Country/Region: </span>
                         {exhibitor.region_country}
                       </div>
                     </div>
 
                     <div className="mt-2">
-                      <span className="label">Product Profile: </span>
+                      <span className="label font-semibold">Product Profile: </span>
                       {exhibitor.product_profile || 'No product profile available'}
                     </div>
 
                     <div className="mt-2">
-                      <span className="label">Company Description: </span>
+                      <span className="label font-semibold">Company Description: </span>
                       <p className="mt-1">{exhibitor.description}</p>
                     </div>
 
-                    <div className="flex justify-end gap-3 mt-4">
+                    <div className="flex flex-col sm:flex-row justify-end gap-3 mt-4">
                       <button
-                        className="btn-secondary"
+                        className="btn-secondary w-full sm:w-auto"
                         onClick={() => openProductModal(exhibitor.id)}
                       >
                         View Products
                       </button>
                       <button
-                        className={selectedExhibitors.includes(exhibitor.company_name) ? 'btn-selected' : 'btn-unselected'}
+                        className={`${selectedExhibitors.includes(exhibitor.company_name) ? 'btn-selected' : 'btn-unselected'} w-full sm:w-auto`}
                         onClick={() => toggleSelection(exhibitor.company_name)}
                       >
                         {selectedExhibitors.includes(exhibitor.company_name) ? 'Selected' : 'Select'}
@@ -502,15 +502,15 @@ const ExhibitorMatching = () => {
         )}
 
         {/* Button row with show more and back buttons aligned horizontally */}
-        <div className="flex items-center justify-between mt-8 mb-4">
-          {/* Back to Interest Page Button - positioned at bottom left */}
-          <button className="btn-secondary" onClick={goBack}>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-8 mb-4">
+          {/* Back to Interest Page Button */}
+          <button className="btn-secondary w-full sm:w-auto" onClick={goBack}>
             &larr; Back to Interest
           </button>
 
           {/* Show More Button (only shown if there are more exhibitors to display) */}
           {displayCount < filteredExhibitors.length ? (
-            <button className="btn-primary btn-lg" onClick={loadMore}>
+            <button className="btn-primary btn-lg w-full sm:w-auto" onClick={loadMore}>
               Show More ({Math.min(5, filteredExhibitors.length - displayCount)} remaining)
             </button>
           ) : (
@@ -521,37 +521,37 @@ const ExhibitorMatching = () => {
 
       {/* Product Modal */}
       {showModal && currentProduct && (
-        <div className="modal-overlay" style={{ backgroundColor: '#584058B5' }}>
-          <div className="modal-container">
+        <div className="modal-overlay fixed inset-0 flex items-center justify-center z-50" style={{ backgroundColor: '#584058B5' }}>
+          <div className="modal-container bg-white rounded-lg shadow-lg w-[95%] md:w-[80%] max-w-2xl max-h-[90vh] overflow-y-auto">
             {/* Close button */}
             <button
               onClick={closeModal}
-              className="modal-close"
+              className="modal-close absolute top-2 right-2 text-gray-500 hover:text-gray-800 text-2xl font-bold"
             >
               ×
             </button>
 
-            <div className="modal-content">
+            <div className="modal-content p-4 md:p-6 flex flex-col items-center">
             {currentProduct.noProducts ? (
-              <div className="flex flex-col items-center justify-center w-full p-6 text-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16 mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div className="flex flex-col items-center justify-center w-full p-4 md:p-6 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-12 h-12 md:w-16 md:h-16 mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m0-10l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                 </svg>
-                <h3 className="mb-2 text-xl font-semibold text-gray-700">No Products Available</h3>
-                <p className="text-gray-600">
+                <h3 className="mb-2 text-lg md:text-xl font-semibold text-gray-700">No Products Available</h3>
+                <p className="text-sm md:text-base text-gray-600">
                   {currentProduct.companyName} does not have any products available at this time.
                 </p>
               </div>
             ) : (
               <>
-                <div className="product-logo">
+                <div className="product-logo w-full max-w-[200px] h-40 md:h-48 mb-4">
                     {currentProduct.image ? (
-                        <img src={`/assets/images/${currentProduct.image}`} alt={currentProduct.name} className="object-contain w-full h-full" />
+                        <img src={`/assets/images/${currentProduct.image}`} alt={currentProduct.name} className="object-contain w-full h-full bg-white" />
                     ) : (
                         <img
                             src={getProductImage(currentProduct.company_name || '', currentProduct.name) || '/images/placeholder-product.png'}
                             alt={currentProduct.name}
-                            className="object-contain w-full h-full"
+                            className="object-contain w-full h-full bg-white"
                             onError={(e) => {
                                 e.target.onerror = null;
                                 e.target.src = '/assets/images/logo1.jpg';
@@ -561,12 +561,12 @@ const ExhibitorMatching = () => {
                 </div>
 
                 {/* Product Details */}
-                <div className="w-[90%]">
-                  <h3 className="modal-title">Product Name: {currentProduct.name}</h3>
+                <div className="w-full">
+                  <h3 className="modal-title text-lg md:text-xl">Product Name: {currentProduct.name}</h3>
 
                   <div className="relative mt-4">
-                    <h4 className="modal-title">Product Description:</h4>
-                    <p className="mt-2 text-sm">{currentProduct.description}</p>
+                    <h4 className="modal-title text-base md:text-lg">Product Description:</h4>
+                    <p className="mt-2 text-sm md:text-base">{currentProduct.description}</p>
 
                     {/* Next button - only show if there are multiple products */}
                     {currentProduct.exhibitor_id && exhibitorProducts[currentProduct.exhibitor_id]?.length > 1 && (
