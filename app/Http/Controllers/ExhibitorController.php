@@ -184,7 +184,7 @@ class ExhibitorController extends Controller
                 return response()->json([
                     [
                         'id' => 0,
-                        'name' => 'No Exhibitor Found',
+                        'name' => 'No Products Available',
                         'description' => 'This exhibitor could not be found in our database.',
                         'image' => null,
                         'exhibitor_id' => $exhibitorId
@@ -194,12 +194,26 @@ class ExhibitorController extends Controller
 
             Log::info('Found exhibitor: ' . $exhibitorId . ' with company_id: ' . $exhibitor->company_id);
 
-            // Look for real products in the company_products table using company_id
-            $realProducts = CompanyProduct::where('company_id', $exhibitor->id)
-                                          ->where('status', 1)
-                                          ->get();
+            // Enhanced debug logging for company_id value
+            Log::info('Exhibitor data:', [
+                'id' => $exhibitor->id,
+                'company_id' => $exhibitor->company_id,
+                'company_name' => $exhibitor->company_name
+            ]);
 
-            Log::info('Query for products with company_id=' . $exhibitor->company_id . ' returned ' . $realProducts->count() . ' products');
+            // Look for real products in the company_products table
+            // Try with both exhibitor id and company_id to be safe
+            $realProducts = CompanyProduct::where(function($query) use ($exhibitor) {
+                                $query->where('company_id', $exhibitor->company_id)
+                                      ->orWhere('company_id', $exhibitor->id);
+                            })
+                            ->where('status', 1)
+                            ->get();
+
+            Log::info('Product query results:', [
+                'count' => $realProducts->count(),
+                'first_few' => $realProducts->take(2)->toArray()
+            ]);
 
             // Map products to response format
             $products = $realProducts->map(function($product) use ($exhibitorId) {
@@ -214,6 +228,7 @@ class ExhibitorController extends Controller
 
             // If no products found, return empty array with informative message
             if (empty($products)) {
+                Log::info("No products found for exhibitor ID: {$exhibitorId}");
                 return response()->json([
                     [
                         'id' => 0,

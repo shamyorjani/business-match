@@ -231,7 +231,8 @@ const ExhibitorMatching = () => {
       setCurrentProduct({
         name: 'Loading...',
         description: 'Loading product details...',
-        exhibitor_id: exhibitorId
+        exhibitor_id: exhibitorId,
+        noProducts: false // Add flag to track if there are no products
       });
       setShowModal(true);
       setCurrentProductIndex(0);
@@ -241,7 +242,15 @@ const ExhibitorMatching = () => {
         const response = await api.get(`/exhibitors/${exhibitorId}/products`);
         console.log('Product data received:', response.data);
 
-        if (response.data && response.data.length > 0) {
+        // Check if there are actual products (not just placeholder "no products" message)
+        // A real product won't have name containing "No Products" and will have a positive ID
+        const hasRealProducts = response.data &&
+                               response.data.length > 0 &&
+                               !response.data[0].name.includes('No Products') &&
+                               response.data[0].id > 0;
+
+        if (hasRealProducts) {
+          console.log('Found real products for exhibitor:', exhibitorId);
           // Store products in state for this specific exhibitor
           setExhibitorProducts(prev => ({
             ...prev,
@@ -251,7 +260,16 @@ const ExhibitorMatching = () => {
           // Set the first product as current
           setCurrentProduct(response.data[0]);
         } else {
-          throw new Error('No products found');
+          console.log('No real products found for exhibitor:', exhibitorId);
+          // Handle case where no products are found
+          const exhibitor = exhibitors.find(e => e.id === exhibitorId) || {};
+          const companyName = exhibitor.company_name || 'This company';
+
+          setCurrentProduct({
+            noProducts: true,
+            exhibitor_id: exhibitorId,
+            companyName: companyName
+          });
         }
       } else {
         // Use cached products
@@ -261,15 +279,14 @@ const ExhibitorMatching = () => {
     } catch (error) {
       console.error('Error fetching products:', error);
 
-      // Display error state in the modal
+      // Display error state as no products in the modal
       const exhibitor = exhibitors.find(e => e.id === exhibitorId) || {};
-      const companyName = exhibitor.company_name || 'Company';
+      const companyName = exhibitor.company_name || 'This company';
 
       setCurrentProduct({
-        name: `${companyName} Product`,
-        description: `Unable to load products for ${companyName}. Please try again later.`,
+        noProducts: true,
         exhibitor_id: exhibitorId,
-        image: null
+        companyName: companyName
       });
     }
   };
@@ -515,59 +532,73 @@ const ExhibitorMatching = () => {
             </button>
 
             <div className="modal-content">
-            <div className="product-logo">
-                {currentProduct.image ? (
-                    <img src={`/assets/images/${currentProduct.image}`} alt={currentProduct.name} className="object-contain w-full h-full" />
-                ) : (
-                    <img
-                        src={getProductImage(currentProduct.company_name || '', currentProduct.name) || '/images/placeholder-product.png'}
-                        alt={currentProduct.name}
-                        className="object-contain w-full h-full"
-                        onError={(e) => {
-                            e.target.onerror = null;
-                            e.target.src = '/assets/images/logo1.jpg';
-                        }}
-                    />
-                )}
-            </div>
-
-            {/* Product Details */}
-              <div className="w-[90%]">
-                <h3 className="modal-title">Product Name: {currentProduct.name}</h3>
-
-                <div className="relative mt-4">
-                  <h4 className="modal-title">Product Description:</h4>
-                  <p className="mt-2 text-sm">{currentProduct.description}</p>
-
-                  {/* Next button - only show if there are multiple products */}
-                  {currentProduct.exhibitor_id && exhibitorProducts[currentProduct.exhibitor_id]?.length > 1 && (
-                    <button
-                      onClick={() => nextProduct(currentProduct.exhibitor_id)}
-                      className="absolute right-0 text-xl font-bold transform -translate-y-1/2 top-1/2"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
-                  )}
+            {currentProduct.noProducts ? (
+              <div className="flex flex-col items-center justify-center w-full p-6 text-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="w-16 h-16 mb-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m0-10l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                </svg>
+                <h3 className="mb-2 text-xl font-semibold text-gray-700">No Products Available</h3>
+                <p className="text-gray-600">
+                  {currentProduct.companyName} does not have any products available at this time.
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="product-logo">
+                    {currentProduct.image ? (
+                        <img src={`/assets/images/${currentProduct.image}`} alt={currentProduct.name} className="object-contain w-full h-full" />
+                    ) : (
+                        <img
+                            src={getProductImage(currentProduct.company_name || '', currentProduct.name) || '/images/placeholder-product.png'}
+                            alt={currentProduct.name}
+                            className="object-contain w-full h-full"
+                            onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = '/assets/images/logo1.jpg';
+                            }}
+                        />
+                    )}
                 </div>
 
-                {/* Navigation dots - only show actual number of products */}
-                {currentProduct.exhibitor_id && exhibitorProducts[currentProduct.exhibitor_id]?.length > 0 && (
-                  <div className="flex items-center justify-center gap-2 mt-6">
-                    {exhibitorProducts[currentProduct.exhibitor_id].map((_, index) => (
-                      <span
-                        key={index}
-                        className={`dot ${currentProductIndex === index ? 'dot-active' : 'dot-inactive'}`}
-                        onClick={() => {
-                          setCurrentProductIndex(index);
-                          setCurrentProduct(exhibitorProducts[currentProduct.exhibitor_id][index]);
-                        }}
-                      ></span>
-                    ))}
+                {/* Product Details */}
+                <div className="w-[90%]">
+                  <h3 className="modal-title">Product Name: {currentProduct.name}</h3>
+
+                  <div className="relative mt-4">
+                    <h4 className="modal-title">Product Description:</h4>
+                    <p className="mt-2 text-sm">{currentProduct.description}</p>
+
+                    {/* Next button - only show if there are multiple products */}
+                    {currentProduct.exhibitor_id && exhibitorProducts[currentProduct.exhibitor_id]?.length > 1 && (
+                      <button
+                        onClick={() => nextProduct(currentProduct.exhibitor_id)}
+                        className="absolute right-0 text-xl font-bold transform -translate-y-1/2 top-1/2"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    )}
                   </div>
-                )}
-              </div>
+
+                  {/* Navigation dots - only show actual number of products */}
+                  {currentProduct.exhibitor_id && exhibitorProducts[currentProduct.exhibitor_id]?.length > 0 && (
+                    <div className="flex items-center justify-center gap-2 mt-6">
+                      {exhibitorProducts[currentProduct.exhibitor_id].map((_, index) => (
+                        <span
+                          key={index}
+                          className={`dot ${currentProductIndex === index ? 'dot-active' : 'dot-inactive'}`}
+                          onClick={() => {
+                            setCurrentProductIndex(index);
+                            setCurrentProduct(exhibitorProducts[currentProduct.exhibitor_id][index]);
+                          }}
+                        ></span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
             </div>
           </div>
         </div>
