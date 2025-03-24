@@ -19,6 +19,7 @@ const ExhibitorMatching = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [subcategories, setSubcategories] = useState([]);
   const [currentInterests, setCurrentInterests] = useState([]);
+  const [exhibitorProducts, setExhibitorProducts] = useState({});
 
   // Load selected exhibitors from localStorage when component mounts
   useEffect(() => {
@@ -226,41 +227,50 @@ const ExhibitorMatching = () => {
 
   const openProductModal = async (exhibitorId) => {
     try {
-      // Fetch products for this exhibitor
-      const response = await api.get(`/exhibitors/${exhibitorId}/products`);
+      // Show loading state in the modal
+      setCurrentProduct({
+        name: 'Loading...',
+        description: 'Loading product details...',
+        exhibitor_id: exhibitorId
+      });
+      setShowModal(true);
+      setCurrentProductIndex(0);
 
-      if (response.data && response.data.length > 0) {
-        setCurrentProduct(response.data[0]);
-        setCurrentProductIndex(0);
-        setShowModal(true);
+      // Fetch products for this exhibitor if not already cached
+      if (!exhibitorProducts[exhibitorId] || exhibitorProducts[exhibitorId].length === 0) {
+        const response = await api.get(`/exhibitors/${exhibitorId}/products`);
+        console.log('Product data received:', response.data);
+
+        if (response.data && response.data.length > 0) {
+          // Store products in state for this specific exhibitor
+          setExhibitorProducts(prev => ({
+            ...prev,
+            [exhibitorId]: response.data
+          }));
+
+          // Set the first product as current
+          setCurrentProduct(response.data[0]);
+        } else {
+          throw new Error('No products found');
+        }
       } else {
-        throw new Error('No products found');
+        // Use cached products
+        console.log('Using cached products for exhibitor', exhibitorId);
+        setCurrentProduct(exhibitorProducts[exhibitorId][0]);
       }
     } catch (error) {
       console.error('Error fetching products:', error);
 
-      // Fallback to sample products if API fails
+      // Display error state in the modal
       const exhibitor = exhibitors.find(e => e.id === exhibitorId) || {};
       const companyName = exhibitor.company_name || 'Company';
 
-      const sampleProducts = [
-        {
-          name: `${companyName} Concealer`,
-          description: `${companyName} Concealer is the state of the art concealer, developed in 1982. Its formula contains...`
-        },
-        {
-          name: `${companyName} Foundation`,
-          description: `${companyName} Foundation provides full coverage with a natural finish, perfect for all skin types.`
-        },
-        {
-          name: `${companyName} Highlighter`,
-          description: `${companyName} Highlighter gives a natural glow that lasts all day without fading.`
-        }
-      ];
-
-      setCurrentProduct(sampleProducts[0]);
-      setCurrentProductIndex(0);
-      setShowModal(true);
+      setCurrentProduct({
+        name: `${companyName} Product`,
+        description: `Unable to load products for ${companyName}. Please try again later.`,
+        exhibitor_id: exhibitorId,
+        image: null
+      });
     }
   };
 
@@ -268,44 +278,21 @@ const ExhibitorMatching = () => {
     setShowModal(false);
   };
 
-  const nextProduct = async (exhibitorId) => {
+  const nextProduct = (exhibitorId) => {
     try {
-      // Fetch products again or use a cached version
-      const response = await api.get(`/exhibitors/${exhibitorId}/products`);
+      // Check if we have products for this exhibitor
+      const products = exhibitorProducts[exhibitorId];
 
-      if (response.data && response.data.length > 0) {
-        const products = response.data;
+      if (products && products.length > 0) {
         const nextIndex = (currentProductIndex + 1) % products.length;
         setCurrentProductIndex(nextIndex);
         setCurrentProduct(products[nextIndex]);
       } else {
-        throw new Error('No products found');
+        // If no products in state, try to fetch them
+        openProductModal(exhibitorId);
       }
     } catch (error) {
-      console.error('Error fetching products:', error);
-
-      // Fallback to sample products if API fails
-      const exhibitor = exhibitors.find(e => e.id === exhibitorId) || {};
-      const companyName = exhibitor.company_name || 'Company';
-
-      const sampleProducts = [
-        {
-          name: `${companyName} Concealer`,
-          description: `${companyName} Concealer is the state of the art concealer, developed in 1982. Its formula contains...`
-        },
-        {
-          name: `${companyName} Foundation`,
-          description: `${companyName} Foundation provides full coverage with a natural finish, perfect for all skin types.`
-        },
-        {
-          name: `${companyName} Highlighter`,
-          description: `${companyName} Highlighter gives a natural glow that lasts all day without fading.`
-        }
-      ];
-
-      const nextIndex = (currentProductIndex + 1) % sampleProducts.length;
-      setCurrentProductIndex(nextIndex);
-      setCurrentProduct(sampleProducts[nextIndex]);
+      console.error('Error displaying next product:', error);
     }
   };
 
@@ -552,36 +539,34 @@ const ExhibitorMatching = () => {
                   <h4 className="modal-title">Product Description:</h4>
                   <p className="mt-2 text-sm">{currentProduct.description}</p>
 
-                  {/* Next button */}
-                  <button
-                    onClick={() => {
-                      const exhibitor = exhibitors.find(e => e.id === currentProduct?.exhibitor_id);
-                      if (exhibitor) {
-                        nextProduct(exhibitor.id);
-                      } else {
-                        // Fallback to old logic
-                        const exhibitor = exhibitors.find(e =>
-                          currentProduct.name.includes(e.company_name)
-                        );
-                        if (exhibitor) {
-                          nextProduct(exhibitor.id);
-                        }
-                      }
-                    }}
-                    className="absolute right-0 text-xl font-bold transform -translate-y-1/2 top-1/2"
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
+                  {/* Next button - only show if there are multiple products */}
+                  {currentProduct.exhibitor_id && exhibitorProducts[currentProduct.exhibitor_id]?.length > 1 && (
+                    <button
+                      onClick={() => nextProduct(currentProduct.exhibitor_id)}
+                      className="absolute right-0 text-xl font-bold transform -translate-y-1/2 top-1/2"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  )}
                 </div>
 
-                {/* Navigation dots */}
-                <div className="flex items-center justify-center gap-2 mt-6">
-                  <span className={`dot ${currentProductIndex === 0 ? 'dot-active' : 'dot-inactive'}`}></span>
-                  <span className={`dot ${currentProductIndex === 1 ? 'dot-active' : 'dot-inactive'}`}></span>
-                  <span className={`dot ${currentProductIndex === 2 ? 'dot-active' : 'dot-inactive'}`}></span>
-                </div>
+                {/* Navigation dots - only show actual number of products */}
+                {currentProduct.exhibitor_id && exhibitorProducts[currentProduct.exhibitor_id]?.length > 0 && (
+                  <div className="flex items-center justify-center gap-2 mt-6">
+                    {exhibitorProducts[currentProduct.exhibitor_id].map((_, index) => (
+                      <span
+                        key={index}
+                        className={`dot ${currentProductIndex === index ? 'dot-active' : 'dot-inactive'}`}
+                        onClick={() => {
+                          setCurrentProductIndex(index);
+                          setCurrentProduct(exhibitorProducts[currentProduct.exhibitor_id][index]);
+                        }}
+                      ></span>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

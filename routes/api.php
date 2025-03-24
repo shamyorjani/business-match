@@ -52,7 +52,7 @@ Route::post('/hosted-registration', [App\Http\Controllers\HostedRegistrationCont
 
 // Schedule Meetings Routes
 Route::get('/schedule-meetings/business', [ScheduleMeetingController::class, 'getBusinessMeetings']);
-
+;
 // Meeting approval routes
 Route::get('/business-meetings', [ScheduleMeetingController::class, 'getBusinessMeetings']);
 Route::post('/meetings/{id}/approve', [ScheduleMeetingController::class, 'approveMeeting']);

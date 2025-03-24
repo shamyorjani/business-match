@@ -38,10 +38,19 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   response => response,
   error => {
-    if (error.response && error.response.status === 401) {
-      // Handle unauthorized access - could redirect to login page
-      console.log('Unauthorized access, please log in');
-      // Could redirect to login or dispatch logout action
+    console.error('API Error:', error.response || error);
+
+    // Handle specific error cases
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      if (error.response.status === 401) {
+        // Unauthorized - clear local storage and redirect to login
+        localStorage.removeItem('auth_token');
+        localStorage.removeItem('user');
+        // Redirect to login page if needed
+        // window.location.href = '/login';
+      }
     }
 
     return Promise.reject(error);

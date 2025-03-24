@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\ExhibitorCompanyInfo;
 use App\Models\ProductSubCategory;
+use App\Models\CompanyProduct;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -173,61 +174,77 @@ class ExhibitorController extends Controller
     public function getProducts($exhibitorId)
     {
         try {
-            $exhibitor = ExhibitorCompanyInfo::findOrFail($exhibitorId);
+            Log::info('Fetching products for exhibitor ID: ' . $exhibitorId);
 
-            // For this example, we'll generate sample products based on subcategories
-            $products = [];
+            // First, verify the exhibitor exists
+            $exhibitor = ExhibitorCompanyInfo::find($exhibitorId);
 
-            // Safely decode JSON
-            $subCategoryIds = is_string($exhibitor->sub_categories)
-                ? json_decode($exhibitor->sub_categories, true)
-                : (is_array($exhibitor->sub_categories) ? $exhibitor->sub_categories : []);
-
-            if (empty($subCategoryIds) || !is_array($subCategoryIds)) {
-                $subCategoryIds = [];
-            }
-
-            $subCategories = ProductSubCategory::whereIn('id', $subCategoryIds)->get();
-
-            foreach ($subCategories as $index => $subCategory) {
-                if ($index < 3) { // Limit to 3 sample products
-                    $products[] = [
-                        'id' => $index + 1,
-                        'name' => "{$exhibitor->company_name} {$subCategory->name}",
-                        'description' => "Our premium {$subCategory->name} product is designed to meet the highest standards of quality and performance.",
-                        'image' => null
-                    ];
-                }
-            }
-
-            // If no subcategories found, fall back to generic products
-            if (empty($products)) {
-                $products = [
+            if (!$exhibitor) {
+                Log::warning("Exhibitor with ID {$exhibitorId} not found");
+                return response()->json([
                     [
-                        'id' => 1,
-                        'name' => "{$exhibitor->company_name} Concealer",
-                        'description' => "{$exhibitor->company_name} Concealer is the state of the art concealer, developed in 1982. Its formula contains...",
+                        'id' => 0,
+                        'name' => 'No Exhibitor Found',
+                        'description' => 'This exhibitor could not be found in our database.',
                         'image' => null,
-                    ],
-                    [
-                        'id' => 2,
-                        'name' => "{$exhibitor->company_name} Foundation",
-                        'description' => "{$exhibitor->company_name} Foundation provides full coverage with a natural finish, perfect for all skin types.",
-                        'image' => null,
-                    ],
-                    [
-                        'id' => 3,
-                        'name' => "{$exhibitor->company_name} Highlighter",
-                        'description' => "{$exhibitor->company_name} Highlighter gives a natural glow that lasts all day without fading.",
-                        'image' => null,
+                        'exhibitor_id' => $exhibitorId
                     ]
-                ];
+                ]);
             }
 
+            Log::info('Found exhibitor: ' . $exhibitorId . ' with company_id: ' . $exhibitor->company_id);
+
+            // Look for real products in the company_products table using company_id
+            $realProducts = CompanyProduct::where('company_id', $exhibitor->id)
+                                          ->where('status', 1)
+                                          ->get();
+
+            Log::info('Query for products with company_id=' . $exhibitor->company_id . ' returned ' . $realProducts->count() . ' products');
+
+            // Map products to response format
+            $products = $realProducts->map(function($product) use ($exhibitorId) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name ?? 'Unnamed Product',
+                    'description' => $product->description ?? 'No description available',
+                    'image' => $product->image,
+                    'exhibitor_id' => $exhibitorId // Keep exhibitor_id for frontend compatibility
+                ];
+            })->values()->toArray();
+
+            // If no products found, return empty array with informative message
+            if (empty($products)) {
+                return response()->json([
+                    [
+                        'id' => 0,
+                        'name' => 'No Products Available',
+                        'description' => 'No products are currently available for this exhibitor.',
+                        'image' => null,
+                        'exhibitor_id' => $exhibitorId
+                    ]
+                ]);
+            }
+
+            Log::info('Returning ' . count($products) . ' real products');
             return response()->json($products);
+
         } catch (\Exception $e) {
-            Log::error('Exception in getProducts: ' . $e->getMessage());
-            return response()->json(['error' => 'An error occurred while fetching products'], 500);
+            Log::error('Exception in getProducts: ' . $e->getMessage(), [
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            // Return a helpful error response with a valid array structure
+            return response()->json([
+                [
+                    'id' => 0,
+                    'name' => 'Error Loading Products',
+                    'description' => 'An error occurred while loading products. Please try again later.',
+                    'image' => null,
+                    'exhibitor_id' => $exhibitorId ?? 0
+                ]
+            ]);
         }
     }
 }
