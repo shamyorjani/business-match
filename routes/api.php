@@ -143,7 +143,7 @@ Route::post('/visitor/echo', [VisitorRegistrationController::class, 'echo']);
 Route::post('/hosted-registration', [App\Http\Controllers\HostedRegistrationController::class, 'register']);
 
 // Schedule Meetings Routes
-Route::get('/schedule-meetings/business', [ScheduleMeetingController::class, 'getBusinessMeetings']);
+// Route::get('/schedule-meetings/business', [ScheduleMeetingController::class, 'getBusinessMeetings']);
 
 // Meeting approval routes
 Route::get('/business-meetings', [ScheduleMeetingController::class, 'getBusinessMeetings']);

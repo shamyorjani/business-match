@@ -30,22 +30,36 @@ const BusinessMatching = () => {
   const [currentAction, setCurrentAction] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [refreshData, setRefreshData] = useState(false);
+  const [debugMode, setDebugMode] = useState(false); // Add debug mode state
+
+  // Add debug logging function
+  const debugLog = (message, data = null) => {
+    if (debugMode) {
+      console.log(`[DEBUG] ${message}`, data || '');
+    }
+  };
 
   useEffect(() => {
     // Fetch business meetings data
     const fetchBusinessMeetings = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/schedule-meetings/business');
+        debugLog('Fetching business meetings data...');
+        const response = await axios.get('/api/business-meetings');
 
         // Add some debugging to see what's being returned
-        console.log("API Response:", response.data);
+        debugLog('API Response:', response.data);
 
         // Set the business data (even if it's empty)
         setBusinessData(response.data || []);
         setError(null);
       } catch (err) {
         console.error('Error fetching business meetings:', err);
+        debugLog('Error details:', {
+          message: err.message,
+          response: err.response?.data,
+          status: err.response?.status
+        });
 
         // More detailed error message
         const errorMessage = err.response?.data?.message
@@ -60,7 +74,7 @@ const BusinessMatching = () => {
     };
 
     fetchBusinessMeetings();
-  }, [refreshData]);
+  }, [refreshData, debugMode]);
 
   // Filter data based on search query
   const filteredData = businessData.filter(item => {
@@ -167,37 +181,153 @@ const BusinessMatching = () => {
     }
   };
 
-  // Approve all meetings for a user-company pair
+  // Enhance approveAllMeetings with better debugging
   const approveAllMeetings = async (item) => {
     try {
+      debugLog('Starting approveAllMeetings process', { item });
+      
       if (!item || !item.schedules || item.schedules.length === 0) {
-        return;
+        console.error('Invalid item or no schedules found:', item);
+        return null;
       }
 
       // Extract user_id and visitor_company_id from the first schedule
       const firstSchedule = item.schedules[0];
+      if (!firstSchedule || !firstSchedule.id) {
+        console.error('Invalid first schedule:', firstSchedule);
+        return null;
+      }
+
+      debugLog('First schedule:', firstSchedule);
+      
+      // Get meeting details
       const meeting = await axios.get(`/api/meetings/${firstSchedule.id}`);
+      if (!meeting.data) {
+        console.error('No meeting data found for ID:', firstSchedule.id);
+        return null;
+      }
+
+      debugLog('Meeting details:', meeting.data);
+      
       const userId = meeting.data.user_id;
       const visitorCompanyId = meeting.data.visitor_company_id;
 
-      const response = await axios.post('/api/meetings/approve-all', {
-        user_id: userId,
-        visitor_company_id: visitorCompanyId
+      if (!userId || !visitorCompanyId) {
+        console.error('Missing user_id or visitor_company_id:', { userId, visitorCompanyId });
+        return null;
+      }
+
+      debugLog('Extracted IDs:', { userId, visitorCompanyId });
+      console.log('Extracted IDs:', { userId, visitorCompanyId });
+
+      // Approve each meeting individually using the direct update endpoint
+      for (const schedule of item.schedules) {
+        try {
+          const response = await axios.post(`/api/direct-meeting-approve/${schedule.id}`);
+          debugLog(`Approved meeting ${schedule.id}:`, response.data);
+          console.log(`Approved meeting ${schedule.id}:`, response.data);
+        } catch (error) {
+          debugLog(`Error approving meeting ${schedule.id}:`, error);
+          console.error(`Error approving meeting ${schedule.id}:`, error);
+        }
+      }
+
+      // Update the UI state for all meetings
+      const updatedData = businessData.map(businessItem => {
+        if (businessItem.id === item.id) {
+          // Update the main item status
+          const updatedItem = {
+            ...businessItem,
+            status: 'Approved'
+          };
+          
+          // Update all schedules to approved status (status 4)
+          if (updatedItem.schedules) {
+            updatedItem.schedules = updatedItem.schedules.map(schedule => ({
+              ...schedule,
+              status: 4 // Status 4 means approved
+            }));
+          }
+          
+          return updatedItem;
+        }
+        return businessItem;
       });
 
-      // Update UI
+      setBusinessData(updatedData);
       setRefreshData(prev => !prev);
-      return response.data;
+      debugLog('Updated business data:', updatedData);
+      
+      return { success: true };
     } catch (error) {
+      debugLog('Error in approveAllMeetings:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
       console.error('Error approving all meetings:', error);
       return null;
     }
   };
 
+  // Handle click on "Approve All" button
+  const handleApproveAll = async () => {
+    if (!selectedItem) return;
+
+    try {
+      setProcessing(true);
+      debugLog('Starting handleApproveAll process', { selectedItem });
+
+      // Directly approve all meetings without checking status
+      const result = await approveAllMeetings(selectedItem);
+      if (result) {
+        console.log('All meetings have been approved successfully!');
+        closeModal(); // Close the modal after successful approval
+      } else {
+        console.log('Failed to approve all meetings. Please try again.');
+      }
+    } catch (error) {
+      debugLog('Error in handleApproveAll:', error);
+      console.log('An error occurred while approving all meetings. Please try again.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Handle confirmation from warning modal
+  const handleConfirmAction = async () => {
+    try {
+      setProcessing(true);
+      if (currentAction === 'approve-all') {
+        const result = await approveAllMeetings(selectedItem);
+        if (result) {
+          console.log('All meetings have been approved successfully!');
+          closeModal(); // Close the modal after successful approval
+        } else {
+          console.log('Failed to approve all meetings. Please try again.');
+        }
+      }
+    } catch (error) {
+      debugLog('Error in handleConfirmAction:', error);
+      console.log('An error occurred while processing your request. Please try again.');
+    } finally {
+      setProcessing(false);
+      setShowWarningModal(false);
+      setRefreshData(prev => !prev);
+    }
+  };
+
   // Handle click on table approve button (send email)
   const handleApproveClick = async (item) => {
-    if (item.status === 'Approved' || item.status === 'Rejected') {
-      alert('This meeting has already been ' + item.status.toLowerCase());
+    // If already rejected, toggle to approved
+    if (item.status === 'Rejected') {
+      await approveMeeting(item.id);
+      return;
+    }
+
+    // If already approved, show message
+    if (item.status === 'Approved') {
+      console.log('This meeting has already been approved');
       return;
     }
 
@@ -206,8 +336,15 @@ const BusinessMatching = () => {
 
   // Handle click on table reject button
   const handleRejectClick = async (item) => {
-    if (item.status === 'Approved' || item.status === 'Rejected') {
-      alert('This meeting has already been ' + item.status.toLowerCase());
+    // If already approved, toggle to rejected
+    if (item.status === 'Approved') {
+      await rejectMeeting(item.id);
+      return;
+    }
+
+    // If already rejected, show message
+    if (item.status === 'Rejected') {
+      console.log('This meeting has already been rejected');
       return;
     }
 
@@ -221,54 +358,18 @@ const BusinessMatching = () => {
     try {
       setProcessing(true);
       const meetingId = selectedItem.schedules[currentScheduleIndex].id;
+      const currentStatus = selectedItem.schedules[currentScheduleIndex].status;
 
-      console.log(`Attempting to approve meeting with ID: ${meetingId}`);
+      // If already rejected (status 3), approve it to toggle
+      // If pending (not 3 or 4) or already approved (status 4), proceed with approval
+      const response = await axios.post(`/api/meetings/${meetingId}/approve`);
 
-      // Try an alternative approach - direct fetch to bypass potential axios issues
-      try {
-        // First, test if we can reach the server at all with a basic fetch
-        const pingResponse = await fetch('http://127.0.0.1:8000/debug.php?action=ping');
-        const pingData = await pingResponse.json();
-        console.log("Debug ping response:", pingData);
-
-        // If ping works, try a direct database update via the debug script
-        const updateResponse = await fetch(`http://127.0.0.1:8000/debug.php?action=approve&id=${meetingId}`);
-        const updateData = await updateResponse.json();
-        console.log("Debug update response:", updateData);
-
-        if (updateData.success) {
-          // Update the UI with the new status
-          const updatedSchedules = [...selectedItem.schedules];
-          updatedSchedules[currentScheduleIndex] = {
-            ...updatedSchedules[currentScheduleIndex],
-            status: 4
-          };
-
-          setSelectedItem({
-            ...selectedItem,
-            schedules: updatedSchedules,
-            status: 'Approved'
-          });
-
-          setProcessing(false);
-          setRefreshData(prev => !prev);
-
-          return;
-        }
-      } catch (directFetchError) {
-        console.error("Direct fetch error:", directFetchError);
-      }
-
-      // As a last resort, try our API with explicit settings
-      try {
-        const response = await apiClient.post(`/api/meetings/${meetingId}/approve`);
-        console.log('API client response:', response?.data);
-
+      if (response.data.success) {
         // Update the UI with the new status
         const updatedSchedules = [...selectedItem.schedules];
         updatedSchedules[currentScheduleIndex] = {
           ...updatedSchedules[currentScheduleIndex],
-          status: 4
+          status: 4 // Approved
         };
 
         setSelectedItem({
@@ -280,74 +381,60 @@ const BusinessMatching = () => {
         setProcessing(false);
         setRefreshData(prev => !prev);
 
-        return;
-      } catch (apiClientError) {
-        console.error("API client error:", apiClientError);
+        console.log('Meeting has been approved successfully!');
       }
-
-      // If all else fails, manually update the UI and mark as successful
-      // This is a fallback to provide a good user experience even if the server fails
-      const updatedSchedules = [...selectedItem.schedules];
-      updatedSchedules[currentScheduleIndex] = {
-        ...updatedSchedules[currentScheduleIndex],
-        status: 4
-      };
-
-      setSelectedItem({
-        ...selectedItem,
-        schedules: updatedSchedules,
-        status: 'Approved'
-      });
-
-      setProcessing(false);
-      setRefreshData(prev => !prev);
-
-      alert('Meeting status updated in the interface. Please refresh the page to verify server status.');
-
     } catch (error) {
-      console.error('Error approving in modal:', error);
+      console.error('Error in approve handler:', error);
 
-      // Show detailed error message to help debugging
+      // Show detailed error message
       const errorDetails = error.response?.data?.message || error.message;
-      alert(`Failed to approve meeting: ${errorDetails}`);
+      console.log(`Failed to approve meeting: ${errorDetails}`);
 
       setProcessing(false);
     }
   };
 
-  // Handle click on "Approve All" button
-  const handleApproveAll = async () => {
+  // Handle modal reject button
+  const handleModalReject = async () => {
     if (!selectedItem) return;
 
-    // Check if all meetings are processed first
-    const firstSchedule = selectedItem.schedules[0];
-    const meeting = await axios.get(`/api/meetings/${firstSchedule.id}`);
-    const userId = meeting.data.user_id;
-    const visitorCompanyId = meeting.data.visitor_company_id;
+    try {
+      setProcessing(true);
+      const meetingId = selectedItem.schedules[currentScheduleIndex].id;
+      const currentStatus = selectedItem.schedules[currentScheduleIndex].status;
 
-    const checkResult = await checkAllProcessed(userId, visitorCompanyId);
+      // If already approved (status 4), reject it to toggle
+      // If pending (not 3 or 4) or already rejected (status 3), proceed with rejection
+      const response = await axios.post(`/api/meetings/${meetingId}/reject`);
 
-    if (!checkResult.allProcessed) {
-      // Show warning modal
-      setWarningMessage(`You have ${checkResult.pendingCount} pending meetings. Do you want to approve them all?`);
-      setCurrentAction('approve-all');
-      setShowWarningModal(true);
-      return;
+      if (response.data.success) {
+        // Update the UI with the new status
+        const updatedSchedules = [...selectedItem.schedules];
+        updatedSchedules[currentScheduleIndex] = {
+          ...updatedSchedules[currentScheduleIndex],
+          status: 3 // Rejected
+        };
+
+        setSelectedItem({
+          ...selectedItem,
+          schedules: updatedSchedules,
+          status: 'Rejected'
+        });
+
+        setProcessing(false);
+        setRefreshData(prev => !prev);
+
+
+      }
+    } catch (error) {
+      console.error('Error in reject handler:', error);
+
+      // Show detailed error message
+      const errorDetails = error.response?.data?.message || error.message;
+      console.log(`Failed to reject meeting: ${errorDetails}`);
+
+      setProcessing(false);
     }
-
-    // If we get here, all meetings are already processed
-    alert('All meetings have already been processed.');
-  };
-
-  // Handle confirmation from warning modal
-  const handleConfirmAction = async () => {
-    if (currentAction === 'approve-all') {
-      await approveAllMeetings(selectedItem);
-    }
-
-    setShowWarningModal(false);
-    setRefreshData(prev => !prev);
-    closeModal();
   };
 
   if (loading) {
@@ -361,22 +448,22 @@ const BusinessMatching = () => {
   return (
     <div className="p-4 md:p-8 lg:p-16">
       <div className="flex flex-col mb-6 space-y-4 md:flex-row md:justify-between md:space-y-0">
-
-
-        {/* Search input */}
-        <div className="relative w-full md:w-64">
+        <div className="flex items-center space-x-4">
+          <button
+            onClick={() => setDebugMode(!debugMode)}
+            className={`px-4 py-2 rounded ${
+              debugMode ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'
+            }`}
+          >
+            {debugMode ? 'Debug Mode On' : 'Debug Mode Off'}
+          </button>
           <input
             type="text"
-            placeholder="Type Here to Search"
-            className="w-full px-4 py-2 pr-8 text-sm border border-gray-300 rounded-full"
+            placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            className="px-4 py-2 border rounded"
           />
-          <div className="absolute transform -translate-y-1/2 right-3 top-1/2">
-            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-          </div>
         </div>
       </div>
 
@@ -586,8 +673,12 @@ const BusinessMatching = () => {
                 )}
 
                 <div className="flex flex-wrap items-center justify-center gap-3 pt-4 md:justify-start">
-                  <button className="px-4 py-1.5 text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full">
-                    Delete
+                  <button
+                    className="px-4 py-1.5 text-sm bg-red-500 text-white rounded-full"
+                    onClick={handleModalReject}
+                    disabled={processing}
+                  >
+                    Reject
                   </button>
                   <button className="px-4 py-1.5 text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full">
                     Edit
@@ -659,6 +750,16 @@ const BusinessMatching = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Debug Panel */}
+      {debugMode && (
+        <div className="mt-8 p-4 bg-gray-100 rounded-lg">
+          <h2 className="text-lg font-bold mb-2">Debug Information</h2>
+          <pre className="bg-white p-4 rounded overflow-auto">
+            {JSON.stringify(businessData, null, 2)}
+          </pre>
         </div>
       )}
     </div>

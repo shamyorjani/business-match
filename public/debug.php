@@ -82,19 +82,19 @@ try {
             }
             break;
 
-        case 'approve':
-            $id = $_GET['id'] ?? 0;
-            $stmt = $db->prepare("UPDATE schedule_meetings SET status = 4 WHERE id = ?");
-            $result = $stmt->execute([$id]);
-            $rowCount = $stmt->rowCount();
+        // case 'approve':
+        //     $id = $_GET['id'] ?? 0;
+        //     $stmt = $db->prepare("UPDATE schedule_meetings SET status = 4 WHERE id = ?");
+        //     $result = $stmt->execute([$id]);
+        //     $rowCount = $stmt->rowCount();
 
-            echo json_encode([
-                'success' => $result && $rowCount > 0,
-                'message' => $result ? 'Meeting approved successfully' : 'No changes made',
-                'rowsAffected' => $rowCount,
-                'id' => $id
-            ]);
-            break;
+        //     echo json_encode([
+        //         'success' => $result && $rowCount > 0,
+        //         'message' => $result ? 'Meeting approved successfully' : 'No changes made',
+        //         'rowsAffected' => $rowCount,
+        //         'id' => $id
+        //     ]);
+        //     break;
 
         default:
             echo json_encode([

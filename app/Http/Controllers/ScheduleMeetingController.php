@@ -199,9 +199,9 @@ class ScheduleMeetingController extends Controller
             $userId = $request->input('user_id');
             $visitorCompanyId = $request->input('visitor_company_id');
 
+            // Get all meetings for this user-company pair regardless of status
             $meetings = ScheduleMeeting::where('user_id', $userId)
                 ->where('visitor_company_id', $visitorCompanyId)
-                ->where('status', StatusEnum::PENDING->value)
                 ->get();
 
             foreach ($meetings as $meeting) {
