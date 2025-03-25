@@ -60,7 +60,7 @@ class ScheduleMeetingController extends Controller
                     'company' => $firstMeeting->user->company_name ?? 'Unknown', // Get from user model
                     'companySize' => $firstMeeting->user->company_size ?? 'Unknown', // Get from user model
                     'documents' => !empty($firstMeeting->visitorCompany->company_document), // Check if document exists
-                    'status' => $firstMeeting->status === StatusEnum::APPROVED->value ? 'Approved' :
+                    'status' => $firstMeeting->status === StatusEnum::APPROVED->value || $firstMeeting->status === 4 ? 'Approved' :
                                ($firstMeeting->status === StatusEnum::REJECTED->value ? 'Rejected' : 'Pending'),
                     'phoneNumber' => $firstMeeting->user->phone_number ?? 'Unknown',
                     'registrationNumber' => '', // No direct field available
@@ -75,6 +75,7 @@ class ScheduleMeetingController extends Controller
                             'time' => $meeting->time,
                             'exhibitor' => $meeting->exhibitor,
                             'boothNumber' => $meeting->booth_number,
+                            'status' => $meeting->status,
                         ];
                     })->values()->all(),
                 ];
@@ -105,18 +106,44 @@ class ScheduleMeetingController extends Controller
      */
     public function approveMeeting(Request $request, $id)
     {
-        Log::info('Approve meeting request received');
+        // First log point - should appear even if there's an exception
+        file_put_contents(storage_path('logs/approval_debug.log'),
+            date('Y-m-d H:i:s') . " - Approval attempt for ID: $id\n",
+            FILE_APPEND);
+
         try {
-            $meeting = ScheduleMeeting::findOrFail($id);
-            $meeting->status = StatusEnum::APPROVED->value;
-            $meeting->save();
+            // Basic direct query rather than model to check if the record exists
+            $exists = \DB::table('schedule_meetings')->where('id', $id)->exists();
 
-            // Removed email sending functionality
+            if (!$exists) {
+                return response()->json(['error' => 'Meeting not found'], 404);
+            }
 
-            return response()->json(['success' => true, 'message' => 'Meeting approved successfully']);
-        } catch (\Throwable $e) {
-            Log::error('Error approving meeting: ' . $e->getMessage());
-            return response()->json(['error' => 'Failed to approve meeting', 'message' => $e->getMessage()], 500);
+            // Update directly with query builder to bypass potential model issues
+            $updated = \DB::table('schedule_meetings')
+                ->where('id', $id)
+                ->update(['status' => 4]);
+
+            // Log the outcome
+            file_put_contents(storage_path('logs/approval_debug.log'),
+                date('Y-m-d H:i:s') . " - Direct update result for ID: $id - " . ($updated ? 'Success' : 'Failed') . "\n",
+                FILE_APPEND);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Meeting approved successfully',
+                'updated' => $updated
+            ]);
+        } catch (\Exception $e) {
+            // Log the exception details
+            file_put_contents(storage_path('logs/approval_debug.log'),
+                date('Y-m-d H:i:s') . " - Exception for ID: $id - " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n",
+                FILE_APPEND);
+
+            return response()->json([
+                'error' => 'Failed to approve meeting',
+                'message' => $e->getMessage(),
+            ], 500);
         }
     }
 
@@ -178,11 +205,15 @@ class ScheduleMeetingController extends Controller
                 ->get();
 
             foreach ($meetings as $meeting) {
-                $meeting->status = StatusEnum::APPROVED->value;
+                $meeting->status = 4; // Status 4 means updated and approved
                 $meeting->save();
             }
 
-            // Removed email sending functionality
+            Log::info('All meetings approved successfully', [
+                'user_id' => $userId,
+                'visitor_company_id' => $visitorCompanyId,
+                'count' => $meetings->count()
+            ]);
 
             return response()->json([
                 'success' => true,

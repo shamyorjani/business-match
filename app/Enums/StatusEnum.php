@@ -2,47 +2,59 @@
 
 namespace App\Enums;
 
-enum StatusEnum: int
-{
-    case INACTIVE = 0;
-    case ACTIVE = 1;
-    case PENDING = 2;
-    case REJECTED = 3;
-    case APPROVED = 4;
-    case ARCHIVED = 5;
-    case DELETED = 6;
+// Add fallback logic in case PHP version doesn't support enums
+if (PHP_VERSION_ID < 80100) {
+    class StatusEnum {
+        const PENDING = 2;
+        const REJECTED = 3;
+        const APPROVED = 1;
+        const UPDATED_APPROVED = 4;
 
-    /**
-     * Get all status options as an array.
-     *
-     * @return array
-     */
-    public static function asArray(): array
-    {
-        return [
-            self::INACTIVE->value => 'Inactive',
-            self::ACTIVE->value => 'Active',
-            self::PENDING->value => 'Pending',
-            self::REJECTED->value => 'Rejected',
-            self::APPROVED->value => 'Approved',
-            self::ARCHIVED->value => 'Archived',
-            self::DELETED->value => 'Deleted',
-        ];
+        public static function getValue($case) {
+            return constant("self::$case");
+        }
     }
-
-    /**
-     * Get status label
-     */
-    public function label(): string
+} else {
+    enum StatusEnum: int
     {
-        return match($this) {
-            self::INACTIVE => 'Inactive',
-            self::ACTIVE => 'Active',
-            self::PENDING => 'Pending',
-            self::REJECTED => 'Rejected',
-            self::APPROVED => 'Approved',
-            self::ARCHIVED => 'Archived',
-            self::DELETED => 'Deleted',
-        };
+        case PENDING = 2;
+        case REJECTED = 3;
+        case APPROVED = 1;
+        case UPDATED_APPROVED = 4;
+
+        /**
+         * Get the integer value for this enum case
+         */
+        public function getValue(): int
+        {
+            return $this->value;
+        }
+
+        /**
+         * Get the enum case from an integer value
+         */
+        public static function fromValue(int $value): ?StatusEnum
+        {
+            foreach (self::cases() as $case) {
+                if ($case->value === $value) {
+                    return $case;
+                }
+            }
+
+            return null;
+        }
+
+        /**
+         * Get the display name for this status
+         */
+        public function getName(): string
+        {
+            return match($this) {
+                self::PENDING => 'Pending',
+                self::REJECTED => 'Rejected',
+                self::APPROVED => 'Approved',
+                self::UPDATED_APPROVED => 'Approved',
+            };
+        }
     }
 }
