@@ -41,10 +41,10 @@ const Registration = ({ isOpen, onClose }) => {
       });
 
       // Close the modal after successful registration
-      setTimeout(() => {
-        onClose();
-        window.location.reload();
-      }, 2000);
+      // setTimeout(() => {
+      //   onClose();
+      //   window.location.reload();
+      // }, 2000);
 
     } catch (error) {
       if (error.response && error.response.data.errors) {

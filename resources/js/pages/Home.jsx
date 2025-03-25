@@ -275,7 +275,7 @@ const HostedBuyerProgram = () => {
                   <button
                     onClick={() => setIsRegistrationOpen(true)}
                     className="w-full px-6 py-3 text-sm font-bold text-white bg-transparent border border-white rounded-full"
-                  >
+                  > 
                     Register
                   </button>
                 </>
