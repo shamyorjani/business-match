@@ -6,6 +6,8 @@ use App\Models\ScheduleMeeting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Enums\StatusEnum;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\wellcomeEmail;
 
 class ScheduleMeetingController extends Controller
 {
@@ -48,9 +50,9 @@ class ScheduleMeetingController extends Controller
             }
 
             // Group meetings by visitor company and user
-            $groupedMeetings = $meetingsData->groupBy(function($meeting) {
+            $groupedMeetings = $meetingsData->groupBy(function ($meeting) {
                 return $meeting->user_id . '-' . $meeting->visitor_company_id;
-            })->map(function($group) {
+            })->map(function ($group) {
                 // Get the first meeting to extract user and company info
                 $firstMeeting = $group->first();
 
@@ -60,13 +62,12 @@ class ScheduleMeetingController extends Controller
                     'company' => $firstMeeting->user->company_name ?? 'Unknown', // Get from user model
                     'companySize' => $firstMeeting->user->company_size ?? 'Unknown', // Get from user model
                     'documents' => !empty($firstMeeting->visitorCompany->company_document), // Check if document exists
-                    'status' => $firstMeeting->status === StatusEnum::APPROVED->value || $firstMeeting->status === 4 ? 'Approved' :
-                               ($firstMeeting->status === StatusEnum::REJECTED->value ? 'Rejected' : 'Pending'),
+                    'status' => $firstMeeting->status === StatusEnum::APPROVED->value || $firstMeeting->status === 4 ? 'Approved' : ($firstMeeting->status === StatusEnum::REJECTED->value ? 'Rejected' : 'Pending'),
                     'phoneNumber' => $firstMeeting->user->phone_number ?? 'Unknown',
                     'registrationNumber' => '', // No direct field available
                     'businessNature' => $firstMeeting->user->company_nature ?? 'Unknown',
                     'country' => $firstMeeting->visitorCompany->country ?? 'Unknown',
-                    'schedules' => $group->map(function($meeting) {
+                    'schedules' => $group->map(function ($meeting) {
                         return [
                             'id' => $meeting->id,
                             'day' => $meeting->day,
@@ -82,7 +83,6 @@ class ScheduleMeetingController extends Controller
             })->values()->all();
 
             return response()->json($groupedMeetings);
-
         } catch (\Throwable $e) {
             Log::error('Error in getBusinessMeetings: ' . $e->getMessage(), [
                 'file' => $e->getFile(),
@@ -107,9 +107,11 @@ class ScheduleMeetingController extends Controller
     public function approveMeeting(Request $request, $id)
     {
         // First log point - should appear even if there's an exception
-        file_put_contents(storage_path('logs/approval_debug.log'),
+        file_put_contents(
+            storage_path('logs/approval_debug.log'),
             date('Y-m-d H:i:s') . " - Approval attempt for ID: $id\n",
-            FILE_APPEND);
+            FILE_APPEND
+        );
 
         try {
             // Basic direct query rather than model to check if the record exists
@@ -125,9 +127,11 @@ class ScheduleMeetingController extends Controller
                 ->update(['status' => 4]);
 
             // Log the outcome
-            file_put_contents(storage_path('logs/approval_debug.log'),
+            file_put_contents(
+                storage_path('logs/approval_debug.log'),
                 date('Y-m-d H:i:s') . " - Direct update result for ID: $id - " . ($updated ? 'Success' : 'Failed') . "\n",
-                FILE_APPEND);
+                FILE_APPEND
+            );
 
             return response()->json([
                 'success' => true,
@@ -136,9 +140,11 @@ class ScheduleMeetingController extends Controller
             ]);
         } catch (\Exception $e) {
             // Log the exception details
-            file_put_contents(storage_path('logs/approval_debug.log'),
+            file_put_contents(
+                storage_path('logs/approval_debug.log'),
                 date('Y-m-d H:i:s') . " - Exception for ID: $id - " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n",
-                FILE_APPEND);
+                FILE_APPEND
+            );
 
             return response()->json([
                 'error' => 'Failed to approve meeting',
@@ -267,6 +273,53 @@ class ScheduleMeetingController extends Controller
         } catch (\Throwable $e) {
             Log::error('Error getting meeting: ' . $e->getMessage());
             return response()->json(['error' => 'Meeting not found', 'message' => $e->getMessage()], 404);
+        }
+    }
+
+    public function sendStatusEmail(Request $request)
+    {
+        try {
+            $userId = $request->input('user_id');
+            $visitorCompanyId = $request->input('visitor_company_id');
+            $schedules = $request->input('schedules');
+            $user = \App\Models\User::find($userId);
+
+            // Calculate counts for the email
+            $approvedCount = collect($schedules)->where('status', 4)->count();
+            $rejectedCount = collect($schedules)->where('status', 3)->count();
+            $pendingCount = collect($schedules)->whereNotIn('status', [3, 4])->count();
+
+            // Prepare data for the email template
+            $emailData = [
+                'user' => $user,
+                'schedules' => $schedules,
+                'approvedCount' => $approvedCount,
+                'rejectedCount' => $rejectedCount,
+                'pendingCount' => $pendingCount,
+                'totalMeetings' => count($schedules)
+            ];
+
+            $subject = "Meeting Schedule Status Update";
+
+            // Send email using the blade template
+            Mail::send('emails.meeting-status', $emailData, function($message) use ($user, $subject) {
+                $message->to($user->email)
+                        ->subject($subject);
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status email sent successfully',
+                'request' => $request->all(),
+                'user' => $user,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error sending status email: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send status email: ' . $e->getMessage(),
+                'error' => $e->getMessage()
+            ], 500);
         }
     }
 }

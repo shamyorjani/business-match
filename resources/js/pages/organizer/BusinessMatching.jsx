@@ -30,42 +30,20 @@ const BusinessMatching = () => {
   const [currentAction, setCurrentAction] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [refreshData, setRefreshData] = useState(false);
-  const [debugMode, setDebugMode] = useState(false); // Add debug mode state
-
-  // Add debug logging function
-  const debugLog = (message, data = null) => {
-    if (debugMode) {
-      console.log(`[DEBUG] ${message}`, data || '');
-    }
-  };
 
   useEffect(() => {
     // Fetch business meetings data
     const fetchBusinessMeetings = async () => {
       try {
         setLoading(true);
-        debugLog('Fetching business meetings data...');
         const response = await axios.get('/api/business-meetings');
-
-        // Add some debugging to see what's being returned
-        debugLog('API Response:', response.data);
-
-        // Set the business data (even if it's empty)
         setBusinessData(response.data || []);
         setError(null);
       } catch (err) {
         console.error('Error fetching business meetings:', err);
-        debugLog('Error details:', {
-          message: err.message,
-          response: err.response?.data,
-          status: err.response?.status
-        });
-
-        // More detailed error message
         const errorMessage = err.response?.data?.message
           ? `Failed to fetch business meetings: ${err.response.data.message}`
           : 'Failed to fetch business meetings. Please try again later.';
-
         setError(errorMessage);
         setBusinessData([]);
       } finally {
@@ -74,7 +52,7 @@ const BusinessMatching = () => {
     };
 
     fetchBusinessMeetings();
-  }, [refreshData, debugMode]);
+  }, [refreshData]);
 
   // Filter data based on search query
   const filteredData = businessData.filter(item => {
@@ -184,8 +162,6 @@ const BusinessMatching = () => {
   // Enhance approveAllMeetings with better debugging
   const approveAllMeetings = async (item) => {
     try {
-      debugLog('Starting approveAllMeetings process', { item });
-      
       if (!item || !item.schedules || item.schedules.length === 0) {
         console.error('Invalid item or no schedules found:', item);
         return null;
@@ -198,8 +174,6 @@ const BusinessMatching = () => {
         return null;
       }
 
-      debugLog('First schedule:', firstSchedule);
-      
       // Get meeting details
       const meeting = await axios.get(`/api/meetings/${firstSchedule.id}`);
       if (!meeting.data) {
@@ -207,8 +181,6 @@ const BusinessMatching = () => {
         return null;
       }
 
-      debugLog('Meeting details:', meeting.data);
-      
       const userId = meeting.data.user_id;
       const visitorCompanyId = meeting.data.visitor_company_id;
 
@@ -217,17 +189,11 @@ const BusinessMatching = () => {
         return null;
       }
 
-      debugLog('Extracted IDs:', { userId, visitorCompanyId });
-      console.log('Extracted IDs:', { userId, visitorCompanyId });
-
       // Approve each meeting individually using the direct update endpoint
       for (const schedule of item.schedules) {
         try {
           const response = await axios.post(`/api/direct-meeting-approve/${schedule.id}`);
-          debugLog(`Approved meeting ${schedule.id}:`, response.data);
-          console.log(`Approved meeting ${schedule.id}:`, response.data);
         } catch (error) {
-          debugLog(`Error approving meeting ${schedule.id}:`, error);
           console.error(`Error approving meeting ${schedule.id}:`, error);
         }
       }
@@ -256,11 +222,10 @@ const BusinessMatching = () => {
 
       setBusinessData(updatedData);
       setRefreshData(prev => !prev);
-      debugLog('Updated business data:', updatedData);
       
       return { success: true };
     } catch (error) {
-      debugLog('Error in approveAllMeetings:', {
+      console.error('Error in approveAllMeetings:', {
         message: error.message,
         response: error.response?.data,
         status: error.response?.status
@@ -276,7 +241,6 @@ const BusinessMatching = () => {
 
     try {
       setProcessing(true);
-      debugLog('Starting handleApproveAll process', { selectedItem });
 
       // Directly approve all meetings without checking status
       const result = await approveAllMeetings(selectedItem);
@@ -287,7 +251,6 @@ const BusinessMatching = () => {
         console.log('Failed to approve all meetings. Please try again.');
       }
     } catch (error) {
-      debugLog('Error in handleApproveAll:', error);
       console.log('An error occurred while approving all meetings. Please try again.');
     } finally {
       setProcessing(false);
@@ -308,7 +271,6 @@ const BusinessMatching = () => {
         }
       }
     } catch (error) {
-      debugLog('Error in handleConfirmAction:', error);
       console.log('An error occurred while processing your request. Please try again.');
     } finally {
       setProcessing(false);
@@ -317,38 +279,82 @@ const BusinessMatching = () => {
     }
   };
 
-  // Handle click on table approve button (send email)
-  const handleApproveClick = async (item) => {
-    // If already rejected, toggle to approved
-    if (item.status === 'Rejected') {
-      await approveMeeting(item.id);
-      return;
-    }
-
-    // If already approved, show message
-    if (item.status === 'Approved') {
-      console.log('This meeting has already been approved');
-      return;
-    }
-
-    await approveMeeting(item.id);
+  // Add new function to check pending meetings
+  const checkPendingMeetings = (item) => {
+    return item.schedules.some(schedule => schedule.status !== 3 && schedule.status !== 4);
   };
 
-  // Handle click on table reject button
-  const handleRejectClick = async (item) => {
-    // If already approved, toggle to rejected
-    if (item.status === 'Approved') {
-      await rejectMeeting(item.id);
-      return;
-    }
+  // Add new function to handle send email click
+  const handleSendEmailClick = async (item) => {
+    try {
+      setProcessing(true);
+      
+      // Check for pending meetings
+      if (checkPendingMeetings(item)) {
+        // Open the modal to show pending meetings
+        setSelectedItem(item);
+        setCurrentScheduleIndex(0);
+        setShowModal(true);
+        console.log('There are pending meetings. Please approve or reject them first.');
+        return;
+      }
 
-    // If already rejected, show message
-    if (item.status === 'Rejected') {
-      console.log('This meeting has already been rejected');
-      return;
-    }
+      try {
+        // Get meeting details to ensure we have the correct data
+        const meetingResponse = await axios.get(`/api/meetings/${item.id}`);
+        const meetingData = meetingResponse.data;
 
-    await rejectMeeting(item.id);
+        if (!meetingData || !meetingData.user_id || !meetingData.visitor_company_id) {
+          throw new Error('Invalid meeting data received');
+        }
+
+        try {
+          // Send status email with the correct data structure
+          const response = await axios.post('/api/meetings/send-status-email', {
+            user_id: meetingData.user_id,
+            visitor_company_id: meetingData.visitor_company_id,
+            schedules: item.schedules.map(schedule => ({
+              id: schedule.id,
+              day: schedule.day,
+              date: schedule.date,
+              dayOfWeek: schedule.dayOfWeek,
+              time: schedule.time,
+              exhibitor: schedule.exhibitor,
+              boothNumber: schedule.boothNumber,
+              status: schedule.status
+            }))
+          });
+
+          if (response.data.success) {
+            console.log(response.data);
+            console.log('Status email sent successfully');
+            // You could add a success notification here
+          } else {
+            throw new Error('Failed to send email: ' + (response.data.message || 'Unknown error'));
+          }
+        } catch (emailError) {
+          console.error('Error sending email:', emailError);
+          if (emailError.response) {
+            console.error('Email error response:', emailError.response.data);
+            throw new Error(`Failed to send email: ${emailError.response.data.message || 'Server error'}`);
+          }
+          throw emailError;
+        }
+      } catch (meetingError) {
+        console.error('Error fetching meeting details:', meetingError);
+        if (meetingError.response) {
+          console.error('Meeting error response:', meetingError.response.data);
+          throw new Error(`Failed to fetch meeting details: ${meetingError.response.data.message || 'Server error'}`);
+        }
+        throw meetingError;
+      }
+    } catch (error) {
+      console.error('Error in handleSendEmailClick:', error);
+      // You could add an error notification here
+      alert(error.message || 'An error occurred while sending the email. Please try again.');
+    } finally {
+      setProcessing(false);
+    }
   };
 
   // Handle click on modal approve button
@@ -424,7 +430,7 @@ const BusinessMatching = () => {
         setProcessing(false);
         setRefreshData(prev => !prev);
 
-
+        console.log('Meeting has been rejected successfully!');
       }
     } catch (error) {
       console.error('Error in reject handler:', error);
@@ -449,20 +455,12 @@ const BusinessMatching = () => {
     <div className="p-4 md:p-8 lg:p-16">
       <div className="flex flex-col mb-6 space-y-4 md:flex-row md:justify-between md:space-y-0">
         <div className="flex items-center space-x-4">
-          <button
-            onClick={() => setDebugMode(!debugMode)}
-            className={`px-4 py-2 rounded ${
-              debugMode ? 'bg-yellow-500 text-white' : 'bg-gray-200 text-gray-700'
-            }`}
-          >
-            {debugMode ? 'Debug Mode On' : 'Debug Mode Off'}
-          </button>
           <input
             type="text"
             placeholder="Search..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="px-4 py-2 border rounded"
+            className="w-full px-4 py-2 pr-8 text-sm border border-gray-300 rounded-full"
           />
         </div>
       </div>
@@ -549,24 +547,13 @@ const BusinessMatching = () => {
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-2">
                       <button
-                        className="p-2 text-white bg-green-500 rounded-full hover:bg-green-700"
-                        onClick={() => handleApproveClick(item)}
-                        disabled={processing || item.status === 'Approved' || item.status === 'Rejected'}
-                        aria-label="Approve"
+                        className="p-2 text-white bg-[#40033f] rounded-full hover:bg-[#2a0228] transition-colors duration-200"
+                        onClick={() => handleSendEmailClick(item)}
+                        disabled={processing}
+                        aria-label="Send Email"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </button>
-
-                      <button
-                        className="p-2 text-white bg-red-500 rounded-full hover:bg-red-700"
-                        onClick={() => handleRejectClick(item)}
-                        disabled={processing || item.status === 'Approved' || item.status === 'Rejected'}
-                        aria-label="Reject"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                         </svg>
                       </button>
                     </div>
@@ -601,6 +588,19 @@ const BusinessMatching = () => {
 
             <div className="p-6">
               <h2 className="mb-4 text-lg font-medium">Schedule Meetings:</h2>
+              
+              {/* Add warning message for pending meetings */}
+              {checkPendingMeetings(selectedItem) && (
+                <div className="p-4 mb-4 text-sm text-yellow-800 bg-yellow-100 rounded-lg">
+                  <div className="flex items-center">
+                    <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    <span>There are pending meetings. Please approve or reject them before sending the email.</span>
+                  </div>
+                </div>
+              )}
+
               <div className="px-0 md:px-4">
                 {/* Visitor Details */}
                 <div className="grid grid-cols-1 gap-2 text-sm md:grid-cols-2">
@@ -733,7 +733,7 @@ const BusinessMatching = () => {
               </button>
 
               <button
-                className="px-4 py-2 text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full min-w-[100px]"
+                  className="px-4 py-2 text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full min-w-[100px]"
                 onClick={() => setShowWarningModal(false)}
               >
                 Cancel
@@ -750,16 +750,6 @@ const BusinessMatching = () => {
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Debug Panel */}
-      {debugMode && (
-        <div className="mt-8 p-4 bg-gray-100 rounded-lg">
-          <h2 className="text-lg font-bold mb-2">Debug Information</h2>
-          <pre className="bg-white p-4 rounded overflow-auto">
-            {JSON.stringify(businessData, null, 2)}
-          </pre>
         </div>
       )}
     </div>

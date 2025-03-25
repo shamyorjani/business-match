@@ -19,7 +19,7 @@ Route::get('/send-mail', [MailController::class, 'sendMail']);
 
 // SPA catch-all route
 Route::get('/{any}', function () {
-    return view('layouts.app');
+    return View('layouts.app');
 })->where('any', '.*');
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
