@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../services/api'; // Import the API service
+import axios from 'axios';
 
 const ScheduleMeeting = () => {
   const location = useLocation();
@@ -21,6 +22,10 @@ const ScheduleMeeting = () => {
   // Add a new state for submission loading
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Add this new state to store unavailable slots
+  const [unavailableSlots, setUnavailableSlots] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+
   // Function to show message modal instead of alert
   const showMessage = (message) => {
     setMessageModalContent(message);
@@ -30,7 +35,26 @@ const ScheduleMeeting = () => {
   // Get selected exhibitors from navigation state
   const [companies, setCompanies] = useState([]);
 
+  // Add this new function to fetch unavailable slots
+  const fetchUnavailableSlots = async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.get('/unavailable-slots');
+      if (response.data.success) {
+        setUnavailableSlots(response.data.data.unavailable_slots);
+      }
+    } catch (error) {
+      console.error('Error fetching unavailable slots:', error);
+      showMessage('Error loading unavailable time slots. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
+    // Fetch unavailable slots when component mounts
+    fetchUnavailableSlots();
+
     // Try to load from localStorage first
     const storedSlots = JSON.parse(localStorage.getItem('selectedMeetingSlots')) || [];
 
@@ -253,12 +277,15 @@ const companyUnavailableSlots = {
     { day: 4, time: "2 pm" },
   ];
 
+  // Update the isSlotUnavailable function to use actual data
   const isSlotUnavailable = (day, time) => {
-    // Get the unavailable slots for the currently selected company
-    const companySlots = companyUnavailableSlots[selectedCompany] || defaultUnavailableSlots;
+    if (!selectedCompany || !unavailableSlots[selectedCompany]) {
+      return false;
+    }
 
-    // Check if this slot is unavailable for the selected company
-    return companySlots.some(slot => slot.day === day && slot.time === time);
+    return unavailableSlots[selectedCompany].some(slot => 
+      slot.day === day && slot.time === time
+    );
   };
 
   // Also check if the slot is already taken by another company
@@ -608,6 +635,13 @@ const companyUnavailableSlots = {
           </div>
         </div>
 
+        {/* Loading state */}
+        {isLoading && (
+          <div className="flex justify-center items-center py-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#40033f]"></div>
+          </div>
+        )}
+
         {/* Legend */}
         <div className="flex flex-wrap items-center gap-3 sm:gap-6 mb-4 font-medium">
           <div className="flex items-center">
@@ -629,65 +663,67 @@ const companyUnavailableSlots = {
         </div>
 
         {/* Schedule table with mobile responsiveness */}
-        <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
-          <table className="w-full border-collapse text-xs sm:text-sm">
-            <thead>
-              <tr>
-                <th className="p-1 sm:p-2 text-center border border-gray-300 bg-gray-50">
-                  <div>Time</div>
-                  <div className="text-[10px] sm:text-xs">(UTC+8)</div>
-                </th>
-                {days.map((day) => (
-                  <th key={day.day} className="p-1 sm:p-2 text-center border border-gray-300 bg-gray-50">
-                    <div>Day {day.day}</div>
-                    <div className="text-[10px] sm:text-xs">{day.date}</div>
-                    <div className="text-[10px] sm:text-xs">({day.dayOfWeek})</div>
+        {!isLoading && (
+          <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <table className="w-full border-collapse text-xs sm:text-sm">
+              <thead>
+                <tr>
+                  <th className="p-1 sm:p-2 text-center border border-gray-300 bg-gray-50">
+                    <div>Time</div>
+                    <div className="text-[10px] sm:text-xs">(UTC+8)</div>
                   </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {timeSlots.map((time) => (
-                <tr key={time}>
-                  <td className="p-1 sm:p-2 text-center border border-gray-300">{time}</td>
-                  {days.map((day) => {
-                    const unavailable = isSlotUnavailable(day.day, time);
-                    const isSelected = isAnyCompanySlotSelected(day.day, time);
-                    const slotCompany = getSlotCompany(day.day, time);
-                    const isOwnedByCurrentCompany = slotCompany === selectedCompany;
-                    const isTakenByOther = isSlotTakenByOtherCompany(day.day, time);
-
-                    let cellClass = "p-1 sm:p-2 border border-gray-300 text-center cursor-pointer min-w-[40px] sm:min-w-0";
-                    if (unavailable) {
-                      cellClass += " bg-[#9c0c40]"; // Company's unavailable slot
-                    } else if (isTakenByOther) {
-                      cellClass += " bg-orange-400 relative"; // Taken by another company
-                    } else if (isSelected && isOwnedByCurrentCompany) {
-                      cellClass += " bg-green-400 relative"; // Current company's selected slot
-                    }
-
-                    return (
-                      <td
-                        key={`${day.day}-${time}`}
-                        className={cellClass}
-                        onClick={() => handleSlotClick(day, time)}
-                        title={isOwnedByCurrentCompany ? "Click to cancel booking" :
-                               unavailable ? "Unavailable" :
-                               isTakenByOther ? `Booked by ${slotCompany}` : "Click to book"}
-                      >
-                        {isSelected && (
-                          <span className="absolute px-1 text-[9px] sm:text-xs font-medium -translate-x-1/2 bg-white rounded left-1/2 -top-3 whitespace-nowrap max-w-[80px] sm:max-w-none overflow-hidden text-ellipsis">
-                            {slotCompany}
-                          </span>
-                        )}
-                      </td>
-                    );
-                  })}
+                  {days.map((day) => (
+                    <th key={day.day} className="p-1 sm:p-2 text-center border border-gray-300 bg-gray-50">
+                      <div>Day {day.day}</div>
+                      <div className="text-[10px] sm:text-xs">{day.date}</div>
+                      <div className="text-[10px] sm:text-xs">({day.dayOfWeek})</div>
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {timeSlots.map((time) => (
+                  <tr key={time}>
+                    <td className="p-1 sm:p-2 text-center border border-gray-300">{time}</td>
+                    {days.map((day) => {
+                      const unavailable = isSlotUnavailable(day.day, time);
+                      const isSelected = isAnyCompanySlotSelected(day.day, time);
+                      const slotCompany = getSlotCompany(day.day, time);
+                      const isOwnedByCurrentCompany = slotCompany === selectedCompany;
+                      const isTakenByOther = isSlotTakenByOtherCompany(day.day, time);
+
+                      let cellClass = "p-1 sm:p-2 border border-gray-300 text-center cursor-pointer min-w-[40px] sm:min-w-0";
+                      if (unavailable) {
+                        cellClass += " bg-[#9c0c40]"; // Company's unavailable slot
+                      } else if (isTakenByOther) {
+                        cellClass += " bg-orange-400 relative"; // Taken by another company
+                      } else if (isSelected && isOwnedByCurrentCompany) {
+                        cellClass += " bg-green-400 relative"; // Current company's selected slot
+                      }
+
+                      return (
+                        <td
+                          key={`${day.day}-${time}`}
+                          className={cellClass}
+                          onClick={() => handleSlotClick(day, time)}
+                          title={isOwnedByCurrentCompany ? "Click to cancel booking" :
+                                 unavailable ? "Unavailable" :
+                                 isTakenByOther ? `Booked by ${slotCompany}` : "Click to book"}
+                        >
+                          {isSelected && (
+                            <span className="absolute px-1 text-[9px] sm:text-xs font-medium -translate-x-1/2 bg-white rounded left-1/2 -top-3 whitespace-nowrap max-w-[80px] sm:max-w-none overflow-hidden text-ellipsis">
+                              {slotCompany}
+                            </span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* Action buttons */}
         <div className="flex flex-col sm:flex-row justify-between mt-8 gap-3 sm:gap-0">

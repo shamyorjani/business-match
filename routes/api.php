@@ -21,6 +21,7 @@ use Illuminate\Support\Facades\Mail;
 use App\Mail\wellcomeEmail;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Controllers\UnavailableTimeSlotController;
 
 // Basic diagnostic endpoints
 Route::get('/ping', function () {
@@ -73,4 +74,10 @@ Route::post('/visitor/echo', [VisitorRegistrationController::class, 'echo']);
 
 // Hosted Buyer Registration endpoint
 Route::post('/hosted-registration', [App\Http\Controllers\HostedRegistrationController::class, 'register']);
+
+// Unavailable Time Slots routes
+Route::prefix('unavailable-slots')->group(function () {
+    Route::get('/', [UnavailableTimeSlotController::class, 'getUnavailableSlots']);
+    Route::get('/exhibitor/{exhibitorId}', [UnavailableTimeSlotController::class, 'getExhibitorUnavailableSlots']);
+});
 
