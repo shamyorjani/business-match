@@ -17,22 +17,43 @@ class LoginController extends Controller
      */
     public function login(Request $request)
     {
-        $credentials = $request->only('email', 'password');
+        try {
+            $credentials = $request->only('email', 'password');
 
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
-            $token = $user->createToken('API Token')->plainTextToken;
+            if (Auth::attempt($credentials)) {
+                $user = Auth::user();
+                
+                // Delete any existing tokens
+                $user->tokens()->delete();
+                
+                // Create new token
+                $token = $user->createToken('API Token')->plainTextToken;
 
-            // Log the successful login
-            Log::info('User logged in successfully', ['user' => $user]);
+                // Log the successful login
+                Log::info('User logged in successfully', ['user' => $user]);
 
-            return response()->json(['message' => 'Login successful', 'token' => $token]);
+                return response()->json([
+                    'message' => 'Login successful',
+                    'token' => $token,
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email
+                    ]
+                ]);
+            }
+
+            // Log the failed login attempt
+            Log::warning('Login failed for user', ['email' => $request->email]);
+
+            return response()->json(['message' => 'Unauthorized'], 401);
+        } catch (\Exception $e) {
+            Log::error('Login error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Internal server error',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        // Log the failed login attempt
-        Log::warning('Login failed for user', ['email' => $request->email]);
-
-        return response()->json(['message' => 'Unauthorized'], 401);
     }
 
     /**
@@ -42,11 +63,17 @@ class LoginController extends Controller
      */
     public function logout(Request $request)
     {
-        // Revoke the user's token
-        Auth::user()->tokens->each(function ($token) {
-            $token->delete();
-        });
+        try {
+            // Revoke the user's token
+            Auth::user()->tokens()->delete();
 
-        return response()->json(['message' => 'Logged out successfully']);
+            return response()->json(['message' => 'Logged out successfully']);
+        } catch (\Exception $e) {
+            Log::error('Logout error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Internal server error',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

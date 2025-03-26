@@ -192,7 +192,7 @@ const BusinessMatching = () => {
       // Approve each meeting individually using the direct update endpoint
       for (const schedule of item.schedules) {
         try {
-          const response = await axios.post(`/api/direct-meeting-approve/${schedule.id}`);
+          const response = await axios.post(`/api/meetings/${schedule.id}/approve`);
         } catch (error) {
           console.error(`Error approving meeting ${schedule.id}:`, error);
         }
@@ -359,6 +359,7 @@ const BusinessMatching = () => {
 
   // Handle click on modal approve button
   const handleModalApprove = async () => {
+    console.log('handleModalApprove');
     if (!selectedItem) return;
 
     try {
@@ -366,28 +367,32 @@ const BusinessMatching = () => {
       const meetingId = selectedItem.schedules[currentScheduleIndex].id;
       const currentStatus = selectedItem.schedules[currentScheduleIndex].status;
 
-      // If already rejected (status 3), approve it to toggle
-      // If pending (not 3 or 4) or already approved (status 4), proceed with approval
-      const response = await axios.post(`/api/meetings/${meetingId}/approve`);
+      // If status is 3 (rejected) or pending (not 4), proceed with approval
+      if (currentStatus === 3 || currentStatus !== 4) {
+        const response = await axios.post(`/api/meetings/${meetingId}/approve`);
 
-      if (response.data.success) {
-        // Update the UI with the new status
-        const updatedSchedules = [...selectedItem.schedules];
-        updatedSchedules[currentScheduleIndex] = {
-          ...updatedSchedules[currentScheduleIndex],
-          status: 4 // Approved
-        };
+        if (response.data.success) {
+          // Update the UI with the new status
+          const updatedSchedules = [...selectedItem.schedules];
+          updatedSchedules[currentScheduleIndex] = {
+            ...updatedSchedules[currentScheduleIndex],
+            status: 4 // Approved
+          };
 
-        setSelectedItem({
-          ...selectedItem,
-          schedules: updatedSchedules,
-          status: 'Approved'
-        });
+          setSelectedItem({
+            ...selectedItem,
+            schedules: updatedSchedules,
+            status: 'Approved'
+          });
 
+          setProcessing(false);
+          setRefreshData(prev => !prev);
+
+          console.log('Meeting has been approved successfully!');
+        }
+      } else {
+        console.log('Meeting is already approved');
         setProcessing(false);
-        setRefreshData(prev => !prev);
-
-        console.log('Meeting has been approved successfully!');
       }
     } catch (error) {
       console.error('Error in approve handler:', error);
@@ -686,9 +691,7 @@ const BusinessMatching = () => {
                   <button
                     className="px-4 py-1.5 text-sm bg-[#40033f] text-white rounded-full"
                     onClick={handleModalApprove}
-                    disabled={selectedItem.schedules[currentScheduleIndex].status === 4 ||
-                             selectedItem.schedules[currentScheduleIndex].status === 3 ||
-                             processing}
+                    
                   >
                     Approve
                   </button>

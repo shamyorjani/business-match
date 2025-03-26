@@ -29,54 +29,7 @@ Route::get('/ping', function () {
 
 Route::get('/send-mail', [MailController::class, 'sendMail']);
 
-Route::get('/direct-meeting-check/{id}', function ($id) {
-    try {
-        // Direct database query to bypass model issues
-        $meeting = DB::table('schedule_meetings')->where('id', $id)->first();
 
-        if (!$meeting) {
-            return response()->json(['error' => 'Meeting not found', 'id' => $id], 404);
-        }
-
-        return response()->json([
-            'success' => true,
-            'meeting' => $meeting
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => 'Database error',
-            'message' => $e->getMessage()
-        ], 500);
-    }
-});
-
-// Direct update endpoint - bypassing controller for testing
-Route::post('/direct-meeting-approve/{id}', function ($id) {
-    try {
-        // Check if meeting exists
-        $meeting = DB::table('schedule_meetings')->where('id', $id)->first();
-
-        if (!$meeting) {
-            return response()->json(['error' => 'Meeting not found', 'id' => $id], 404);
-        }
-
-        // Direct update without models
-        $result = DB::table('schedule_meetings')
-            ->where('id', $id)
-            ->update(['status' => 4]);
-
-        return response()->json([
-            'success' => true,
-            'updated' => $result,
-            'message' => 'Meeting updated successfully'
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => 'Database error',
-            'message' => $e->getMessage()
-        ], 500);
-    }
-});
 
 // Original API routes with prefix
 Route::prefix('meetings')->group(function () {
@@ -90,40 +43,6 @@ Route::prefix('meetings')->group(function () {
     Route::post('/send-status-email', [ScheduleMeetingController::class, 'sendStatusEmail']);
 });
 // [ScheduleMeetingController::class, 'sendStatusEmail']
-// Test endpoints for troubleshooting
-Route::get('/test', function () {
-    Log::info('Test endpoint hit');
-    return response()->json([
-        'status' => 'API is working!',
-        'timestamp' => now()->toDateTimeString()
-    ]);
-});
-
-// Add a simple test endpoint for meeting status updates
-Route::get('/test-meeting-update/{id}', function ($id) {
-    try {
-        $meeting = App\Models\ScheduleMeeting::find($id);
-        if (!$meeting) {
-            return response()->json([
-                'error' => 'Meeting not found',
-                'id' => $id
-            ], 404);
-        }
-
-        return response()->json([
-            'message' => 'Meeting found',
-            'id' => $meeting->id,
-            'status' => $meeting->status,
-            'model' => $meeting
-        ]);
-    } catch (\Exception $e) {
-        return response()->json([
-            'error' => 'Error finding meeting',
-            'message' => $e->getMessage(),
-            'trace' => $e->getTraceAsString()
-        ], 500);
-    }
-});
 
 Route::get('/visitor/test', [VisitorRegistrationController::class, 'test']);
 
@@ -137,6 +56,7 @@ Route::get('/user', function () {
     }
     return response()->json(null, 401);
 });
+
 
 // Product categories and subcategories
 Route::get('/categories', [ProductCategoryController::class, 'index']);

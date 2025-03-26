@@ -5,6 +5,7 @@ const Login = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({
     email: '',
     password: '',
+    remember: true
   });
 
   const [errors, setErrors] = useState({});
@@ -26,17 +27,24 @@ const Login = ({ isOpen, onClose }) => {
     try {
       const response = await login(formData);
 
+      // Store the token in localStorage
+      if (response.data.token) {
+        localStorage.setItem('auth_token', response.data.token);
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      }
+
       setSuccess(true);
       // Clear the form
       setFormData({
         email: '',
-        password: ''
+        password: '',
+        remember: true
       });
 
-      // Close the modal after successful login
+      // Close the modal and redirect to home page
       setTimeout(() => {
         onClose();
-        window.location.reload();
+        window.location.href = '/';
       }, 2000);
 
     } catch (error) {
@@ -57,9 +65,7 @@ const Login = ({ isOpen, onClose }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
       <div className="relative w-full max-w-md p-6 bg-white rounded-lg shadow-lg">
-
         <button onClick={onClose} className="modal-close">×</button>
-
         <h2 className="mb-4 text-2xl font-bold text-center text-[#40033f]">Sign In</h2>
 
         {success && (
@@ -91,7 +97,7 @@ const Login = ({ isOpen, onClose }) => {
             )}
           </div>
 
-          <div className="mb-6">
+          <div className="mb-4">
             <label className="block mb-1 text-sm font-medium" htmlFor="password">Password</label>
             <input
               type="password"
@@ -105,6 +111,19 @@ const Login = ({ isOpen, onClose }) => {
             {errors.password && (
               <p className="mt-1 text-xs text-red-600">{errors.password[0]}</p>
             )}
+          </div>
+
+          <div className="mb-6">
+            <label className="flex items-center">
+              <input
+                type="checkbox"
+                name="remember"
+                checked={formData.remember}
+                onChange={(e) => setFormData({ ...formData, remember: e.target.checked })}
+                className="rounded border-gray-300 text-[#40033f] shadow-sm focus:border-[#40033f] focus:ring focus:ring-[#40033f] focus:ring-opacity-50"
+              />
+              <span className="ml-2 text-sm text-gray-600">Remember me</span>
+            </label>
           </div>
 
           <button
@@ -124,7 +143,6 @@ const Login = ({ isOpen, onClose }) => {
               onClick={(e) => {
                 e.preventDefault();
                 onClose();
-                // Add a small delay before opening registration modal
                 setTimeout(() => {
                   document.dispatchEvent(new CustomEvent('open-register-modal'));
                 }, 100);

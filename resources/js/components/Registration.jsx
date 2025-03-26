@@ -8,7 +8,8 @@ const Registration = ({ isOpen, onClose }) => {
     name: '',
     email: '',
     password: '',
-    password_confirmation: ''
+    password_confirmation: '',
+    remember_token: true
   });
 
   const [errors, setErrors] = useState({});
@@ -37,14 +38,15 @@ const Registration = ({ isOpen, onClose }) => {
         name: '',
         email: '',
         password: '',
-        password_confirmation: ''
+        password_confirmation: '',
+        remember_token: true
       });
 
-      // Close the modal after successful registration
-      // setTimeout(() => {
-      //   onClose();
-      //   window.location.reload();
-      // }, 2000);
+      // Close the modal and redirect to home page
+      setTimeout(() => {
+        onClose();
+        window.location.href = '/';
+      }, 2000);
 
     } catch (error) {
       if (error.response && error.response.data.errors) {
