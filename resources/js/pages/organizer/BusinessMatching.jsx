@@ -326,9 +326,15 @@ const BusinessMatching = () => {
           });
 
           if (response.data.success) {
-            console.log(response.data);
+            // Update the status to Email Sent in the table
+            const updatedData = businessData.map(businessItem => {
+              if (businessItem.id === item.id) {
+                return { ...businessItem, status: 'Email Sent' };
+              }
+              return businessItem;
+            });
+            setBusinessData(updatedData);
             console.log('Status email sent successfully');
-            // You could add a success notification here
           } else {
             throw new Error('Failed to send email: ' + (response.data.message || 'Unknown error'));
           }
@@ -543,10 +549,9 @@ const BusinessMatching = () => {
                   </td>
                   <td className="px-4 py-4 text-sm">
                     <span className={
-                      item.status === 'Approved' ? 'text-green-600' :
-                      item.status === 'Rejected' ? 'text-red-600' : ''
+                      item.status === 'Email Sent' ? 'text-green-600' : 'text-yellow-600'
                     }>
-                      {item.status}
+                      {item.status === 'Email Sent' ? 'Email Sent' : 'Pending'}
                     </span>
                   </td>
                   <td className="px-4 py-4">

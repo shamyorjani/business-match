@@ -14,6 +14,7 @@ use App\Http\Controllers\VisitorRegistrationController;
 use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\ScheduleMeetingController;
 use App\Http\Controllers\MailController;
+use App\Http\Controllers\EmailStatusController;
 use App\Models\ScheduleMeeting;
 use Illuminate\Support\Facades\Mail;
 
@@ -40,9 +41,10 @@ Route::prefix('meetings')->group(function () {
     Route::post('/approve-all', [ScheduleMeetingController::class, 'approveAllMeetings']);
     Route::post('/reject-all', [ScheduleMeetingController::class, 'rejectAllMeetings']);
     Route::get('/{id}', [ScheduleMeetingController::class, 'getMeeting']);
-    Route::post('/send-status-email', [ScheduleMeetingController::class, 'sendStatusEmail']);
 });
-// [ScheduleMeetingController::class, 'sendStatusEmail']
+
+// Email status routes
+Route::post('/meetings/send-status-email', [EmailStatusController::class, 'sendStatusEmail']);
 
 Route::get('/visitor/test', [VisitorRegistrationController::class, 'test']);
 
@@ -85,3 +87,9 @@ Route::post('/meetings/check-processed', [ScheduleMeetingController::class, 'che
 Route::post('/meetings/approve-all', [ScheduleMeetingController::class, 'approveAllMeetings']);
 Route::post('/meetings/reject-all', [ScheduleMeetingController::class, 'rejectAllMeetings']);
 Route::get('/meetings/{id}', [ScheduleMeetingController::class, 'getMeeting']);
+
+
+Route::get('/email-status', [EmailStatusController::class, 'getStatus']);
+Route::post('/email-status/mark-sent', [EmailStatusController::class, 'markAsSent']);
+Route::post('/email-status/reset', [EmailStatusController::class, 'resetAllStatuses']);
+

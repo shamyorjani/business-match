@@ -9,6 +9,7 @@ if (PHP_VERSION_ID < 80100) {
         const REJECTED = 3;
         const APPROVED = 1;
         const UPDATED_APPROVED = 4;
+        const EMAIL_SENT = 5;
 
         public static function getValue($case) {
             return constant("self::$case");
@@ -21,6 +22,7 @@ if (PHP_VERSION_ID < 80100) {
         case REJECTED = 3;
         case APPROVED = 1;
         case UPDATED_APPROVED = 4;
+        case EMAIL_SENT = 5;
 
         /**
          * Get the integer value for this enum case
@@ -54,6 +56,7 @@ if (PHP_VERSION_ID < 80100) {
                 self::REJECTED => 'Rejected',
                 self::APPROVED => 'Approved',
                 self::UPDATED_APPROVED => 'Approved',
+                self::EMAIL_SENT => 'Email Sent',
             };
         }
     }
