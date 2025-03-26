@@ -14,6 +14,9 @@ const Interest = () => {
     const [lastFetchTime, setLastFetchTime] = useState(0);
     const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
     const [lastLoadedIds, setLastLoadedIds] = useState([]); // Track IDs of loaded categories
+    const [currentPage, setCurrentPage] = useState(1); // Track current page
+    const [hasMore, setHasMore] = useState(true); // Track if there are more categories to load
+    const ITEMS_PER_PAGE = 10; // Number of categories to load per page
 
     // Load selected interests from local storage on component mount
     useEffect(() => {
@@ -164,10 +167,15 @@ const Interest = () => {
             const categoriesData = response.data;
 
             if (Array.isArray(categoriesData)) {
-                // Fetch subcategories for each category
+                // Calculate pagination
+                const startIndex = 0;
+                const endIndex = ITEMS_PER_PAGE;
+                const initialCategories = categoriesData.slice(startIndex, endIndex);
+                
+                // Fetch subcategories for initial categories
                 setLoadingMore(true);
                 const categoriesWithSubcategories = await Promise.all(
-                    categoriesData.map(async (category) => {
+                    initialCategories.map(async (category) => {
                         try {
                             const subcategoriesResponse = await api.get(`/categories/${category.id}/subcategories`);
                             return {
@@ -201,6 +209,8 @@ const Interest = () => {
                 setLastFetchTime(Date.now());
 
                 setCategories(filteredCategories);
+                setHasMore(categoriesData.length > ITEMS_PER_PAGE);
+                setCurrentPage(1);
                 setLoadingMore(false);
                 setLoading(false);
             } else {
@@ -213,23 +223,91 @@ const Interest = () => {
         }
     };
 
-    // Handle scroll events to implement lazy loading
+    // Function to load more categories
+    const loadMoreCategories = async () => {
+        if (loadingMore || !hasMore) return;
+
+        try {
+            setLoadingMore(true);
+            const response = await api.get('/categories');
+            const categoriesData = response.data;
+
+            if (Array.isArray(categoriesData)) {
+                const startIndex = currentPage * ITEMS_PER_PAGE;
+                const endIndex = startIndex + ITEMS_PER_PAGE;
+                const nextCategories = categoriesData.slice(startIndex, endIndex);
+
+                if (nextCategories.length === 0) {
+                    setHasMore(false);
+                    setLoadingMore(false);
+                    return;
+                }
+
+                // Fetch subcategories for next batch of categories
+                const categoriesWithSubcategories = await Promise.all(
+                    nextCategories.map(async (category) => {
+                        try {
+                            const subcategoriesResponse = await api.get(`/categories/${category.id}/subcategories`);
+                            return {
+                                ...category,
+                                subCategories: subcategoriesResponse.data
+                            };
+                        } catch (error) {
+                            console.error(`Error fetching subcategories for category ${category.id}:`, error);
+                            return {
+                                ...category,
+                                subCategories: []
+                            };
+                        }
+                    })
+                );
+
+                // Filter out categories without subcategories
+                const filteredNewCategories = categoriesWithSubcategories.filter(
+                    category => category.subCategories && category.subCategories.length > 0
+                );
+
+                if (filteredNewCategories.length === 0) {
+                    setHasMore(false);
+                    setLoadingMore(false);
+                    return;
+                }
+
+                // Update the list of loaded IDs
+                const updatedLoadedIds = [...lastLoadedIds, ...filteredNewCategories.map(cat => cat.id)];
+                setLastLoadedIds(updatedLoadedIds);
+
+                // Update categories state
+                setCategories(prevCategories => [...prevCategories, ...filteredNewCategories]);
+                setCurrentPage(prevPage => prevPage + 1);
+                setHasMore(endIndex < categoriesData.length);
+
+                // Update cache
+                const cachedData = JSON.parse(localStorage.getItem('categoriesCache') || '{}');
+                localStorage.setItem('categoriesCache', JSON.stringify({
+                    ...cachedData,
+                    categories: [...(cachedData.categories || []), ...filteredNewCategories],
+                    loadedIds: updatedLoadedIds
+                }));
+
+                setLoadingMore(false);
+            }
+        } catch (error) {
+            console.error('Error loading more categories:', error);
+            setLoadingMore(false);
+        }
+    };
+
+    // Update scroll handler to use new loadMoreCategories function
     useEffect(() => {
         const handleScroll = () => {
             if (loading || loadingMore) return;
 
-            // You would implement actual lazy loading logic here if needed
-            // This is a placeholder for demonstration
             const scrollPosition = window.innerHeight + window.scrollY;
             const pageHeight = document.body.offsetHeight;
 
             if (scrollPosition >= pageHeight - 300) {
-                // Load more categories if needed (this is just a simulation)
-                // In a real implementation, you would fetch the next page of categories
-                setLoadingMore(true);
-                setTimeout(() => {
-                    setLoadingMore(false);
-                }, 1000);
+                loadMoreCategories();
             }
         };
 
@@ -237,7 +315,7 @@ const Interest = () => {
         return () => {
             window.removeEventListener('scroll', handleScroll);
         };
-    }, [loading, loadingMore]);
+    }, [loading, loadingMore, hasMore, currentPage]);
 
     const handleSubmit = (e) => {
         e.preventDefault();
