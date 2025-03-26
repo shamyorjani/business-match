@@ -91,15 +91,17 @@ const Registration = () => {
       {/* Form Content */}
       <div className="p-3 sm:p-6 px-8 py-8 md:px-16 md:py-12 bg-white">
         {/* Step Indicator */}
-        <div className="mb-4 md:mb-8">
-          <h2 className="step-indicator">STEP 1</h2>
-          <div className="flex w-full overflow-hidden">
-            <svg width="100%" height="34" viewBox="0 0 400 40" preserveAspectRatio="xMidYMid meet">
-              <polygon points="240,0 340,0 360,20 340,40 240,40 260,20" fill="#E5E7EB" />
+        
+
+        <div className="mb-8">
+            <h2 className="step-indicator">STEP 1</h2>
+            <div className="flex">
+                <svg width="326" height="34" viewBox="0 0 400 40">
+                <polygon points="240,0 340,0 360,20 340,40 240,40 260,20" fill="#E5E7EB" />
               <polygon points="120,0 220,0 240,20 220,40 120,40 140,20" fill="#E5E7EB" />
               <polygon points="0,0 100,0 120,20 100,40 0,40" fill="#40033f" />
-            </svg>
-          </div>
+                </svg>
+            </div>
         </div>
 
         <form onSubmit={handleSubmit}>
@@ -185,8 +187,8 @@ const Registration = () => {
           <div className="mt-3 sm:mt-6 text-xs sm:text-sm text-red-600">*All fields are required to fill</div>
 
           {/* Next Button */}
-          <div className="flex justify-center sm:justify-end mt-4 sm:mt-6">
-            <button type="submit" className="primary-btn w-full sm:w-auto px-4 py-2">Next</button>
+          <div className="form-actions">
+            <button type="submit" className="primary-btn">Next</button>
           </div>
         </form>
       </div>
