@@ -56,13 +56,32 @@ class ScheduleMeetingController extends Controller
                 // Get the first meeting to extract user and company info
                 $firstMeeting = $group->first();
 
+                // Check email status
+                $emailStatus = \App\Models\EmailStatus::where('user_id', $firstMeeting->user_id)
+                    ->where('visitor_company_id', $firstMeeting->visitor_company_id)
+                    ->first();
+
+                // Determine the status based on email status and meeting status
+                $status = 'Pending';
+                if ($emailStatus && $emailStatus->status === StatusEnum::EMAIL_SENT->getValue()) {
+                    $status = 'Email Sent';
+                } else {
+                    // Check if all meetings are approved
+                    $allApproved = $group->every(function ($meeting) {
+                        return $meeting->status === StatusEnum::UPDATED_APPROVED->getValue();
+                    });
+                    if ($allApproved) {
+                        $status = 'Approved';
+                    }
+                }
+
                 return [
                     'id' => $firstMeeting->id,
                     'name' => $firstMeeting->user->name ?? 'Unknown',
-                    'company' => $firstMeeting->user->company_name ?? 'Unknown', // Get from user model
-                    'companySize' => $firstMeeting->user->company_size ?? 'Unknown', // Get from user model
-                    'documents' => !empty($firstMeeting->visitorCompany->company_document), // Check if document exists
-                    'status' => $firstMeeting->status === StatusEnum::APPROVED->value || $firstMeeting->status === 4 ? 'Approved' : ($firstMeeting->status === StatusEnum::REJECTED->value ? 'Rejected' : 'Pending'),
+                    'company' => $firstMeeting->user->company_name ?? 'Unknown',
+                    'companySize' => $firstMeeting->user->company_size ?? 'Unknown',
+                    'documents' => !empty($firstMeeting->visitorCompany->company_document),
+                    'status' => $status,
                     'phoneNumber' => $firstMeeting->user->phone_number ?? 'Unknown',
                     'registrationNumber' => '', // No direct field available
                     'businessNature' => $firstMeeting->user->company_nature ?? 'Unknown',
