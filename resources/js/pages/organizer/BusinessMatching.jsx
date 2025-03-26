@@ -851,113 +851,122 @@ const BusinessMatching = () => {
       {showEditModal && selectedItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(88, 64, 88, 0.7)' }}>
           <div className="relative w-full max-w-lg mx-auto overflow-hidden bg-white shadow-lg rounded-xl">
-            <button
-              onClick={() => setShowEditModal(false)}
-              className="absolute p-2 text-gray-400 top-2 right-2 hover:text-gray-600 focus:outline-none"
-              aria-label="Close"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-semibold text-gray-800">Edit Meeting Schedule</h2>
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="p-2 text-gray-400 transition-colors duration-200 rounded-full hover:bg-gray-200 hover:text-gray-600 focus:outline-none"
+                  aria-label="Close"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
 
             <div className="p-6">
-              <h2 className="mb-4 text-lg font-medium">Edit Meeting Schedule</h2>
-              
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Booth Number</label>
-                  <input
-                    type="text"
-                    value={editForm.booth_number}
-                    onChange={(e) => setEditForm({...editForm, booth_number: e.target.value})}
-                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
-                  />
-                </div>
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Booth Number</label>
+                    <input
+                      type="text"
+                      value={editForm.booth_number}
+                      onChange={(e) => setEditForm({...editForm, booth_number: e.target.value})}
+                      className="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#40033f] focus:border-transparent"
+                      placeholder="Enter booth number"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Date</label>
-                  <input
-                    type="date"
-                    value={editForm.date}
-                    onChange={(e) => setEditForm({...editForm, date: e.target.value})}
-                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Date</label>
+                    <input
+                      type="date"
+                      value={editForm.date}
+                      onChange={(e) => setEditForm({...editForm, date: e.target.value})}
+                      className="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#40033f] focus:border-transparent"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Day</label>
-                  <input
-                    type="number"
-                    value={editForm.day}
-                    onChange={(e) => setEditForm({...editForm, day: e.target.value})}
-                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Day</label>
+                    <input
+                      type="number"
+                      value={editForm.day}
+                      onChange={(e) => setEditForm({...editForm, day: e.target.value})}
+                      className="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#40033f] focus:border-transparent"
+                      placeholder="Enter day number"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Day of Week</label>
-                  <select
-                    value={editForm.day_of_week}
-                    onChange={(e) => setEditForm({...editForm, day_of_week: e.target.value})}
-                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
-                  >
-                    <option value="">Select Day</option>
-                    <option value="Monday">Monday</option>
-                    <option value="Tuesday">Tuesday</option>
-                    <option value="Wednesday">Wednesday</option>
-                    <option value="Thursday">Thursday</option>
-                    <option value="Friday">Friday</option>
-                    <option value="Saturday">Saturday</option>
-                    <option value="Sunday">Sunday</option>
-                  </select>
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Day of Week</label>
+                    <select
+                      value={editForm.day_of_week}
+                      onChange={(e) => setEditForm({...editForm, day_of_week: e.target.value})}
+                      className="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#40033f] focus:border-transparent"
+                    >
+                      <option value="">Select Day</option>
+                      <option value="Monday">Monday</option>
+                      <option value="Tuesday">Tuesday</option>
+                      <option value="Wednesday">Wednesday</option>
+                      <option value="Thursday">Thursday</option>
+                      <option value="Friday">Friday</option>
+                      <option value="Saturday">Saturday</option>
+                      <option value="Sunday">Sunday</option>
+                    </select>
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Exhibitor</label>
-                  <input
-                    type="text"
-                    value={editForm.exhibitor}
-                    onChange={(e) => setEditForm({...editForm, exhibitor: e.target.value})}
-                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Exhibitor</label>
+                    <input
+                      type="text"
+                      value={editForm.exhibitor}
+                      onChange={(e) => setEditForm({...editForm, exhibitor: e.target.value})}
+                      className="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#40033f] focus:border-transparent"
+                      placeholder="Enter exhibitor name"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Time</label>
-                  <input
-                    type="time"
-                    value={editForm.time}
-                    onChange={(e) => setEditForm({...editForm, time: e.target.value})}
-                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
-                  />
-                </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Time</label>
+                    <input
+                      type="time"
+                      value={editForm.time}
+                      onChange={(e) => setEditForm({...editForm, time: e.target.value})}
+                      className="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#40033f] focus:border-transparent"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
-                  <select
-                    value={editForm.status}
-                    onChange={(e) => setEditForm({...editForm, status: parseInt(e.target.value)})}
-                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
-                  >
-                    <option value="2">Pending</option>
-                    <option value="3">Rejected</option>
-                    <option value="4">Approved</option>
-                  </select>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Status</label>
+                    <select
+                      value={editForm.status}
+                      onChange={(e) => setEditForm({...editForm, status: parseInt(e.target.value)})}
+                      className="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#40033f] focus:border-transparent"
+                    >
+                      <option value="2">Pending</option>
+                      <option value="3">Rejected</option>
+                      <option value="4">Approved</option>
+                    </select>
+                  </div>
                 </div>
               </div>
 
-              <div className="flex justify-end gap-3 mt-6">
+              <div className="flex justify-end gap-3 pt-6 mt-6 border-t border-gray-200">
                 <button
                   onClick={() => setShowEditModal(false)}
-                  className="px-4 py-2 text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full"
+                  className="px-6 py-2 text-sm font-medium text-[#9c0c40] transition-colors duration-200 border border-[#9c0c40] rounded-full hover:bg-[#9c0c40] hover:text-white focus:outline-none focus:ring-2 focus:ring-[#9c0c40] focus:ring-offset-2"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleEditSubmit}
                   disabled={processing}
-                  className="px-4 py-2 text-sm text-white bg-[#40033f] rounded-full hover:bg-[#2a0228]"
+                  className="px-6 py-2 text-sm font-medium text-white transition-colors duration-200 bg-[#40033f] rounded-full hover:bg-[#2a0228] focus:outline-none focus:ring-2 focus:ring-[#40033f] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {processing ? 'Saving...' : 'Save Changes'}
                 </button>
