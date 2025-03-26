@@ -557,9 +557,13 @@ const BusinessMatching = () => {
                   <td className="px-4 py-4">
                     <div className="flex items-center gap-2">
                       <button
-                        className="p-2 text-white bg-[#40033f] rounded-full hover:bg-[#2a0228] transition-colors duration-200"
+                        className={`p-2 text-white rounded-full transition-colors duration-200 ${
+                          item.status === 'Email Sent' 
+                            ? 'bg-gray-400 cursor-not-allowed' 
+                            : 'bg-[#40033f] hover:bg-[#2a0228]'
+                        }`}
                         onClick={() => handleSendEmailClick(item)}
-                        disabled={processing}
+                        disabled={item.status === 'Email Sent' || processing}
                         aria-label="Send Email"
                       >
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

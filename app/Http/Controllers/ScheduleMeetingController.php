@@ -133,17 +133,21 @@ class ScheduleMeetingController extends Controller
         );
 
         try {
-            // Basic direct query rather than model to check if the record exists
-            $exists = \DB::table('schedule_meetings')->where('id', $id)->exists();
-
-            if (!$exists) {
+            // Get the meeting first to get user_id and visitor_company_id
+            $meeting = ScheduleMeeting::find($id);
+            if (!$meeting) {
                 return response()->json(['error' => 'Meeting not found'], 404);
             }
 
-            // Update directly with query builder to bypass potential model issues
+            // Update meeting status
             $updated = \DB::table('schedule_meetings')
                 ->where('id', $id)
                 ->update(['status' => 4]);
+
+            // Update email status to pending
+            \App\Models\EmailStatus::where('user_id', $meeting->user_id)
+                ->where('visitor_company_id', $meeting->visitor_company_id)
+                ->update(['status' => StatusEnum::PENDING->getValue()]);
 
             // Log the outcome
             file_put_contents(
@@ -181,6 +185,11 @@ class ScheduleMeetingController extends Controller
             $meeting = ScheduleMeeting::findOrFail($id);
             $meeting->status = StatusEnum::REJECTED->value;
             $meeting->save();
+
+            // Update email status to pending
+            \App\Models\EmailStatus::where('user_id', $meeting->user_id)
+                ->where('visitor_company_id', $meeting->visitor_company_id)
+                ->update(['status' => StatusEnum::PENDING->getValue()]);
 
             return response()->json(['success' => true, 'message' => 'Meeting rejected successfully']);
         } catch (\Throwable $e) {
@@ -303,10 +312,32 @@ class ScheduleMeetingController extends Controller
             $schedules = $request->input('schedules');
             $user = \App\Models\User::find($userId);
 
+            // Check if email has already been sent
+            $emailStatus = \App\Models\EmailStatus::where('user_id', $userId)
+                ->where('visitor_company_id', $visitorCompanyId)
+                ->first();
+
+            if ($emailStatus && $emailStatus->status === StatusEnum::EMAIL_SENT->getValue()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Email has already been sent for these meetings',
+                    'status' => 'Email Sent'
+                ], 400);
+            }
+
             // Calculate counts for the email
             $approvedCount = collect($schedules)->where('status', 4)->count();
             $rejectedCount = collect($schedules)->where('status', 3)->count();
             $pendingCount = collect($schedules)->whereNotIn('status', [3, 4])->count();
+
+            // Check if there are any pending meetings
+            if ($pendingCount > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cannot send email while there are pending meetings',
+                    'pendingCount' => $pendingCount
+                ], 400);
+            }
 
             // Prepare data for the email template
             $emailData = [
@@ -325,6 +356,21 @@ class ScheduleMeetingController extends Controller
                 $message->to($user->email)
                         ->subject($subject);
             });
+
+            // Update email status to sent
+            if ($emailStatus) {
+                $emailStatus->update([
+                    'status' => StatusEnum::EMAIL_SENT->getValue(),
+                    'email_sent_at' => now()
+                ]);
+            } else {
+                \App\Models\EmailStatus::create([
+                    'user_id' => $userId,
+                    'visitor_company_id' => $visitorCompanyId,
+                    'status' => StatusEnum::EMAIL_SENT->getValue(),
+                    'email_sent_at' => now()
+                ]);
+            }
 
             return response()->json([
                 'success' => true,
