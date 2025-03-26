@@ -6,6 +6,7 @@ use App\Models\ScheduleMeeting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Enums\StatusEnum;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\wellcomeEmail;
 
@@ -383,6 +384,48 @@ class ScheduleMeetingController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to send status email: ' . $e->getMessage(),
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Update a meeting
+     */
+    public function updateMeeting(Request $request, $id)
+    {
+        try {
+            $meeting = ScheduleMeeting::findOrFail($id);
+            
+            // Validate the request data
+            $validated = $request->validate([
+                'booth_number' => 'required|string',
+                'date' => 'required|date',
+                'day' => 'required|integer',
+                'day_of_week' => 'required|string',
+                'exhibitor' => 'required|string',
+                'time' => 'required',
+                'status' => 'required|integer'
+            ]);
+
+            // Update the meeting
+            $meeting->update($validated);
+
+            // Update email status to pending since meeting was modified
+            \App\Models\EmailStatus::where('user_id', $meeting->user_id)
+                ->where('visitor_company_id', $meeting->visitor_company_id)
+                ->update(['status' => StatusEnum::PENDING->getValue()]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Meeting updated successfully',
+                'meeting' => $meeting
+            ]);
+        } catch (\Throwable $e) {
+            Log::error('Error updating meeting: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to update meeting',
                 'error' => $e->getMessage()
             ], 500);
         }

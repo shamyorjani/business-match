@@ -18,11 +18,21 @@ const apiClient = axios.create({
 const BusinessMatching = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [currentScheduleIndex, setCurrentScheduleIndex] = useState(0);
   const [businessData, setBusinessData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [editForm, setEditForm] = useState({
+    booth_number: '',
+    date: '',
+    day: '',
+    day_of_week: '',
+    exhibitor: '',
+    time: '',
+    status: 2
+  });
 
   // New state variables for approval features
   const [showWarningModal, setShowWarningModal] = useState(false);
@@ -36,7 +46,7 @@ const BusinessMatching = () => {
     const fetchBusinessMeetings = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/business-meetings');
+        const response = await axios.get('/api/meetings');
         setBusinessData(response.data || []);
         setError(null);
       } catch (err) {
@@ -454,6 +464,75 @@ const BusinessMatching = () => {
     }
   };
 
+  // Add handleEditClick function
+  const handleEditClick = (item) => {
+    const currentSchedule = item.schedules[currentScheduleIndex];
+    setEditForm({
+      booth_number: currentSchedule.boothNumber || '',
+      date: currentSchedule.date || '',
+      day: currentSchedule.day || '',
+      day_of_week: currentSchedule.dayOfWeek || '',
+      exhibitor: currentSchedule.exhibitor || '',
+      time: currentSchedule.time || '',
+      status: currentSchedule.status || 2
+    });
+    setSelectedItem(item);
+    setShowEditModal(true);
+  };
+
+  // Add handleEditSubmit function
+  const handleEditSubmit = async () => {
+    try {
+      setProcessing(true);
+      const currentSchedule = selectedItem.schedules[currentScheduleIndex];
+      
+      const response = await axios.put(`/api/meetings/${currentSchedule.id}`, editForm);
+      
+      if (response.data.success) {
+        // Update local state
+        const updatedData = businessData.map(item => {
+          if (item.id === selectedItem.id) {
+            const updatedSchedules = [...item.schedules];
+            updatedSchedules[currentScheduleIndex] = {
+              ...updatedSchedules[currentScheduleIndex],
+              ...editForm,
+              boothNumber: editForm.booth_number,
+              dayOfWeek: editForm.day_of_week
+            };
+            return { ...item, schedules: updatedSchedules };
+          }
+          return item;
+        });
+        
+        setBusinessData(updatedData);
+        setShowEditModal(false);
+        setRefreshData(prev => !prev);
+
+        // Update the selectedItem for the modal
+        const updatedSelectedItem = {
+          ...selectedItem,
+          schedules: selectedItem.schedules.map((schedule, index) => {
+            if (index === currentScheduleIndex) {
+              return {
+                ...schedule,
+                ...editForm,
+                boothNumber: editForm.booth_number,
+                dayOfWeek: editForm.day_of_week
+              };
+            }
+            return schedule;
+          })
+        };
+        setSelectedItem(updatedSelectedItem);
+      }
+    } catch (error) {
+      console.error('Error updating meeting:', error);
+      alert('Failed to update meeting. Please try again.');
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   if (loading) {
     return <div className="p-16 py-10 text-center">Loading business meetings...</div>;
   }
@@ -694,7 +773,10 @@ const BusinessMatching = () => {
                   >
                     Reject
                   </button>
-                  <button className="px-4 py-1.5 text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full">
+                  <button
+                    className="px-4 py-1.5 text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full"
+                    onClick={() => handleEditClick(selectedItem)}
+                  >
                     Edit
                   </button>
                   <button
@@ -760,6 +842,126 @@ const BusinessMatching = () => {
               >
                 View
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && selectedItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(88, 64, 88, 0.7)' }}>
+          <div className="relative w-full max-w-lg mx-auto overflow-hidden bg-white shadow-lg rounded-xl">
+            <button
+              onClick={() => setShowEditModal(false)}
+              className="absolute p-2 text-gray-400 top-2 right-2 hover:text-gray-600 focus:outline-none"
+              aria-label="Close"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+
+            <div className="p-6">
+              <h2 className="mb-4 text-lg font-medium">Edit Meeting Schedule</h2>
+              
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Booth Number</label>
+                  <input
+                    type="text"
+                    value={editForm.booth_number}
+                    onChange={(e) => setEditForm({...editForm, booth_number: e.target.value})}
+                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Date</label>
+                  <input
+                    type="date"
+                    value={editForm.date}
+                    onChange={(e) => setEditForm({...editForm, date: e.target.value})}
+                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Day</label>
+                  <input
+                    type="number"
+                    value={editForm.day}
+                    onChange={(e) => setEditForm({...editForm, day: e.target.value})}
+                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Day of Week</label>
+                  <select
+                    value={editForm.day_of_week}
+                    onChange={(e) => setEditForm({...editForm, day_of_week: e.target.value})}
+                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
+                  >
+                    <option value="">Select Day</option>
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Exhibitor</label>
+                  <input
+                    type="text"
+                    value={editForm.exhibitor}
+                    onChange={(e) => setEditForm({...editForm, exhibitor: e.target.value})}
+                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Time</label>
+                  <input
+                    type="time"
+                    value={editForm.time}
+                    onChange={(e) => setEditForm({...editForm, time: e.target.value})}
+                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <select
+                    value={editForm.status}
+                    onChange={(e) => setEditForm({...editForm, status: parseInt(e.target.value)})}
+                    className="w-full px-3 py-2 mt-1 border border-gray-300 rounded-md"
+                  >
+                    <option value="2">Pending</option>
+                    <option value="3">Rejected</option>
+                    <option value="4">Approved</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleEditSubmit}
+                  disabled={processing}
+                  className="px-4 py-2 text-sm text-white bg-[#40033f] rounded-full hover:bg-[#2a0228]"
+                >
+                  {processing ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
             </div>
           </div>
         </div>

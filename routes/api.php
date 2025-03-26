@@ -27,12 +27,9 @@ Route::get('/ping', function () {
     return response()->json(['status' => 'API is functional', 'time' => now()->toDateTimeString()]);
 });
 
-
 Route::get('/send-mail', [MailController::class, 'sendMail']);
 
-
-
-// Original API routes with prefix
+// Meeting routes with prefix
 Route::prefix('meetings')->group(function () {
     Route::get('/', [ScheduleMeetingController::class, 'getBusinessMeetings']);
     Route::post('/{id}/approve', [ScheduleMeetingController::class, 'approveMeeting']);
@@ -41,12 +38,14 @@ Route::prefix('meetings')->group(function () {
     Route::post('/approve-all', [ScheduleMeetingController::class, 'approveAllMeetings']);
     Route::post('/reject-all', [ScheduleMeetingController::class, 'rejectAllMeetings']);
     Route::get('/{id}', [ScheduleMeetingController::class, 'getMeeting']);
+    Route::put('/{id}', [ScheduleMeetingController::class, 'updateMeeting']);
 });
 
 // Email status routes
 Route::post('/meetings/send-status-email', [EmailStatusController::class, 'sendStatusEmail']);
-
-Route::get('/visitor/test', [VisitorRegistrationController::class, 'test']);
+Route::get('/email-status', [EmailStatusController::class, 'getStatus']);
+Route::post('/email-status/mark-sent', [EmailStatusController::class, 'markAsSent']);
+Route::post('/email-status/reset', [EmailStatusController::class, 'resetAllStatuses']);
 
 // API Routes for Authentication
 Route::post('/register', [RegisterController::class, 'register']);
@@ -58,7 +57,6 @@ Route::get('/user', function () {
     }
     return response()->json(null, 401);
 });
-
 
 // Product categories and subcategories
 Route::get('/categories', [ProductCategoryController::class, 'index']);
@@ -75,21 +73,4 @@ Route::post('/visitor/echo', [VisitorRegistrationController::class, 'echo']);
 
 // Hosted Buyer Registration endpoint
 Route::post('/hosted-registration', [App\Http\Controllers\HostedRegistrationController::class, 'register']);
-
-// Schedule Meetings Routes
-// Route::get('/schedule-meetings/business', [ScheduleMeetingController::class, 'getBusinessMeetings']);
-
-// Meeting approval routes
-Route::get('/business-meetings', [ScheduleMeetingController::class, 'getBusinessMeetings']);
-Route::post('/meetings/{id}/approve', [ScheduleMeetingController::class, 'approveMeeting']);
-Route::post('/meetings/{id}/reject', [ScheduleMeetingController::class, 'rejectMeeting']);
-Route::post('/meetings/check-processed', [ScheduleMeetingController::class, 'checkAllMeetingsProcessed']);
-Route::post('/meetings/approve-all', [ScheduleMeetingController::class, 'approveAllMeetings']);
-Route::post('/meetings/reject-all', [ScheduleMeetingController::class, 'rejectAllMeetings']);
-Route::get('/meetings/{id}', [ScheduleMeetingController::class, 'getMeeting']);
-
-
-Route::get('/email-status', [EmailStatusController::class, 'getStatus']);
-Route::post('/email-status/mark-sent', [EmailStatusController::class, 'markAsSent']);
-Route::post('/email-status/reset', [EmailStatusController::class, 'resetAllStatuses']);
 
