@@ -89,7 +89,7 @@ const OrganizerDashboard = () => {
         </div>
 
         {/* Main Content - takes full width on mobile, adjusted width on desktop */}
-        <div className="flex-1 p-4 overflow-auto bg-white md:p-6">
+        <div className="flex-1 p-2 overflow-auto bg-white md:p-6">
           <Outlet />
         </div>
       </div>

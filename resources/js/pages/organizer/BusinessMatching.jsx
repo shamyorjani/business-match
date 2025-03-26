@@ -542,7 +542,7 @@ const BusinessMatching = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 lg:p-16">
+    <div className="p-4 md:p-8 lg:p-8">
       <div className="flex flex-col mb-6 space-y-4 md:flex-row md:justify-between md:space-y-0">
         <div className="flex items-center space-x-4">
           <input
@@ -666,7 +666,15 @@ const BusinessMatching = () => {
 
       {/* Detail Modal */}
       {showModal && selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(88, 64, 88, 0.7)' }}>
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4" 
+          style={{ backgroundColor: 'rgba(88, 64, 88, 0.7)' }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              closeModal();
+            }
+          }}
+        >
           <div className="relative w-full max-w-lg mx-auto overflow-hidden bg-white shadow-lg rounded-xl">
             {/* Close button */}
             <button
@@ -802,7 +810,15 @@ const BusinessMatching = () => {
 
       {/* Warning Modal for Approve/Reject All */}
       {showWarningModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(88, 64, 88, 0.7)' }}>
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4" 
+          style={{ backgroundColor: 'rgba(88, 64, 88, 0.7)' }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowWarningModal(false);
+            }
+          }}
+        >
           <div className="relative w-full max-w-sm p-6 mx-auto bg-white shadow-lg rounded-xl">
             <button
               onClick={() => setShowWarningModal(false)}
@@ -849,7 +865,15 @@ const BusinessMatching = () => {
 
       {/* Edit Modal */}
       {showEditModal && selectedItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(88, 64, 88, 0.7)' }}>
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center p-4" 
+          style={{ backgroundColor: 'rgba(88, 64, 88, 0.7)' }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowEditModal(false);
+            }
+          }}
+        >
           <div className="relative w-full max-w-lg mx-auto overflow-hidden bg-white shadow-lg rounded-xl">
             {/* Header */}
             <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
