@@ -456,8 +456,40 @@ const companyUnavailableSlots = {
       .then(response => {
         console.log('Registration successful:', response.data);
 
-        // Clear all exhibitor selections from localStorage
-        clearAllSelectedExhibitors();
+        // Clear all data from localStorage
+        localStorage.removeItem('selectedMeetingSlots');
+        localStorage.removeItem('businessRegistration');
+        localStorage.removeItem('companyInfoData');
+        localStorage.removeItem('selectedInterests');
+        localStorage.removeItem('selectedExhibitors');
+        localStorage.removeItem('companies');
+        localStorage.removeItem('selectedCompanies');
+        
+        // Clear any category-specific exhibitor selections
+        const savedInterests = selectedInterests;
+        if (savedInterests && savedInterests.length > 0) {
+          savedInterests.forEach(interest => {
+            localStorage.removeItem(`selectedExhibitors_${interest.subCategory}`);
+            localStorage.removeItem(`companies_${interest.subCategory}`);
+          });
+        }
+
+        // Clear the combined selection keys if they exist
+        if (savedInterests && savedInterests.length > 0) {
+          const sortedKey = [...savedInterests.map(interest => interest.subCategory)].sort().join('_');
+          localStorage.removeItem(`selectedExhibitors_${sortedKey}`);
+          localStorage.removeItem(`companies_${sortedKey}`);
+        }
+
+        // Clear any remaining company-related data
+        localStorage.removeItem('selectedCompany');
+        localStorage.removeItem('previousCompanies');
+        localStorage.removeItem('companySelections');
+
+        // Reset the companies state
+        setCompanies([]);
+        setSelectedCompany("");
+        setSelectedSlots([]);
 
         // Navigate to thank you page with scheduled meetings data
         navigate('/business/thankyou', {
@@ -476,30 +508,6 @@ const companyUnavailableSlots = {
         setIsSubmitting(false);
         handleRegistrationError(error);
       });
-  };
-
-  // Add this new function to clear all exhibitor selections
-  const clearAllSelectedExhibitors = () => {
-    // Clear meeting slots
-    localStorage.removeItem('selectedMeetingSlots');
-
-    // Get current interests
-    const savedInterests = localStorage.getItem('selectedInterests');
-    if (savedInterests) {
-      const interests = JSON.parse(savedInterests);
-      const subcategoriesList = interests.map(interest => interest.subCategory);
-
-      // Clear selections for each subcategory
-      subcategoriesList.forEach(subcategory => {
-        localStorage.removeItem(`selectedExhibitors_${subcategory}`);
-      });
-
-      // Also clear the combined selection key if it exists
-      if (subcategoriesList && subcategoriesList.length > 0) {
-        const sortedKey = [...subcategoriesList].sort().join('_');
-        localStorage.removeItem(`selectedExhibitors_${sortedKey}`);
-      }
-    }
   };
 
   const handleRegistrationError = (error) => {

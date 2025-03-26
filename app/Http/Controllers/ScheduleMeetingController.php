@@ -141,7 +141,7 @@ class ScheduleMeetingController extends Controller
             }
 
             // Update meeting status
-            $updated = \DB::table('schedule_meetings')
+            $updated = DB::table('schedule_meetings')
                 ->where('id', $id)
                 ->update(['status' => 4]);
 

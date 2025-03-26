@@ -48,6 +48,6 @@ class CompanyProduct extends Model
      */
     public function isActive(): bool
     {
-        return $this->status === StatusEnum::ACTIVE->value ?? true;
+        return $this->status === StatusEnum::Active->value;
     }
 }
