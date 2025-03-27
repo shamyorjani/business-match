@@ -38,29 +38,5 @@ class MailController extends Controller
     /**
      * Test if mail configuration is working
      */
-    public function testMailConfig()
-    {
-        try {
-            $config = config('mail');
-
-            // Remove potential sensitive data
-            if (isset($config['password'])) {
-                $config['password'] = '****';
-            }
-
-            return response()->json([
-                'success' => true,
-                'config' => $config,
-                'message' => 'Mail configuration retrieved successfully'
-            ]);
-        } catch (\Exception $e) {
-            Log::error("Error retrieving mail config: " . $e->getMessage());
-
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to retrieve mail configuration',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
+   
 }

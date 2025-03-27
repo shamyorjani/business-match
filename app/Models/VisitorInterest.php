@@ -46,10 +46,6 @@ class VisitorInterest extends Model
     /**
      * Get the registration associated with the interest.
      */
-    public function registration(): BelongsTo
-    {
-        return $this->belongsTo(Registration::class);
-    }
 
     /**
      * Get the visitor company associated with the interest.
