@@ -3,6 +3,7 @@ import PrimaryApplicant from '../../components/form/PrimaryApplicant';
 import AdditionalApplicant from '../../components/form/AdditionalApplicant';
 import StayDetails from '../../components/form/StayDetails';
 import { useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const PaymentGateway = () => {
   const location = useLocation();
@@ -17,15 +18,14 @@ const PaymentGateway = () => {
     const company = params.get('company');
     
     if (user && company) {
-      try {
-        // Decrypt the parameters
-        const decryptedUser = atob(user);
-        const decryptedCompany = atob(company);
-        setUserId(decryptedUser);
-        setCompanyId(decryptedCompany);
-      } catch (error) {
-        console.error('Error decrypting parameters:', error);
-      }
+      setUserId(parseInt(user));
+      setCompanyId(parseInt(company));
+      // Update formData with the IDs
+      setFormData(prevData => ({
+        ...prevData,
+        userId: parseInt(user),
+        companyId: parseInt(company)
+      }));
     }
   }, [location]);
 
@@ -67,34 +67,46 @@ const PaymentGateway = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Save form data to localStorage
-    const dataToSave = {
-      ...formData,
-      userId,
-      companyId
-    };
-    localStorage.setItem('hostedPaymentData', JSON.stringify(dataToSave));
+    try {
+      // Save booking data to database with correct field names
+      const response = await axios.post(`/api/payments/booking/${userId}/${companyId}`, {
+        ...formData,
+        totalAmount: calculateTotalAmount(formData)
+      });
 
-    // Calculate total amount
-    const totalAmount = calculateTotalAmount(formData);
-    
-    // Save total amount to localStorage for payment card
-    localStorage.setItem('paymentSummary', JSON.stringify({
-      ...dataToSave,
-      totalAmount,
-      orderData: [
-        { label: "Refundable Deposit", value: "450.00" },
-        { label: "Room Booking (2 nights)", value: "850.00" },
-        { label: "Registration Fee", value: "150.00" },
-        ...(formData.extraNight ? [{ label: "Extra Night", value: "450.00" }] : [])
-      ]
-    }));
+      // Save form data to localStorage
+      const dataToSave = {
+        ...formData,
+        user_id: userId,
+        visitor_company_id: companyId,
+        bookingId: response.data.booking_id
+      };
+      localStorage.setItem('hostedPaymentData', JSON.stringify(dataToSave));
 
-    // Navigate to payment card
-    navigate('/hosted/payment-card');
+      // Calculate total amount
+      const totalAmount = calculateTotalAmount(formData);
+      
+      // Save total amount to localStorage for payment card
+      localStorage.setItem('paymentSummary', JSON.stringify({
+        ...dataToSave,
+        totalAmount,
+        orderData: [
+          { label: "Refundable Deposit", value: "450.00" },
+          { label: "Room Booking (2 nights)", value: "850.00" },
+          { label: "Registration Fee", value: "150.00" },
+          ...(formData.extraNight ? [{ label: "Extra Night", value: "450.00" }] : [])
+        ]
+      }));
+
+      // Navigate to payment card
+      navigate('/hosted/payment-card');
+    } catch (error) {
+      console.error('Error saving booking:', error);
+      // Handle error (show error message to user)
+    }
   };
 
   const calculateTotalAmount = (data) => {

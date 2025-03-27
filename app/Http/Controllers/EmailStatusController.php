@@ -107,9 +107,10 @@ class EmailStatusController extends Controller
 
             // Create payment link with encrypted parameters
             $paymentLink = url('/hosted/payment') . '?' . http_build_query([
-                'user' => encrypt($userId),
-                'company' => encrypt($companyId)
+                'user' => $userId,  // Send plain user ID
+                'company' => $companyId  // Send plain company ID
             ]);
+            
 
             $emailData = [
                 'user' => $user->name,

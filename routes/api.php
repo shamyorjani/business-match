@@ -23,6 +23,7 @@ use App\Mail\wellcomeEmail;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\UnavailableTimeSlotController;
+use App\Http\Controllers\PaymentController;
 
 // Basic diagnostic endpoints
 Route::get('/ping', function () {
@@ -83,5 +84,14 @@ Route::post('/hosted-registration', [App\Http\Controllers\HostedRegistrationCont
 Route::prefix('unavailable-slots')->group(function () {
     Route::get('/', [UnavailableTimeSlotController::class, 'getUnavailableSlots']);
     Route::get('/exhibitor/{exhibitorId}', [UnavailableTimeSlotController::class, 'getExhibitorUnavailableSlots']);
+});
+
+// Payment Routes
+Route::prefix('payments')->group(function () {
+    Route::post('/booking/{id}/{companyId}', [PaymentController::class, 'storeBooking']);
+    Route::post('/process', [PaymentController::class, 'processPayment']);
+    Route::get('/booking/{id}', [PaymentController::class, 'getBookingDetails']);
+    Route::get('/{id}', [PaymentController::class, 'getPaymentDetails']);
+    Route::post('/booking/{id}/cancel', [PaymentController::class, 'cancelBooking']);
 });
 
