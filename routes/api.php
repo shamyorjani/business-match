@@ -15,6 +15,7 @@ use App\Http\Controllers\RegistrationController;
 use App\Http\Controllers\ScheduleMeetingController;
 use App\Http\Controllers\MailController;
 use App\Http\Controllers\EmailStatusController;
+use App\Http\Controllers\HostedBuyerRegistrationController;
 use App\Models\ScheduleMeeting;
 use Illuminate\Support\Facades\Mail;
 
@@ -42,11 +43,12 @@ Route::prefix('meetings')->group(function () {
     Route::put('/{id}', [ScheduleMeetingController::class, 'updateMeeting']);
 });
 
+Route::prefix('hosted')->group(function () {
+    Route::get('/', [HostedBuyerRegistrationController::class, 'getHostedRegistrations']);
+});
+
 // Email status routes
 Route::post('/meetings/send-status-email', [EmailStatusController::class, 'sendStatusEmail']);
-Route::get('/email-status', [EmailStatusController::class, 'getStatus']);
-Route::post('/email-status/mark-sent', [EmailStatusController::class, 'markAsSent']);
-Route::post('/email-status/reset', [EmailStatusController::class, 'resetAllStatuses']);
 
 // API Routes for Authentication
 Route::post('/register', [RegisterController::class, 'register']);
