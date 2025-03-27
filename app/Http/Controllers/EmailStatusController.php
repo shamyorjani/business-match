@@ -159,4 +159,73 @@ class EmailStatusController extends Controller
             ], 500);
         }
     }
+
+    public function rejectHostedBuyer(Request $request)
+    {
+        try {
+            $request->validate([
+                'user_id' => 'required',
+                'visitor_company_id' => 'required'
+            ]);
+
+            $userId = $request->user_id;
+            $companyId = $request->visitor_company_id;
+            
+            // Get user and company data
+            $user = User::find($userId);
+            $company = VisitorCompanyInfo::find($companyId);
+
+            if (!$user || !$company) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'User or company not found'
+                ], 404);
+            }
+
+            $emailData = [
+                'user' => $user->name,
+                'visitorCompany' => $company->company_name ?? 'Your Company'
+            ];
+
+            // Send rejection email using the blade template
+            Mail::send('emails.hosted-rejection', $emailData, function($message) use ($user) {
+                $message->to($user->email)
+                        ->subject('Hosted Buyer Application Status Update');
+            });
+
+            // Update email status to REJECTED
+            $status = EmailStatus::where('user_id', $userId)
+                ->where('visitor_company_id', $companyId)
+                ->first();
+
+            if (!$status) {
+                $status = EmailStatus::create([
+                    'user_id' => $userId,
+                    'visitor_company_id' => $companyId,
+                    'status' => StatusEnum::REJECTED->getValue(),
+                    'email_sent_at' => now()
+                ]);
+            } else {
+                $status->update([
+                    'status' => StatusEnum::REJECTED->getValue(),
+                    'email_sent_at' => now()
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Rejection email sent successfully',
+                'status' => $status->status,
+                'status_name' => $status->status_name
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error sending rejection email: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send rejection email: ' . $e->getMessage(),
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 }

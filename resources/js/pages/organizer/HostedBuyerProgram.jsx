@@ -10,6 +10,7 @@ const HostedBuyerProgram = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [verifyingIds, setVerifyingIds] = useState(new Set());
+  const [rejectingIds, setRejectingIds] = useState(new Set());
 
   // Fetch data from API
   useEffect(() => {
@@ -103,6 +104,44 @@ const HostedBuyerProgram = () => {
     } finally {
       // Remove from verifying set
       setVerifyingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(item.id);
+        return newSet;
+      });
+    }
+  };
+
+  const handleReject = async (item) => {
+    try {
+      // Prevent multiple clicks
+      if (rejectingIds.has(item.id)) return;
+      
+      // Add to rejecting set
+      setRejectingIds(prev => new Set([...prev, item.id]));
+
+      const response = await axios.post('/api/hosted/reject', {
+        user_id: item.user_id,
+        visitor_company_id: item.company_id
+      });
+
+      if (response.data.success) {
+        // Update the item's status in the local state
+        setHostedBuyerData(prevData => 
+          prevData.map(data => 
+            data.id === item.id 
+              ? { ...data, status: response.data.status_name }
+              : data
+          )
+        );
+      } else {
+        alert(response.data.message || 'Failed to send rejection email');
+      }
+    } catch (error) {
+      console.error('Error sending rejection email:', error);
+      alert(error.response?.data?.message || 'Failed to send rejection email');
+    } finally {
+      // Remove from rejecting set
+      setRejectingIds(prev => {
         const newSet = new Set(prev);
         newSet.delete(item.id);
         return newSet;
@@ -282,14 +321,21 @@ const HostedBuyerProgram = () => {
                           className={`p-2 text-white rounded-full ${
                             item.status === 'Rejected' || item.status === 'Email Sent'
                               ? 'bg-gray-400 cursor-not-allowed' 
+                              : rejectingIds.has(item.id)
+                              ? 'bg-red-400'
                               : 'bg-red-500 hover:bg-red-700'
                           }`} 
                           aria-label="Reject"
-                          disabled={item.status === 'Rejected' || item.status === 'Email Sent'}
+                          onClick={() => handleReject(item)}
+                          disabled={item.status === 'Rejected' || item.status === 'Email Sent' || rejectingIds.has(item.id)}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
+                          {rejectingIds.has(item.id) ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          )}
                         </button>
                       </div>
                     </div>

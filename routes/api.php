@@ -50,6 +50,7 @@ Route::prefix('hosted')->group(function () {
 // Email status routes
 Route::post('/meetings/send-status-email', [EmailStatusController::class, 'sendStatusEmail']);
 Route::post('/hosted/varification-email', [EmailStatusController::class, 'sendHostedBuyerEmail']);
+Route::post('/hosted/reject', [EmailStatusController::class, 'rejectHostedBuyer']);
 
 // API Routes for Authentication
 Route::post('/register', [RegisterController::class, 'register']);
