@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\VisitorCompanyInfo;
 use App\Models\User;
+use App\Models\EmailStatus;
+use App\Enums\StatusEnum;
 use Illuminate\Http\Request;
 
 class HostedBuyerRegistrationController extends Controller
@@ -35,14 +37,25 @@ class HostedBuyerRegistrationController extends Controller
                     }
                 }
 
+                // Get email status
+                $emailStatus = EmailStatus::where('user_id', $company->user_id)
+                    ->where('visitor_company_id', $company->id)
+                    ->first();
+
+                $status = $emailStatus ? $emailStatus->status_name : 'Pending';
+                $statusValue = $emailStatus ? $emailStatus->status : StatusEnum::PENDING->getValue();
+
                 return [
                     'id' => $company->id,
+                    'user_id' => $company->user_id,
+                    'company_id' => $company->id,
                     'name' => $company->user->name,
                     'company' => $company->user->company_name ?? 'N/A',
                     'companySize' => $company->user->company_size ?? 'N/A',
                     'arrivalDate' => $company->arrival_date ?? 'N/A',
                     'departureDate' => $company->departure_date ?? 'N/A',
-                    'status' => $company->status ?? 'Pending',
+                    'status' => $status,
+                    'status_value' => $statusValue,
                     'accommodationStatus' => $company->accommodation_status ?? 'Pending',
                     'flightStatus' => $company->flight_status ?? 'Pending',
                     'phoneNumber' => $company->company_phone_number,

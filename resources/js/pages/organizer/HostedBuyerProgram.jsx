@@ -9,6 +9,7 @@ const HostedBuyerProgram = () => {
   const [hostedBuyerData, setHostedBuyerData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [verifyingIds, setVerifyingIds] = useState(new Set());
 
   // Fetch data from API
   useEffect(() => {
@@ -68,6 +69,58 @@ const HostedBuyerProgram = () => {
       setCurrentDocumentIndex((prev) =>
         prev === 0 ? selectedItem.documents.length - 1 : prev - 1
       );
+    }
+  };
+
+  const handleApprove = async (item) => {
+    try {
+      // Prevent multiple clicks
+      if (verifyingIds.has(item.id)) return;
+      
+      // Add to verifying set
+      setVerifyingIds(prev => new Set([...prev, item.id]));
+
+      const response = await axios.post('/api/hosted/varification-email', {
+        user_id: item.user_id,
+        visitor_company_id: item.company_id
+      });
+
+      if (response.data.success) {
+        // Update the item's status in the local state
+        setHostedBuyerData(prevData => 
+          prevData.map(data => 
+            data.id === item.id 
+              ? { ...data, status: response.data.status_name }
+              : data
+          )
+        );
+      } else {
+        alert(response.data.message || 'Failed to send verification email');
+      }
+    } catch (error) {
+      console.error('Error sending verification email:', error);
+      alert(error.response?.data?.message || 'Failed to send verification email');
+    } finally {
+      // Remove from verifying set
+      setVerifyingIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(item.id);
+        return newSet;
+      });
+    }
+  };
+
+  // Add function to get status color
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Approved':
+        return 'text-green-600 font-medium';
+      case 'Rejected':
+        return 'text-red-600 font-medium';
+      case 'Email Sent':
+        return 'text-blue-600 font-medium';
+      default:
+        return 'text-yellow-600';
     }
   };
 
@@ -198,19 +251,42 @@ const HostedBuyerProgram = () => {
                     )}
                   </td>
                   <td className="px-4 py-4 text-sm">
-                    <span className={item.status === 'Approved' ? 'text-green-600 font-medium' : 'text-yellow-600'}>
+                    <span className={getStatusColor(item.status)}>
                       {item.status}
                     </span>
                   </td>
                   <td className="px-4 py-4">
                     <div className="flex flex-wrap items-center gap-2">
                       <div className="flex gap-1">
-                        <button className="p-2 text-white bg-green-500 rounded-full hover:bg-green-700" aria-label="Approve">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                          </svg>
+                        <button 
+                          className={`p-2 text-white rounded-full ${
+                            item.status === 'Approved' || item.status === 'Email Sent'
+                              ? 'bg-gray-400 cursor-not-allowed' 
+                              : verifyingIds.has(item.id)
+                              ? 'bg-green-400'
+                              : 'bg-green-500 hover:bg-green-700'
+                          }`} 
+                          aria-label="Approve"
+                          onClick={() => handleApprove(item)}
+                          disabled={item.status === 'Approved' || item.status === 'Email Sent' || verifyingIds.has(item.id)}
+                        >
+                          {verifyingIds.has(item.id) ? (
+                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
                         </button>
-                        <button className="p-2 text-white bg-red-500 rounded-full hover:bg-red-700" aria-label="Reject">
+                        <button 
+                          className={`p-2 text-white rounded-full ${
+                            item.status === 'Rejected' || item.status === 'Email Sent'
+                              ? 'bg-gray-400 cursor-not-allowed' 
+                              : 'bg-red-500 hover:bg-red-700'
+                          }`} 
+                          aria-label="Reject"
+                          disabled={item.status === 'Rejected' || item.status === 'Email Sent'}
+                        >
                           <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                           </svg>

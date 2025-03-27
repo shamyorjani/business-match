@@ -40,6 +40,7 @@ const BusinessMatching = () => {
   const [currentAction, setCurrentAction] = useState(null);
   const [processing, setProcessing] = useState(false);
   const [refreshData, setRefreshData] = useState(false);
+  const [sendingEmailIds, setSendingEmailIds] = useState(new Set());
 
   useEffect(() => {
     // Fetch business meetings data
@@ -297,7 +298,11 @@ const BusinessMatching = () => {
   // Add new function to handle send email click
   const handleSendEmailClick = async (item) => {
     try {
-      setProcessing(true);
+      // Prevent multiple clicks
+      if (sendingEmailIds.has(item.id)) return;
+      
+      // Add to sending set
+      setSendingEmailIds(prev => new Set([...prev, item.id]));
       
       // Check for pending meetings
       if (checkPendingMeetings(item)) {
@@ -366,10 +371,14 @@ const BusinessMatching = () => {
       }
     } catch (error) {
       console.error('Error in handleSendEmailClick:', error);
-      // You could add an error notification here
       alert(error.message || 'An error occurred while sending the email. Please try again.');
     } finally {
-      setProcessing(false);
+      // Remove from sending set
+      setSendingEmailIds(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(item.id);
+        return newSet;
+      });
     }
   };
 
@@ -639,15 +648,21 @@ const BusinessMatching = () => {
                         className={`p-2 text-white rounded-full transition-colors duration-200 ${
                           item.status === 'Email Sent' 
                             ? 'bg-gray-400 cursor-not-allowed' 
+                            : sendingEmailIds.has(item.id)
+                            ? 'bg-[#40033f] opacity-75'
                             : 'bg-[#40033f] hover:bg-[#2a0228]'
                         }`}
                         onClick={() => handleSendEmailClick(item)}
-                        disabled={item.status === 'Email Sent' || processing}
+                        disabled={item.status === 'Email Sent' || sendingEmailIds.has(item.id)}
                         aria-label="Send Email"
                       >
-                        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
+                        {sendingEmailIds.has(item.id) ? (
+                          <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        ) : (
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                        )}
                       </button>
                     </div>
                   </td>
