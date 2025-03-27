@@ -191,7 +191,7 @@ const HostedBuyerProgram = () => {
   }
 
   return (
-    <div className="p-4 md:p-8 lg:p-16">
+    <div className="p-4 md:p-8 lg:p-8">
       <div className="flex flex-col mb-6 space-y-4 md:flex-row md:justify-between md:space-y-0">
         {/* Search input */}
         <div className="relative w-full md:w-64">

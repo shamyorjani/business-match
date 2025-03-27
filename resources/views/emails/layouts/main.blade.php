@@ -70,7 +70,11 @@
 </head>
 <body>
     <div class="header">
-        <h1>@yield('header')</h1>
+        <img 
+            src="{{ asset('images/logo.svg') }}" 
+            alt="IBE International Beauty Expo" 
+            style="max-width: 200px; width: 100%; height: auto; margin: 0 auto; display: block;"
+        />
     </div>
 
     <div class="content">
