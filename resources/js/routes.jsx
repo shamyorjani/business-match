@@ -18,6 +18,7 @@ import HostedThankYouPage from './pages/Hosted/ThankYouPage';
 import HostedInterest from './pages/Hosted/Interest';
 import HostedExhibitorMatching from './pages/Hosted/ExhibitorMatching';
 import HostedScheduleMeeting from './pages/Hosted/ScheduleMeeting';
+import FinalMeetings from './pages/Hosted/FinalMeetings';
 
 // Import Organizer components
 import OrganizerDashboard from './pages/organizer/OrganizerDashboard';
@@ -98,6 +99,10 @@ const router = createBrowserRouter([
       {
         path: 'schedule',
         element: <HostedScheduleMeeting />,
+      },
+      {
+        path: 'final-meetings',
+        element: <FinalMeetings />,
       },
       {
         path: 'thank-you',

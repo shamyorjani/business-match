@@ -12,40 +12,61 @@ const FinalMeetings = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchMeetings = async () => {
-      try {
-        setLoading(true);
-        // Get user and company IDs from localStorage
-        const userCompanyData = JSON.parse(localStorage.getItem('userCompanyData') || '{}');
-        const { userId, companyId } = userCompanyData;
+    // Check if registration is complete from navigation state
+    if (location.state && location.state.registrationComplete) {
+      setRegistrationComplete(true);
 
-        if (!userId || !companyId) {
-          throw new Error('User or company data not found');
-        }
-
-        // Fetch meetings from the API
-        const response = await api.get(`/hosted/meetings/${userId}/${companyId}`);
-        
-        if (response.data.success) {
-          setConfirmedMeetings(response.data.meetings);
-          setRegistrationComplete(true);
-        } else {
-          throw new Error(response.data.message || 'Failed to fetch meetings');
-        }
-      } catch (error) {
-        console.error('Error fetching meetings:', error);
-        setError(error.response?.data?.message || error.message || 'Failed to fetch meetings');
-      } finally {
-        setLoading(false);
+      // Store registration ID if available
+      const registrationId = location.state.registrationId;
+      if (registrationId) {
+        localStorage.setItem('registrationId', registrationId);
       }
-    };
 
-    // Check if we have meetings data from navigation state
+      // Clear localStorage data after successful registration
+      localStorage.removeItem('selectedMeetingSlots');
+      localStorage.removeItem('selectedInterests');
+      localStorage.removeItem('selectedExhibitors');
+
+      // Display registration success message
+      console.log('Registration completed successfully');
+    }
+
+    // Get meetings data from navigation state
     if (location.state && location.state.meetings && location.state.meetings.length > 0) {
+      // Use the real meeting data passed from ScheduleMeeting.jsx
       setConfirmedMeetings(location.state.meetings);
-      setRegistrationComplete(location.state.registrationComplete || false);
+      console.log('Meetings loaded:', location.state.meetings);
+      setLoading(false);
     } else {
       // If no meetings in state, fetch from API
+      const fetchMeetings = async () => {
+        try {
+          setLoading(true);
+          // Get user and company IDs from localStorage
+          const userCompanyData = JSON.parse(localStorage.getItem('userCompanyData') || '{}');
+          const { userId, companyId } = userCompanyData;
+
+          if (!userId || !companyId) {
+            throw new Error('User or company data not found');
+          }
+
+          // Fetch meetings from the API
+          const response = await api.get(`/hosted/meetings/${userId}/${companyId}`);
+          
+          if (response.data.success) {
+            setConfirmedMeetings(response.data.meetings);
+            setRegistrationComplete(true);
+          } else {
+            throw new Error(response.data.message || 'Failed to fetch meetings');
+          }
+        } catch (error) {
+          console.error('Error fetching meetings:', error);
+          setError(error.response?.data?.message || error.message || 'Failed to fetch meetings');
+        } finally {
+          setLoading(false);
+        }
+      };
+
       fetchMeetings();
     }
   }, [location]);

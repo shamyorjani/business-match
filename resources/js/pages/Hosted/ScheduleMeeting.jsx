@@ -445,8 +445,8 @@ const ScheduleMeeting = () => {
       localStorage.removeItem('selectedInterests');
       localStorage.removeItem('selectedExhibitors');
 
-      // Navigate to thank you page
-      navigate('/hosted/thank-you', {
+      // Navigate to FinalMeetings page with scheduled meetings data
+      navigate('/hosted/final-meetings', {
         state: {
           meetings,
           selectedExhibitors: companies,
