@@ -331,10 +331,12 @@ const ExhibitorMatching = () => {
   };
 
   const handleScheduleMeeting = () => {
+    // Get selected exhibitor data
     const selectedExhibitorData = exhibitors.filter(exhibitor =>
       validSelectedExhibitors.includes(exhibitor.company_name)
     );
 
+    // Format exhibitor data for schedule meeting
     const formattedExhibitors = selectedExhibitorData.map(exhibitor => ({
       name: exhibitor.company_name,
       boothNumber: exhibitor.booth_number || 'N/A'
@@ -343,12 +345,16 @@ const ExhibitorMatching = () => {
     // Save selected exhibitors to localStorage
     localStorage.setItem('selectedExhibitors', JSON.stringify(formattedExhibitors));
 
-    // Navigate to schedule meeting page
+    // Get user and company IDs from localStorage
+    const userCompanyData = JSON.parse(localStorage.getItem('userCompanyData') || '{}');
+
+    // Navigate to schedule meeting page with all necessary data
     navigate('/hosted/schedule', {
       state: {
         selectedExhibitors: formattedExhibitors,
-        userId,
-        companyId
+        userId: userCompanyData.userId,
+        companyId: userCompanyData.companyId,
+        selectedInterests: currentInterests
       }
     });
   };

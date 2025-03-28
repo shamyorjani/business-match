@@ -26,14 +26,26 @@ const ScheduleMeeting = () => {
   const [unavailableSlots, setUnavailableSlots] = useState({});
   const [isLoading, setIsLoading] = useState(true);
 
+  // Load user and company IDs from location state
+  const [userId, setUserId] = useState(null);
+  const [companyId, setCompanyId] = useState(null);
+
+  // Get selected exhibitors from navigation state
+  const [companies, setCompanies] = useState([]);
+
+  // Load user and company IDs from location state
+  useEffect(() => {
+    if (location.state) {
+      setUserId(location.state.userId);
+      setCompanyId(location.state.companyId);
+    }
+  }, [location]);
+
   // Function to show message modal instead of alert
   const showMessage = (message) => {
     setMessageModalContent(message);
     setShowMessageModal(true);
   };
-
-  // Get selected exhibitors from navigation state
-  const [companies, setCompanies] = useState([]);
 
   // Add this new function to fetch unavailable slots
   const fetchUnavailableSlots = async () => {
@@ -121,18 +133,10 @@ const ScheduleMeeting = () => {
         setSelectedCompany(exhibitorData[0].name);
       }
     } else {
-      // Fallback data if no companies were passed
-      setCompanies([
-        { name: "ABC Company", boothNumber: "A11" },
-        { name: "XYZ Corporation", boothNumber: "B22" },
-        { name: "123 Industries", boothNumber: "C33" },
-        { name: "Global Solutions", boothNumber: "D44" },
-        { name: "Tech Innovators", boothNumber: "E55" },
-        { name: "Future Systems", boothNumber: "F66" }
-      ]);
-      setSelectedCompany("ABC Company");
+      // Redirect to exhibitor matching if no companies selected
+      navigate('/hosted/exhibitor-matching');
     }
-  }, [location]);
+  }, [location, navigate]);
 
   // Convert time range back to simple time (e.g., "3.00pm-4.00pm" becomes "3 pm")
   const convertTimeRangeToSimpleTime = (timeRange) => {
@@ -357,133 +361,110 @@ const ScheduleMeeting = () => {
     setSelectedCompany(e.target.value);
   };
 
-  const handleNextClick = () => {
-    // Only allow submit if all companies have meetings scheduled
+  const handleNextClick = async () => {
     if (selectedSlots.length < companies.length) {
-      // Replace alert with modal
       showMessage("Please schedule meetings for all companies before proceeding.");
       return;
     }
 
-    // Format the meeting data for submission
-    const meetings = selectedSlots.map(slot => ({
-      day: slot.day,
-      date: slot.date,
-      dayOfWeek: slot.dayOfWeek,
-      time: formatTimeRange(slot.time),
-      exhibitor: slot.company,
-      boothNumber: slot.boothNumber
-    }));
-
-    // Get all saved registration data from localStorage
-    const businessData = JSON.parse(localStorage.getItem('businessRegistration') || '{}');
-    const companyData = JSON.parse(localStorage.getItem('companyInfoData') || '{}');
-    const selectedInterests = JSON.parse(localStorage.getItem('selectedInterests') || '[]');
-
-    // Set loading state to true
     setIsSubmitting(true);
 
-    // Prepare the final data for submission
-    const finalData = {
-      registration: {
-        ...businessData,
-        registration_type: 'business'
-      },
-      companyInfo: companyData,
-      interests: selectedInterests,
-      meetings: meetings
-    };
+    try {
+      // Format the meeting data
+      const meetings = selectedSlots.map(slot => ({
+        day: slot.day,
+        date: slot.date,
+        dayOfWeek: slot.dayOfWeek,
+        time: formatTimeRange(slot.time),
+        exhibitor: slot.company,
+        boothNumber: slot.boothNumber
+      }));
 
-    console.log('Submitting registration data:', finalData);
+      // Get saved data from localStorage
+      const selectedInterests = JSON.parse(localStorage.getItem('selectedInterests') || '[]');
+      
+      // Format interests data to match business version structure
+      const formattedInterests = selectedInterests.map(interest => {
+        // Log the raw interest data for debugging
+        console.log('Raw interest data:', interest);
 
-    // Submit all data to the backend
-    api.post('/visitor/register', finalData)
-      .then(response => {
-        console.log('Registration successful:', response.data);
+        // Extract category and subcategory data
+        const category = interest.category || '';
+        const subCategory = interest.subCategory || '';
+        const categoryId = interest.categoryId || null;
+        const subCategoryId = interest.subCategoryId || null;
+        const childCategoryId = interest.childCategoryId || null;
 
-        // Clear all data from localStorage
-        localStorage.removeItem('selectedMeetingSlots');
-        localStorage.removeItem('businessRegistration');
-        localStorage.removeItem('companyInfoData');
-        localStorage.removeItem('selectedInterests');
-        localStorage.removeItem('selectedExhibitors');
-        localStorage.removeItem('companies');
-        localStorage.removeItem('selectedCompanies');
-        
-        // Clear any category-specific exhibitor selections
-        const savedInterests = selectedInterests;
-        if (savedInterests && savedInterests.length > 0) {
-          savedInterests.forEach(interest => {
-            localStorage.removeItem(`selectedExhibitors_${interest.subCategory}`);
-            localStorage.removeItem(`companies_${interest.subCategory}`);
-          });
-        }
-
-        // Clear the combined selection keys if they exist
-        if (savedInterests && savedInterests.length > 0) {
-          const sortedKey = [...savedInterests.map(interest => interest.subCategory)].sort().join('_');
-          localStorage.removeItem(`selectedExhibitors_${sortedKey}`);
-          localStorage.removeItem(`companies_${sortedKey}`);
-        }
-
-        // Clear any remaining company-related data
-        localStorage.removeItem('selectedCompany');
-        localStorage.removeItem('previousCompanies');
-        localStorage.removeItem('companySelections');
-
-        // Reset the companies state
-        setCompanies([]);
-        setSelectedCompany("");
-        setSelectedSlots([]);
-
-        // Navigate to thank you page with scheduled meetings data
-        navigate('/business/thankyou', {
-          state: {
-            meetings,
-            selectedExhibitors: companies,
-            scheduledMeetings: selectedSlots,
-            registrationComplete: true,
-            registrationId: response.data.registration_id || null
-          }
+        // Log the extracted data for debugging
+        console.log('Extracted interest data:', {
+          category,
+          subCategory,
+          categoryId,
+          subCategoryId,
+          childCategoryId
         });
-      })
-      .catch(error => {
-        console.error('Registration failed:', error);
-        // Set loading state back to false on error
-        setIsSubmitting(false);
-        handleRegistrationError(error);
+
+        return {
+          category,
+          subCategory,
+          categoryId,
+          subCategoryId,
+          childCategoryId
+        };
       });
-  };
 
-  const handleRegistrationError = (error) => {
-    console.error('Registration failed:', error);
+      // Log the final formatted interests for debugging
+      console.log('Formatted interests:', formattedInterests);
 
-    // Enhanced error logging
-    if (error.response) {
-      console.error('Error response data:', error.response.data);
-      console.error('Error response status:', error.response.status);
-      console.error('Error response headers:', error.response.headers);
-    } else if (error.request) {
-      console.error('Error request:', error.request);
-    } else {
-      console.error('Error message:', error.message);
+      // Prepare the final data for submission
+      const finalData = {
+        user_id: userId,
+        company_id: companyId,
+        interests: formattedInterests,
+        meetings: meetings
+      };
+
+      // Log the final data being sent
+      console.log('Submitting data:', finalData);
+
+      // Submit data to the backend
+      const response = await api.post('/hosted/meetings/save', finalData);
+
+      if (!response.data.success) {
+        throw new Error(response.data.message || 'Failed to save meetings');
+      }
+
+      // Store user and company data in localStorage for later use
+      localStorage.setItem('userCompanyData', JSON.stringify({
+        userId: userId,
+        companyId: companyId
+      }));
+
+      // Clear other localStorage data
+      localStorage.removeItem('selectedMeetingSlots');
+      localStorage.removeItem('selectedInterests');
+      localStorage.removeItem('selectedExhibitors');
+
+      // Navigate to thank you page
+      navigate('/hosted/thank-you', {
+        state: {
+          meetings,
+          selectedExhibitors: companies,
+          scheduledMeetings: selectedSlots,
+          registrationComplete: true,
+          registrationId: response.data.registration_id
+        }
+      });
+    } catch (error) {
+      console.error('Failed to schedule meetings:', error);
+      showMessage(error.response?.data?.message || 'Failed to schedule meetings. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-
-    let errorMessage = "Registration failed. Please try again or contact support.";
-
-    // Try to extract meaningful error message from response
-    if (error.response?.data?.message) {
-      errorMessage = error.response.data.message;
-    } else if (error.response?.data?.error) {
-      errorMessage = error.response.data.error;
-    }
-
-    showMessage(errorMessage);
   };
 
   const handleBack = () => {
-    // Pass back selected exhibitors and scheduled meetings
-    navigate('/business/exhibitor-matching', {
+    navigate('/hosted/exhibitor-matching', {
       state: {
         selectedExhibitors: companies.map(c => c.name),
         scheduledMeetings: selectedSlots

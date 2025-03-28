@@ -85,7 +85,7 @@ class RegistrationController extends Controller
                 $subCategoryIds = array_filter($subCategoryIds);
 
                 $visitorInterest = VisitorInterest::create([
-                    'registration_id' => $registration->id,
+                    'user_id' => $registration->id,
                     'visitor_company_id' => $companyInfo->id,
                     'product_categories' => $categoryIds, // Store category IDs
                     'product_sub_categories' => $subCategoryIds, // Store subcategory IDs

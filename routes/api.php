@@ -24,6 +24,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\UnavailableTimeSlotController;
 use App\Http\Controllers\PaymentController;
+use App\Http\Controllers\HostedRegistrationController;
 
 // Basic diagnostic endpoints
 Route::get('/ping', function () {
@@ -46,6 +47,8 @@ Route::prefix('meetings')->group(function () {
 
 Route::prefix('hosted')->group(function () {
     Route::get('/', [HostedBuyerRegistrationController::class, 'getHostedRegistrations']);
+    Route::post('/meetings/save', [HostedRegistrationController::class, 'saveInterestsAndMeetings']);
+    Route::get('/meetings/{userId}/{companyId}', [HostedRegistrationController::class, 'getMeetings']);
 });
 
 // Email status routes
