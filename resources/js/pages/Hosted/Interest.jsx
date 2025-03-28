@@ -343,7 +343,7 @@ const Interest = () => {
     const handleBack = () => {
         // Save selected interests to local storage before going back
         localStorage.setItem('selectedInterests', JSON.stringify(selectedInterests));
-        navigate('/hosted/payment-card');
+        navigate('/');
     };
 
     const handleSearchChange = (e) => {

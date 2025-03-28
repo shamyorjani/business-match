@@ -148,7 +148,7 @@ const HostedBuyerProgram = () => {
           icon: (
             <img src="/images/deposit.svg" alt="" />
           ),
-          url: "/hosted/payment"
+          url: "#"
         },
         {
           id: 3,
@@ -157,7 +157,7 @@ const HostedBuyerProgram = () => {
           icon: (
             <img src="/images/search.svg" alt="" />
           ),
-          url: "/hosted/interest"
+          url: "#"
         },
         {
           id: 4,
@@ -166,7 +166,7 @@ const HostedBuyerProgram = () => {
           icon: (
             <img src="/images/enjoy.svg" alt="" />
           ),
-          url: "/benefits"
+          url: "#"
         }
       ];
   return (

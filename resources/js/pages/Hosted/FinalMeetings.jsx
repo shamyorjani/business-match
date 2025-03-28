@@ -22,10 +22,8 @@ const FinalMeetings = () => {
         localStorage.setItem('registrationId', registrationId);
       }
 
-      // Clear localStorage data after successful registration
-      localStorage.removeItem('selectedMeetingSlots');
-      localStorage.removeItem('selectedInterests');
-      localStorage.removeItem('selectedExhibitors');
+      // Clear ALL localStorage data
+      localStorage.clear();
 
       // Display registration success message
       console.log('Registration completed successfully');
@@ -42,9 +40,8 @@ const FinalMeetings = () => {
       const fetchMeetings = async () => {
         try {
           setLoading(true);
-          // Get user and company IDs from localStorage
-          const userCompanyData = JSON.parse(localStorage.getItem('userCompanyData') || '{}');
-          const { userId, companyId } = userCompanyData;
+          // Get user and company IDs from navigation state
+          const { userId, companyId } = location.state || {};
 
           if (!userId || !companyId) {
             throw new Error('User or company data not found');
@@ -76,11 +73,8 @@ const FinalMeetings = () => {
   };
 
   const goToHomePage = () => {
-    // Clear all localStorage data
-    localStorage.removeItem('userCompanyData');
-    localStorage.removeItem('selectedMeetingSlots');
-    localStorage.removeItem('selectedInterests');
-    localStorage.removeItem('selectedExhibitors');
+    // Clear ALL localStorage data
+    localStorage.clear();
     navigate('/');
   };
 

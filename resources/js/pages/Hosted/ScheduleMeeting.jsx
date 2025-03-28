@@ -32,6 +32,7 @@ const ScheduleMeeting = () => {
 
   // Get selected exhibitors from navigation state
   const [companies, setCompanies] = useState([]);
+  const [remainingCompanies, setRemainingCompanies] = useState([]);
 
   // Load user and company IDs from location state
   useEffect(() => {
@@ -74,6 +75,7 @@ const ScheduleMeeting = () => {
       // Process exhibitor data from navigation state
       const exhibitorData = location.state.selectedExhibitors;
       setCompanies(exhibitorData);
+      setRemainingCompanies(exhibitorData);
 
       // Get the set of currently selected company names
       const currentlySelectedCompanies = new Set(exhibitorData.map(company => company.name));
@@ -361,7 +363,14 @@ const ScheduleMeeting = () => {
     setSelectedCompany(e.target.value);
   };
 
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
   const handleNextClick = async () => {
+    if (isSubmitted) {
+      showMessage("Meetings have already been submitted. Please wait while we redirect you.");
+      return;
+    }
+
     if (selectedSlots.length < companies.length) {
       showMessage("Please schedule meetings for all companies before proceeding.");
       return;
@@ -382,27 +391,14 @@ const ScheduleMeeting = () => {
 
       // Get saved data from localStorage
       const selectedInterests = JSON.parse(localStorage.getItem('selectedInterests') || '[]');
-      
+
       // Format interests data to match business version structure
       const formattedInterests = selectedInterests.map(interest => {
-        // Log the raw interest data for debugging
-        console.log('Raw interest data:', interest);
-
-        // Extract category and subcategory data
         const category = interest.category || '';
         const subCategory = interest.subCategory || '';
         const categoryId = interest.categoryId || null;
         const subCategoryId = interest.subCategoryId || null;
         const childCategoryId = interest.childCategoryId || null;
-
-        // Log the extracted data for debugging
-        console.log('Extracted interest data:', {
-          category,
-          subCategory,
-          categoryId,
-          subCategoryId,
-          childCategoryId
-        });
 
         return {
           category,
@@ -413,9 +409,6 @@ const ScheduleMeeting = () => {
         };
       });
 
-      // Log the final formatted interests for debugging
-      console.log('Formatted interests:', formattedInterests);
-
       // Prepare the final data for submission
       const finalData = {
         user_id: userId,
@@ -424,9 +417,6 @@ const ScheduleMeeting = () => {
         meetings: meetings
       };
 
-      // Log the final data being sent
-      console.log('Submitting data:', finalData);
-
       // Submit data to the backend
       const response = await api.post('/hosted/meetings/save', finalData);
 
@@ -434,16 +424,11 @@ const ScheduleMeeting = () => {
         throw new Error(response.data.message || 'Failed to save meetings');
       }
 
-      // Store user and company data in localStorage for later use
-      localStorage.setItem('userCompanyData', JSON.stringify({
-        userId: userId,
-        companyId: companyId
-      }));
+      // Set submitted state to true
+      setIsSubmitted(true);
 
-      // Clear other localStorage data
-      localStorage.removeItem('selectedMeetingSlots');
-      localStorage.removeItem('selectedInterests');
-      localStorage.removeItem('selectedExhibitors');
+      // Clear ALL localStorage data
+      localStorage.clear();
 
       // Navigate to FinalMeetings page with scheduled meetings data
       navigate('/hosted/final-meetings', {
@@ -458,7 +443,6 @@ const ScheduleMeeting = () => {
     } catch (error) {
       console.error('Failed to schedule meetings:', error);
       showMessage(error.response?.data?.message || 'Failed to schedule meetings. Please try again.');
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -502,8 +486,9 @@ const ScheduleMeeting = () => {
                 value={selectedCompany}
                 onChange={handleCompanyChange}
                 className="block appearance-none w-full bg-white border-2 border-gray-300 px-4 py-2 pr-8 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm md:text-[16px] text-black font-medium"
+                disabled={isSubmitted}
               >
-                {companies.map(company => {
+                {remainingCompanies.map(company => {
                   const hasScheduled = selectedSlots.some(slot => slot.company === company.name);
                   return (
                     <option key={company.name} value={company.name}>
@@ -637,7 +622,7 @@ const ScheduleMeeting = () => {
           <button
             className="px-6 sm:px-8 py-2 bg-[#40033f] text-white rounded-4xl disabled:opacity-50 text-sm sm:text-base w-full sm:w-auto"
             onClick={handleNextClick}
-            disabled={selectedSlots.length < companies.length || isSubmitting}
+            disabled={selectedSlots.length < companies.length || isSubmitting || isSubmitted}
           >
             {isSubmitting ? (
               <span className="flex items-center justify-center">
@@ -647,6 +632,8 @@ const ScheduleMeeting = () => {
                 </svg>
                 Submitting...
               </span>
+            ) : isSubmitted ? (
+              "Submitted Successfully"
             ) : (
               "Submit"
             )}
