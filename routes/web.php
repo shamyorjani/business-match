@@ -51,3 +51,7 @@ Route::fallback(function(){
         ]
     ], 404);
 })->where('any', '^(?!api).*$');
+
+Route::get('/sanctum/csrf-cookie', function () {
+    return response()->json(['message' => 'CSRF cookie set']);
+});

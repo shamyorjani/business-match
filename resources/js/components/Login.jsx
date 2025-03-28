@@ -26,7 +26,7 @@ const Login = ({ isOpen, onClose }) => {
 
     try {
       const response = await login(formData);
-
+      console.log('login res', response)
       // Store the token in localStorage
       if (response.data.token) {
         localStorage.setItem('auth_token', response.data.token);

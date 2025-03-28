@@ -18,19 +18,22 @@ class LoginController extends Controller
     public function login(Request $request)
     {
         try {
+            // Ensure session is started
+            if (!$request->hasSession()) {
+                $request->setLaravelSession(app('session.store'));
+            }
+
             $credentials = $request->only('email', 'password');
 
             if (Auth::attempt($credentials)) {
+                $request->session()->regenerate();
+                
                 $user = Auth::user();
                 
-                // Delete any existing tokens
-                $user->tokens()->delete();
-                
-                // Create new token
                 $token = $user->createToken('API Token')->plainTextToken;
-
-                // Log the successful login
-                Log::info('User logged in successfully', ['user' => $user]);
+                
+                // Set session cookie
+                $cookie = cookie('token', $token, 60 * 24); // 1 day
 
                 return response()->json([
                     'message' => 'Login successful',
@@ -40,11 +43,8 @@ class LoginController extends Controller
                         'name' => $user->name,
                         'email' => $user->email
                     ]
-                ]);
+                ])->withCookie($cookie);
             }
-
-            // Log the failed login attempt
-            Log::warning('Login failed for user', ['email' => $request->email]);
 
             return response()->json(['message' => 'Unauthorized'], 401);
         } catch (\Exception $e) {
@@ -64,10 +64,26 @@ class LoginController extends Controller
     public function logout(Request $request)
     {
         try {
-            // Revoke the user's token
-            Auth::user()->tokens()->delete();
+            // Revoke all tokens if user is authenticated
+            if (Auth::check()) {
+                Auth::user()->tokens()->delete();
+            }
 
-            return response()->json(['message' => 'Logged out successfully']);
+            // Clear the session
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            // Create cookie to clear the token
+            $cookie = cookie()->forget('token');
+
+            return response()->json([
+                'message' => 'Logged out successfully',
+                'clearStorage' => [
+                    'auth_token',
+                    'user'
+                ]
+            ])->withCookie($cookie);
         } catch (\Exception $e) {
             Log::error('Logout error: ' . $e->getMessage());
             return response()->json([

@@ -26,6 +26,41 @@ use App\Http\Controllers\UnavailableTimeSlotController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\HostedRegistrationController;
 
+// Move this route to the top of your routes file
+// Route::middleware(['web', 'session'])->group(function () {
+    Route::post('/user', function (Request $request) {
+        $user = $request->input('user');
+        $isAuthenticated = $user !== null;
+    
+        // Perform any necessary actions with the user data
+    
+        return response()->json([
+            'isAuthenticated' => $isAuthenticated,
+            'user' => $user,
+        ]);
+    });
+// });
+
+// Test route without middleware first
+Route::get('/auth-test', function () {
+    return response()->json([
+        'session_id' => session()->getId(),
+        'has_session' => session()->isStarted(),
+        'user' => auth()->user(),
+    ]);
+});
+
+// Then test with middleware
+Route::middleware(['web'])->group(function () {
+    Route::get('/user', function () {
+        return response()->json([
+            'isAuthenticated' => Auth::check(),
+            'user' => Auth::user(),
+            'session_id' => session()->getId(),
+        ]);
+    });
+});
+
 // Basic diagnostic endpoints
 Route::get('/ping', function () {
     return response()->json(['status' => 'API is functional', 'time' => now()->toDateTimeString()]);
@@ -59,12 +94,10 @@ Route::post('/hosted/reject', [EmailStatusController::class, 'rejectHostedBuyer'
 // API Routes for Authentication
 Route::post('/register', [RegisterController::class, 'register']);
 Route::post('/login', [LoginController::class, 'login']);
-Route::post('/logout', [LoginController::class, 'logout']);
-Route::get('/user', function () {
-    if (Auth::check()) {
-        return response()->json(Auth::user());
-    }
-    return response()->json(null, 401);
+Route::get('/logout', function (){
+    return response()->json([
+        'message' => 'Successfully logged out'
+    ]);
 });
 
 // Product categories and subcategories
