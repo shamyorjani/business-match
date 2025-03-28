@@ -42,18 +42,18 @@ const PaymentCard = () => {
         amount: amount.toFixed(2)
       });
 
-      // Clear localStorage
+      // Save user and company IDs to localStorage
+      localStorage.setItem('userCompanyData', JSON.stringify({
+        userId: formData.userId,
+        companyId: formData.companyId
+      }));
+
+      // Clear payment related data from localStorage
       localStorage.removeItem('hostedPaymentData');
       localStorage.removeItem('paymentSummary');
 
-      // Redirect to success page with payment details
-      navigate('/hosted/success', {
-        state: {
-          orderId: response.data.order_id,
-          transactionId: response.data.transaction_id,
-          amount: amount.toFixed(2)
-        }
-      });
+      // Navigate to interest page
+      navigate('/hosted/interest');
     } catch (error) {
       console.error('Error processing payment:', error);
       // Handle error (show error message to user)
