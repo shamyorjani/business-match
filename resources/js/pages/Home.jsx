@@ -1,12 +1,6 @@
-import React, { useState } from 'react';
-import Registration from '../components/Registration';
-import Login from '../components/Login';
+import React from 'react';
 
-const HostedBuyerProgram = () => {
-    const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
-    const [isLoginOpen, setIsLoginOpen] = useState(false);
-    const [isMenuOpen, setIsMenuOpen] = useState(false);
-
+const Home = () => {
     const steps = [
         {
             id: 1,
@@ -118,15 +112,6 @@ const HostedBuyerProgram = () => {
                         <img className='main-logo' src="/images/logo.svg" alt="My Image" />
                     </div>
 
-                    {/* Hamburger Menu */}
-                    <div className="md:hidden">
-                        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white focus:outline-none">
-                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-                            </svg>
-                        </button>
-                    </div>
-
                     <div className="items-center hidden space-x-4 md:flex font-cardo">
                         <nav className="flex flex-col sm:flex-row">
                             <a href="/" className="py-2 font-medium text-white transition-colors duration-200 border-b-2 border-transparent nav-menu hover:text-pink-200 hover:border-white">Home</a>
@@ -139,12 +124,8 @@ const HostedBuyerProgram = () => {
                 </div>
             </header>
 
-            {/* Registration and Login Modals */}
-            <Registration isOpen={isRegistrationOpen} onClose={() => setIsRegistrationOpen(false)} />
-            <Login isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
-
             {/* Hero Image with Title */}
-            <div className="relative h-64 mb-12 md:h-96"> {/* Increased height and margin */}
+            <div className="relative h-64 mb-12 md:h-96">
                 <div className="absolute inset-0 bg-center bg-cover" style={{ backgroundImage: "url('/images/bg-img.png')" }}></div>
                 <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
                     <h1 className="mb-4 font-serif text-4xl font-bold text-white md:text-7xl drop-shadow-lg">
@@ -166,8 +147,6 @@ const HostedBuyerProgram = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Buttons below hero section */}
 
             {/* Main Content */}
             <div className="flex-grow py-12 bg-white">
@@ -239,7 +218,6 @@ const HostedBuyerProgram = () => {
                 Steps to apply for IBE Hosted Buyer Program
             </h1>
             <div className="max-w-6xl p-6 mx-auto">
-
                 <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                     {steps.map((step) => (
                         <div
@@ -264,38 +242,23 @@ const HostedBuyerProgram = () => {
                         </div>
                     ))}
                 </div>
-
-
             </div>
-            <div className="z-20 max-w-4xl p-8 mx-auto ">
+
+            <div className="z-20 max-w-4xl p-8 mx-auto">
                 <h1 className="text-3xl md:text-4xl text-center font-bold text-[#40033f] font-serif mb-6">Terms & Conditions</h1>
 
                 <section className="mb-8">
                     <h2 className="mb-4 text-xl font-bold text-left">Program Overview</h2>
                 </section>
 
-                {/* Map through the termsData array to render each section */}
                 {termsData.map((section) => (
                     <section key={section.id} className="mb-8">
                         <h3 className="mb-2 text-lg font-bold">{section.id}. {section.title}</h3>
-
-                        {/* Map through the content array for each section */}
                         {section.content.map((paragraph, index) => (
                             <p key={index} className="mb-2">{paragraph}</p>
                         ))}
                     </section>
                 ))}
-            </div>
-
-            {/* Update the "Register Now" button at the bottom of the page to open registration modal if not logged in */}
-            <div className="z-20 flex justify-center py-6 my-12">
-                {/* <button
-                    type="button"
-                    className="primary-btn text-[24px] font-bold px-10 py-4 hover:shadow-lg transition-all duration-300"
-                    onClick={() => user ? alert("You're already registered!") : setIsRegistrationOpen(true)}
-                >
-                    Register Now
-                </button> */}
             </div>
 
             {/* Enhanced Footer */}
@@ -316,4 +279,4 @@ const HostedBuyerProgram = () => {
     );
 };
 
-export default HostedBuyerProgram;
+export default Home;

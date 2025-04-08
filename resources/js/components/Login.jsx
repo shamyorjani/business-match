@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { login } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 
-const Login = ({ isOpen, onClose, onSuccess, onRegisterClick }) => {
+const Login = ({ isOpen, onClose, onLoginSuccess, onRegisterClick }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -22,7 +22,7 @@ const Login = ({ isOpen, onClose, onSuccess, onRegisterClick }) => {
     try {
       const response = await login({ email, password });
       if (response.data.token) {
-        onSuccess();
+        onLoginSuccess(response.data.token);
       }
     } catch (error) {
       if (error.response?.status === 401) {
@@ -105,16 +105,14 @@ const Login = ({ isOpen, onClose, onSuccess, onRegisterClick }) => {
           </button>
         </form>
 
-        <div className="mt-4 text-center">
-          <p className="text-sm text-gray-600">
-            Don't have an account?{' '}
-            <button
-              onClick={onRegisterClick}
-              className="font-medium text-[#40033f] hover:text-[#6f0f55]"
-            >
-              Register
-            </button>
-          </p>
+        <div className="mt-6 text-center">
+          {/* <p className="mb-2 text-base text-gray-700">Don't have an account?</p>
+          <button
+            onClick={onRegisterClick}
+            className="w-full py-2 text-sm font-medium text-white bg-[#9c0c40] rounded-md hover:bg-[#40033f] transition-colors duration-200"
+          >
+            Register Now
+          </button> */}
         </div>
       </div>
     </div>
