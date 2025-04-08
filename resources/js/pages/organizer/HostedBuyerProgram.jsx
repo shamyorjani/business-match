@@ -11,6 +11,7 @@ const HostedBuyerProgram = () => {
   const [error, setError] = useState(null);
   const [verifyingIds, setVerifyingIds] = useState(new Set());
   const [rejectingIds, setRejectingIds] = useState(new Set());
+  const [displayCount, setDisplayCount] = useState(10); // Number of items to display initially
 
   // Fetch data from API
   useEffect(() => {
@@ -19,7 +20,9 @@ const HostedBuyerProgram = () => {
         setLoading(true);
         const response = await axios.get('/api/hosted');
         if (response.data.success) {
-          setHostedBuyerData(response.data.data);
+          // Sort data in descending order (newest first)
+          const sortedData = response.data.data.sort((a, b) => b.id - a.id);
+          setHostedBuyerData(sortedData);
         } else {
           setError('Failed to fetch hosted buyer data');
         }
@@ -34,6 +37,11 @@ const HostedBuyerProgram = () => {
     fetchHostedBuyers();
   }, []);
 
+  // Add load more function
+  const loadMore = () => {
+    setDisplayCount(prevCount => prevCount + 10);
+  };
+
   // Filter data based on search query
   const filteredData = hostedBuyerData.filter(item => {
     if (!searchQuery) return true;
@@ -46,6 +54,9 @@ const HostedBuyerProgram = () => {
       item.status.toLowerCase().includes(query)
     );
   });
+
+  // Get the visible items based on displayCount
+  const visibleData = filteredData.slice(0, displayCount);
 
   const handleViewClick = (item) => {
     setSelectedItem(item);
@@ -260,8 +271,8 @@ const HostedBuyerProgram = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredData.length > 0 ? (
-              filteredData.map((item) => (
+            {visibleData.length > 0 ? (
+              visibleData.map((item) => (
                 <tr key={item.id} className="border-b border-gray-200 hover:bg-gray-50">
                   <td className="px-4 py-4 text-sm">
                     <a
@@ -352,6 +363,18 @@ const HostedBuyerProgram = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Show More Button */}
+      {displayCount < filteredData.length && (
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={loadMore}
+            className="px-6 py-2 text-sm font-medium text-white bg-[#40033f] rounded-full hover:bg-[#2a0228] focus:outline-none focus:ring-2 focus:ring-[#40033f] focus:ring-offset-2"
+          >
+            Show More ({filteredData.length - displayCount} remaining)
+          </button>
+        </div>
+      )}
 
       {/* Detail Modal */}
       {showModal && selectedItem && (

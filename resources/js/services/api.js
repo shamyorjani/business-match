@@ -31,8 +31,6 @@ api.interceptors.response.use(
       // Clear auth data
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
-      // Redirect to login page
-      window.location.href = '/';
     }
     return Promise.reject(error);
   }
@@ -64,6 +62,8 @@ export const logout = () => {
   return api.post('/logout').finally(() => {
     localStorage.removeItem('auth_token');
     localStorage.removeItem('user');
+    // Reload the page after logout
+    window.location.reload();
   });
 };
 

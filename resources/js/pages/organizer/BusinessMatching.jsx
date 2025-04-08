@@ -24,6 +24,7 @@ const BusinessMatching = () => {
   const [businessData, setBusinessData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [displayCount, setDisplayCount] = useState(10); // Number of items to display initially
   const [editForm, setEditForm] = useState({
     booth_number: '',
     date: '',
@@ -48,7 +49,12 @@ const BusinessMatching = () => {
       try {
         setLoading(true);
         const response = await axios.get('/api/meetings');
-        setBusinessData(response.data || []);
+        // Sort data in descending order (newest first)
+        const sortedData = (response.data || []).sort((a, b) => {
+          // Sort by ID in descending order (assuming higher IDs are newer)
+          return b.id - a.id;
+        });
+        setBusinessData(sortedData);
         setError(null);
       } catch (err) {
         console.error('Error fetching business meetings:', err);
@@ -65,6 +71,11 @@ const BusinessMatching = () => {
     fetchBusinessMeetings();
   }, [refreshData]);
 
+  // Add load more function
+  const loadMore = () => {
+    setDisplayCount(prevCount => prevCount + 10);
+  };
+
   // Filter data based on search query
   const filteredData = businessData.filter(item => {
     if (!searchQuery) return true;
@@ -77,6 +88,9 @@ const BusinessMatching = () => {
       item.status.toLowerCase().includes(query)
     );
   });
+
+  // Get the visible items based on displayCount
+  const visibleData = filteredData.slice(0, displayCount);
 
   const handleViewClick = (item) => {
     setSelectedItem(item);
@@ -617,8 +631,8 @@ const BusinessMatching = () => {
             </tr>
           </thead>
           <tbody>
-            {filteredData.length > 0 ? (
-              filteredData.map((item) => (
+            {visibleData.length > 0 ? (
+              visibleData.map((item) => (
                 <tr key={item.id} className="border-b border-gray-200 hover:bg-gray-50">
                   <td className="px-4 py-4 text-sm">{item.name}</td>
                   <td className="px-4 py-4 text-sm">{item.company}</td>
@@ -678,6 +692,18 @@ const BusinessMatching = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Show More Button */}
+      {displayCount < filteredData.length && (
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={loadMore}
+            className="px-6 py-2 text-sm font-medium text-white bg-[#40033f] rounded-full hover:bg-[#2a0228] focus:outline-none focus:ring-2 focus:ring-[#40033f] focus:ring-offset-2"
+          >
+            Show More ({filteredData.length - displayCount} remaining)
+          </button>
+        </div>
+      )}
 
       {/* Detail Modal */}
       {showModal && selectedItem && (
