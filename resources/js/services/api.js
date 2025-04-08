@@ -6,8 +6,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
-  },
-  withCredentials: true // Enable sending cookies with requests
+  }
 });
 
 // Add request interceptor to add auth token
@@ -16,43 +15,24 @@ api.interceptors.request.use(
     const token = localStorage.getItem('auth_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log('Adding auth token to request:', token.substring(0, 10) + '...');
-    } else {
-      console.log('No auth token found in localStorage');
     }
     return config;
   },
   (error) => {
-    console.error('Request interceptor error:', error);
     return Promise.reject(error);
   }
 );
 
 // Add response interceptor to handle common errors
 api.interceptors.response.use(
-  response => {
-    console.log('API Response:', response.status, response.config.url);
-    return response;
-  },
+  response => response,
   error => {
-    console.error('API Error:', {
-      status: error.response?.status,
-      url: error.config?.url,
-      message: error.message,
-      response: error.response?.data
-    });
-
     if (error.response?.status === 401) {
-      console.log('Unauthorized - clearing auth data');
       // Clear auth data
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
-
-      // Only redirect if not already on home page
-      const currentPath = window.location.pathname;
-      if (currentPath !== '/') {
-        window.location.href = '/';
-      }
+      // Redirect to login page
+      window.location.href = '/';
     }
     return Promise.reject(error);
   }
@@ -63,14 +43,8 @@ export const login = (data) => {
     // Save token to local storage
     if (response.data.token) {
       localStorage.setItem('auth_token', response.data.token);
-      console.log('Auth token saved to localStorage:', response.data.token.substring(0, 10) + '...');
-    }
-    
-    // Save user data if available
-    if (response.data.user) {
       localStorage.setItem('user', JSON.stringify(response.data.user));
     }
-    
     return response;
   });
 };
@@ -80,14 +54,8 @@ export const register = (data) => {
     // Save token to local storage
     if (response.data.token) {
       localStorage.setItem('auth_token', response.data.token);
-      console.log('Auth token saved to localStorage:', response.data.token.substring(0, 10) + '...');
-    }
-    
-    // Save user data if available
-    if (response.data.user) {
       localStorage.setItem('user', JSON.stringify(response.data.user));
     }
-    
     return response;
   });
 };
@@ -100,7 +68,6 @@ export const logout = () => {
 };
 
 export const getUser = () => {
-  console.log('Fetching user data...');
   return api.get('/user');
 };
 

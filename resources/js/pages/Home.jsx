@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Registration from '../components/Registration';
 import Login from '../components/Login';
-import api from '../services/api';
+import { logout, getUser } from '../services/api';
 
 const HostedBuyerProgram = () => {
     const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
@@ -12,25 +12,42 @@ const HostedBuyerProgram = () => {
 
     // Check if user is authenticated
     useEffect(() => {
-      const checkAuth = async () => {
-        // Debug token
+        let isMounted = true;
         const token = localStorage.getItem('auth_token');
-        console.log('Auth token in storage:', token ? `${token.substring(0, 10)}...` : 'none');
-        
-        try {
-          const response = await api.get('/user');
-          console.log('Auth response:', response.data);
-          setUser(response.data);
-        } catch (error) {
-          console.error('Auth error details:', error);
-          setUser(null);
-        } finally {
-          setLoading(false);
-        }
-      };
 
-      checkAuth();
-    }, []);
+        const checkAuth = async () => {
+            if (!token) {
+                if (isMounted) {
+                    setUser(null);
+                    setLoading(false);
+                }
+                return;
+            }
+
+            try {
+                const response = await getUser();
+                if (isMounted) {
+                    setUser(response.data);
+                }
+            } catch (error) {
+                if (isMounted) {
+                    setUser(null);
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('user');
+                }
+            } finally {
+                if (isMounted) {
+                    setLoading(false);
+                }
+            }
+        };
+
+        checkAuth();
+
+        return () => {
+            isMounted = false;
+        };
+    }, []); // Empty dependency array since we only want to check once on mount
 
     // Add event listeners for modal coordination
     useEffect(() => {
@@ -47,14 +64,13 @@ const HostedBuyerProgram = () => {
     }, []);
 
     const handleLogout = async () => {
-      try {
-        await api.post('/logout');
-        setUser(null);
-        localStorage.removeItem('auth_token');
-        window.location.href = '/';
-      } catch (error) {
-        console.error('Logout failed', error);
-      }
+        try {
+            await logout();
+            setUser(null);
+            window.location.href = '/';
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
     };
 
     const termsData = [
