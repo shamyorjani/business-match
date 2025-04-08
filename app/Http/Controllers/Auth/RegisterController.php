@@ -40,7 +40,7 @@ class RegisterController extends Controller
             $token = $user->createToken('API Token')->plainTextToken;
 
             // Log the event
-            Log::info('User registered successfully', ['user' => $user]);
+            Log::info('User registered successfully', ['token' => $token]);
 
             // Return the response with the token
             return response()->json([

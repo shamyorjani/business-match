@@ -22,10 +22,10 @@ class LoginController extends Controller
 
             if (Auth::attempt($credentials)) {
                 $user = Auth::user();
-                
+
                 // Delete any existing tokens
                 $user->tokens()->delete();
-                
+
                 // Create new token
                 $token = $user->createToken('API Token')->plainTextToken;
 
@@ -63,6 +63,8 @@ class LoginController extends Controller
      */
     public function logout(Request $request)
     {
+
+        Log::info("chank the asfdljk");
         try {
             // Revoke the user's token
             Auth::user()->tokens()->delete();

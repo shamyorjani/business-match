@@ -47,7 +47,7 @@ api.interceptors.response.use(
       // Clear auth data
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
-      
+
       // Only redirect if not already on home page
       const currentPath = window.location.pathname;
       if (currentPath !== '/') {
@@ -61,9 +61,16 @@ api.interceptors.response.use(
 export const login = (data) => {
   return api.post('/login', data);
 };
-
 export const register = (data) => {
-  return api.post('/register', data);
+    return api.post('/register', data).then(response => {
+        // Save token to local storage
+        if (response.data.token) {
+            localStorage.setItem('auth_token', response.data.token);
+            console.log('Auth token saved to localStorage' ,  response.data.token);
+        }
+
+        return response;
+    });
 };
 
 export const logout = () => {

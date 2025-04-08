@@ -60,10 +60,12 @@ Route::post('/hosted/reject', [EmailStatusController::class, 'rejectHostedBuyer'
 Route::post('/register', [RegisterController::class, 'register']);
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout']);
-Route::get('/user', function () {
+Route::get('/users', function () {
     if (Auth::check()) {
+        Log::info('User authenticated', ['user' => Auth::user()]);
         return response()->json(Auth::user());
     }
+    Log::info('Unauthorized access attempt');
     return response()->json(null, 401);
 });
 

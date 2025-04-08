@@ -49,7 +49,7 @@ const HostedBuyerProgram = () => {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
 
         // Make the logout request with the token
-        await axios.post('/logout', {}, {
+        await axios.post('/api/logout', {}, {
           headers: {
             'X-CSRF-TOKEN': csrfToken,
             'Accept': 'application/json',
@@ -188,13 +188,13 @@ const HostedBuyerProgram = () => {
             </button>
           </div>
 
-          <div className="hidden md:flex items-center space-x-4 font-cardo">
+          <div className="items-center hidden space-x-4 md:flex font-cardo">
             <nav className="flex flex-col sm:flex-row">
-              <a href="/" className="nav-menu text-white hover:text-pink-200 transition-colors duration-200 font-medium py-2 border-b-2 border-transparent hover:border-white">Home</a>
-              <a href="/exhibitions" className="nav-menu text-white hover:text-pink-200 transition-colors duration-200 font-medium py-2 border-b-2 border-transparent hover:border-white">Exhibitions</a>
-              <a href="/hosted/registration" className="nav-menu text-white hover:text-pink-200 transition-colors duration-200 font-medium py-2 border-b-2 border-transparent hover:border-white">Hosted Buyer</a>
-              <a href="/business/registration" className="nav-menu text-white hover:text-pink-200 transition-colors duration-200 font-medium py-2 border-b-2 border-transparent hover:border-white">Business Matching</a>
-              <a href="/about" className="nav-menu text-white hover:text-pink-200 transition-colors duration-200 font-medium py-2 border-b-2 border-transparent hover:border-white">About IBE</a>
+              <a href="/" className="py-2 font-medium text-white transition-colors duration-200 border-b-2 border-transparent nav-menu hover:text-pink-200 hover:border-white">Home</a>
+              <a href="/exhibitions" className="py-2 font-medium text-white transition-colors duration-200 border-b-2 border-transparent nav-menu hover:text-pink-200 hover:border-white">Exhibitions</a>
+              <a href="/hosted/registration" className="py-2 font-medium text-white transition-colors duration-200 border-b-2 border-transparent nav-menu hover:text-pink-200 hover:border-white">Hosted Buyer</a>
+              <a href="/business/registration" className="py-2 font-medium text-white transition-colors duration-200 border-b-2 border-transparent nav-menu hover:text-pink-200 hover:border-white">Business Matching</a>
+              <a href="/about" className="py-2 font-medium text-white transition-colors duration-200 border-b-2 border-transparent nav-menu hover:text-pink-200 hover:border-white">About IBE</a>
             </nav>
 
             {/* Authentication buttons */}
@@ -233,30 +233,30 @@ const HostedBuyerProgram = () => {
         {isMenuOpen && (
           <div className="md:hidden absolute top-full left-0 right-0 bg-gradient-to-r from-[#40033f] to-[#9c0c40] z-50 py-4 px-4 shadow-lg">
             <nav className="flex flex-col space-y-4">
-              <a href="/" className="text-white py-3 px-4 border-b border-white/20 hover:bg-white/10 rounded-lg flex items-center">
+              <a href="/" className="flex items-center px-4 py-3 text-white border-b rounded-lg border-white/20 hover:bg-white/10">
                 <span className="mr-2">🏠</span> Home
               </a>
-              <a href="/exhibitions" className="text-white py-3 px-4 border-b border-white/20 hover:bg-white/10 rounded-lg flex items-center">
+              <a href="/exhibitions" className="flex items-center px-4 py-3 text-white border-b rounded-lg border-white/20 hover:bg-white/10">
                 <span className="mr-2">🎪</span> Exhibitions
               </a>
-              <a href="/hosted/registration" className="text-white py-3 px-4 border-b border-white/20 hover:bg-white/10 rounded-lg flex items-center">
+              <a href="/hosted/registration" className="flex items-center px-4 py-3 text-white border-b rounded-lg border-white/20 hover:bg-white/10">
                 <span className="mr-2">🏨</span> Hosted Buyer
               </a>
-              <a href="/business/registration" className="text-white py-3 px-4 border-b border-white/20 hover:bg-white/10 rounded-lg flex items-center">
+              <a href="/business/registration" className="flex items-center px-4 py-3 text-white border-b rounded-lg border-white/20 hover:bg-white/10">
                 <span className="mr-2">🤝</span> Business Matching
               </a>
-              <a href="/about" className="text-white py-3 px-4 hover:bg-white/10 rounded-lg flex items-center">
+              <a href="/about" className="flex items-center px-4 py-3 text-white rounded-lg hover:bg-white/10">
                 <span className="mr-2">ℹ️</span> About IBE
               </a>
             </nav>
 
             {/* Mobile Authentication buttons */}
-            <div className="mt-4 flex flex-col space-y-3">
+            <div className="flex flex-col mt-4 space-y-3">
               {loading ? (
                 <div className="w-full h-10 bg-gray-300 rounded-full animate-pulse"></div>
               ) : user ? (
                 <>
-                  <div className="text-white mb-2">Hi, {user.name}</div>
+                  <div className="mb-2 text-white">Hi, {user.name}</div>
                   <button
                     onClick={handleLogout}
                     className="w-full bg-white text-[#40033f] px-6 py-3 rounded-full text-sm font-bold"
@@ -275,7 +275,7 @@ const HostedBuyerProgram = () => {
                   <button
                     onClick={() => setIsRegistrationOpen(true)}
                     className="w-full px-6 py-3 text-sm font-bold text-white bg-transparent border border-white rounded-full"
-                  > 
+                  >
                     Register
                   </button>
                 </>
@@ -290,13 +290,13 @@ const HostedBuyerProgram = () => {
       <Login isOpen={isLoginOpen} onClose={() => setIsLoginOpen(false)} />
 
       {/* Hero Image with Title */}
-      <div className="relative h-64 md:h-96 mb-12"> {/* Increased height and margin */}
+      <div className="relative h-64 mb-12 md:h-96"> {/* Increased height and margin */}
         <div className="absolute inset-0 bg-center bg-cover" style={{ backgroundImage: "url('/images/bg-img.png')" }}></div>
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
-          <h1 className="font-serif text-4xl font-bold text-white md:text-7xl drop-shadow-lg mb-4">
+        <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center">
+          <h1 className="mb-4 font-serif text-4xl font-bold text-white md:text-7xl drop-shadow-lg">
             Hosted Buyer Program
           </h1>
-          <div className="z-20 flex flex-wrap justify-center mt-6 gap-4">
+          <div className="z-20 flex flex-wrap justify-center gap-4 mt-6">
             <button
               className="text-lg font-bold primary-btn min-w-[180px]"
               onClick={() => window.location.href = '/hosted/registration'}
@@ -324,7 +324,7 @@ const HostedBuyerProgram = () => {
               Why Hosted Buyer Program ?
             </h2>
 
-            <div className="grid max-w-6xl grid-cols-1 gap-8 p-3 sm:p-6 mx-auto md:grid-cols-2">
+            <div className="grid max-w-6xl grid-cols-1 gap-8 p-3 mx-auto sm:p-6 md:grid-cols-2">
               {/* Feature 1 */}
               <div className="flex items-center p-4 space-x-4">
                 <div className="flex-shrink-0">
@@ -434,7 +434,7 @@ const HostedBuyerProgram = () => {
     </div>
 
     {/* Update the "Register Now" button at the bottom of the page to open registration modal if not logged in */}
-    <div className="z-20 flex justify-center my-12 py-6">
+    <div className="z-20 flex justify-center py-6 my-12">
       <button
         type="button"
         className="primary-btn text-[24px] font-bold px-10 py-4 hover:shadow-lg transition-all duration-300"
@@ -445,12 +445,12 @@ const HostedBuyerProgram = () => {
     </div>
 
       {/* Enhanced Footer */}
-      <footer className="py-10 text-center text-gray-600 bg-gray-100 mt-auto">
-        <div className="container mx-auto px-4">
+      <footer className="py-10 mt-auto text-center text-gray-600 bg-gray-100">
+        <div className="container px-4 mx-auto">
           <div className="flex flex-col items-center">
             <img className="w-32 mb-6" src="/images/logo.svg" alt="IBE Logo" />
             <p className="mb-4">© {new Date().getFullYear()} IBE - International Beauty Expo. All rights reserved.</p>
-            <div className="flex space-x-6 mt-2">
+            <div className="flex mt-2 space-x-6">
               <a href="#" className="text-gray-500 hover:text-[#40033f]">Privacy Policy</a>
               <a href="#" className="text-gray-500 hover:text-[#40033f]">Terms & Conditions</a>
               <a href="#" className="text-gray-500 hover:text-[#40033f]">Contact Us</a>
