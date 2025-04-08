@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Models\VisitorCompanyInfo;
 use App\Models\VisitorInterest;
 use App\Models\ScheduleMeeting;
+use App\Models\UnavailableTimeSlot;
+use App\Models\ExhibitorCompanyInfo;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -194,13 +196,41 @@ class HostedRegistrationController extends Controller
 
                 // Step 3: Save scheduled meetings with the interest_id
                 if (!empty($meetings) && $interestRecord) {
-                    $meetingRecords = array_map(function ($meeting) use ($userId, $companyId, $interestRecord) {
-                        return [
+                    // Prepare meeting records for insertion
+                    $meetingRecords = [];
+                    $unavailableSlots = [];
+                    
+                    foreach ($meetings as $meeting) {
+                        // Convert date format from '9 April 2025' to '2025-04-09'
+                        $date = \DateTime::createFromFormat('j F Y', $meeting['date']);
+                        if (!$date) {
+                            Log::error('Invalid date format', ['date' => $meeting['date']]);
+                            continue;
+                        }
+                        $formattedDate = $date->format('Y-m-d');
+                        
+                        // Extract and format start time (e.g., "12.00pm-1.00pm" -> "12 pm")
+                        $timeRange = $meeting['time'];
+                        $startTime = explode('-', $timeRange)[0];
+                        
+                        // Convert time format
+                        $startTime = str_replace('.00', '', $startTime); // Remove .00
+                        $startTime = str_replace('1200', '12', $startTime); // Fix 1200 to 12
+                        $startTime = str_replace('12pm', '12 pm', $startTime); // Add space for 12 pm
+                        $startTime = str_replace('12am', '12 am', $startTime); // Add space for 12 am
+                        $startTime = preg_replace('/(\d+)([ap]m)/i', '$1 $2', $startTime); // Add space for other times
+                        
+                        // Get visitor company name
+                        $visitorCompany = VisitorCompanyInfo::find($companyId);
+                        $visitorCompanyName = $visitorCompany ? $visitorCompany->company_name : 'Unknown Company';
+                        
+                        // Add meeting to records array
+                        $meetingRecords[] = [
                             'user_id' => $userId,
                             'visitor_company_id' => $companyId,
                             'interest_id' => $interestRecord->id,
                             'booth_number' => $meeting['boothNumber'],
-                            'date' => $meeting['date'],
+                            'date' => $formattedDate,
                             'day' => $meeting['day'],
                             'day_of_week' => $meeting['dayOfWeek'],
                             'exhibitor' => $meeting['exhibitor'],
@@ -209,10 +239,46 @@ class HostedRegistrationController extends Controller
                             'created_at' => now(),
                             'updated_at' => now()
                         ];
-                    }, $meetings);
-
+                        
+                        // Find exhibitor company
+                        $exhibitorCompany = ExhibitorCompanyInfo::where('company_name', $meeting['exhibitor'])->first();
+                        
+                        // If exhibitor company exists, mark time slot as unavailable
+                        if ($exhibitorCompany) {
+                            $unavailableSlots[] = [
+                                'exhibitor_company_id' => $exhibitorCompany->id,
+                                'date' => $formattedDate,
+                                'time' => $startTime,
+                                'reason' => "Meeting with visitor from " . $visitorCompanyName,
+                                'status' => 1,
+                                'created_at' => now(),
+                                'updated_at' => now()
+                            ];
+                        } else {
+                            Log::warning('Exhibitor company not found', [
+                                'exhibitor_name' => $meeting['exhibitor'],
+                                'date' => $meeting['date'],
+                                'time' => $meeting['time']
+                            ]);
+                        }
+                    }
+                    
+                    // Insert all meeting records
                     ScheduleMeeting::insert($meetingRecords);
-                    Log::info('Saved scheduled meetings', ['user_id' => $userId, 'company_id' => $companyId]);
+                    
+                    // Insert all unavailable time slots
+                    if (!empty($unavailableSlots)) {
+                        UnavailableTimeSlot::insert($unavailableSlots);
+                        Log::info('Marked time slots as unavailable', [
+                            'slots_count' => count($unavailableSlots)
+                        ]);
+                    }
+                    
+                    Log::info('Saved scheduled meetings', [
+                        'user_id' => $userId, 
+                        'company_id' => $companyId,
+                        'meetings_count' => count($meetingRecords)
+                    ]);
                 }
             }
 
