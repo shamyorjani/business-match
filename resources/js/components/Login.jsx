@@ -15,7 +15,7 @@ const Login = ({ isOpen, onClose }) => {
   const handleChange = (e) => {
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.type === 'checkbox' ? e.target.checked : e.target.value
     });
   };
 
@@ -26,13 +26,8 @@ const Login = ({ isOpen, onClose }) => {
 
     try {
       const response = await login(formData);
-
-      // Store the token in localStorage
-      if (response.data.token) {
-        localStorage.setItem('auth_token', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
-      }
-
+      console.log('Login successful:', response.data);
+      
       setSuccess(true);
       // Clear the form
       setFormData({
@@ -41,16 +36,17 @@ const Login = ({ isOpen, onClose }) => {
         remember: true
       });
 
-      // Close the modal and redirect to home page
+      // Close the modal and reload the page to show the logged-in state
       setTimeout(() => {
         onClose();
-        window.location.href = '/';
-      }, 2000);
+        window.location.reload();
+      }, 1500);
 
     } catch (error) {
-      if (error.response && error.response.data.errors) {
+      console.error('Login error:', error);
+      if (error.response?.data?.errors) {
         setErrors(error.response.data.errors);
-      } else if (error.response && error.response.data.message) {
+      } else if (error.response?.data?.message) {
         setErrors({ general: error.response.data.message });
       } else {
         setErrors({ general: 'Login failed. Please try again.' });
@@ -119,7 +115,7 @@ const Login = ({ isOpen, onClose }) => {
                 type="checkbox"
                 name="remember"
                 checked={formData.remember}
-                onChange={(e) => setFormData({ ...formData, remember: e.target.checked })}
+                onChange={handleChange}
                 className="rounded border-gray-300 text-[#40033f] shadow-sm focus:border-[#40033f] focus:ring focus:ring-[#40033f] focus:ring-opacity-50"
               />
               <span className="ml-2 text-sm text-gray-600">Remember me</span>

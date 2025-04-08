@@ -6,7 +6,21 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Laravel\Sanctum\NewAccessToken;
 
+/**
+ * @property int $id
+ * @property string $name
+ * @property string $email
+ * @property string $password
+ * @property string $phone_number
+ * @property string $company_name
+ * @property string $company_nature
+ * @property string $company_size
+ * @property string $registration_type
+ * @method \Illuminate\Database\Eloquent\Relations\HasMany tokens()
+ * @method NewAccessToken createToken(string $name, array $abilities = ['*'])
+ */
 class User extends Authenticatable
 {
     use HasFactory, HasApiTokens, Notifiable;

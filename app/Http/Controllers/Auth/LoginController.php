@@ -63,11 +63,16 @@ class LoginController extends Controller
      */
     public function logout(Request $request)
     {
-
-        Log::info("chank the asfdljk");
         try {
-            // Revoke the user's token
-            Auth::user()->tokens()->delete();
+            // Get the current user
+            $user = Auth::user();
+        
+            if (!$user) {
+                return response()->json(['message' => 'No authenticated user found'], 401);
+            }
+            
+            // Revoke all of the user's tokens
+            $user->tokens()->delete();
 
             return response()->json(['message' => 'Logged out successfully']);
         } catch (\Exception $e) {

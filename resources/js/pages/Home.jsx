@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Registration from '../components/Registration';
 import Login from '../components/Login';
-import axios from 'axios';
+import api from '../services/api';
 
 const HostedBuyerProgram = () => {
     const [isRegistrationOpen, setIsRegistrationOpen] = useState(false);
@@ -13,10 +13,16 @@ const HostedBuyerProgram = () => {
     // Check if user is authenticated
     useEffect(() => {
       const checkAuth = async () => {
+        // Debug token
+        const token = localStorage.getItem('auth_token');
+        console.log('Auth token in storage:', token ? `${token.substring(0, 10)}...` : 'none');
+        
         try {
-          const response = await axios.get('/api/user');
+          const response = await api.get('/user');
+          console.log('Auth response:', response.data);
           setUser(response.data);
         } catch (error) {
+          console.error('Auth error details:', error);
           setUser(null);
         } finally {
           setLoading(false);
@@ -42,30 +48,12 @@ const HostedBuyerProgram = () => {
 
     const handleLogout = async () => {
       try {
-        // Get CSRF token - use the sanctum/csrf-cookie endpoint first
-        await axios.get('/sanctum/csrf-cookie');
-
-        // Get the CSRF token from cookies or meta tag
-        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
-
-        // Make the logout request with the token
-        await axios.post('/api/logout', {}, {
-          headers: {
-            'X-CSRF-TOKEN': csrfToken,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-
-        // Clear user state and reload page
+        await api.post('/logout');
         setUser(null);
-
-        // Provide feedback
-        alert('Logged out successfully');
-        window.location.href = '/'; // Redirect to home page
+        localStorage.removeItem('auth_token');
+        window.location.href = '/';
       } catch (error) {
         console.error('Logout failed', error);
-        alert('Logout failed: ' + (error.response?.data?.message || error.message));
       }
     };
 

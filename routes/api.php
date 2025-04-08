@@ -25,6 +25,7 @@ use Illuminate\Support\Facades\Hash;
 use App\Http\Controllers\UnavailableTimeSlotController;
 use App\Http\Controllers\PaymentController;
 use App\Http\Controllers\HostedRegistrationController;
+use App\Http\Controllers\DashboardController;
 
 // Basic diagnostic endpoints
 Route::get('/ping', function () {
@@ -60,14 +61,7 @@ Route::post('/hosted/reject', [EmailStatusController::class, 'rejectHostedBuyer'
 Route::post('/register', [RegisterController::class, 'register']);
 Route::post('/login', [LoginController::class, 'login']);
 Route::post('/logout', [LoginController::class, 'logout']);
-Route::get('/users', function () {
-    if (Auth::check()) {
-        Log::info('User authenticated', ['user' => Auth::user()]);
-        return response()->json(Auth::user());
-    }
-    Log::info('Unauthorized access attempt');
-    return response()->json(null, 401);
-});
+Route::get('/user', [DashboardController::class, 'checkToken'])->name('user.profile');
 
 // Product categories and subcategories
 Route::get('/categories', [ProductCategoryController::class, 'index']);
