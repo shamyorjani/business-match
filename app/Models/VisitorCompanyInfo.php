@@ -37,10 +37,7 @@ class VisitorCompanyInfo extends Model
     /**
      * Get the registration that owns the company info.
      */
-    public function registration()
-    {
-        return $this->belongsTo(Registration::class);
-    }
+
 
     /**
      * Get the user that owns the company info.

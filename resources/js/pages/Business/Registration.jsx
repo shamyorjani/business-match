@@ -39,7 +39,7 @@ const Registration = () => {
       setErrors(prevErrors => ({
         ...prevErrors,
         [name]: ''
-      }));
+    }));
     }
   };
 
@@ -82,28 +82,30 @@ const Registration = () => {
   ];
 
   return (
-    <div className="form-container">
+    <div className="form-container w-full max-w-7xl mx-auto">
       {/* Header */}
-      <div className="header">
-        <h1 className="header-title">Business Matching Registration and Form Submission</h1>
+      <div className="header px-3 sm:px-6">
+        <h1 className="header-title text-xl sm:text-2xl md:text-3xl">Business Matching Registration and Form Submission</h1>
       </div>
 
       {/* Form Content */}
-      <div className="p-6 px-16 py-12 bg-white">
+      <div className="p-3 sm:p-6 px-8 py-8 md:px-16 md:py-12 bg-white">
         {/* Step Indicator */}
+        
+
         <div className="mb-8">
-          <h2 className="step-indicator">STEP 1</h2>
-          <div className="flex">
-            <svg width="326" height="34" viewBox="0 0 400 40">
-              <polygon points="240,0 340,0 360,20 340,40 240,40 260,20" fill="#E5E7EB" />
+            <h2 className="step-indicator">STEP 1</h2>
+            <div className="flex">
+                <svg width="326" height="34" viewBox="0 0 400 40">
+                <polygon points="240,0 340,0 360,20 340,40 240,40 260,20" fill="#E5E7EB" />
               <polygon points="120,0 220,0 240,20 220,40 120,40 140,20" fill="#E5E7EB" />
               <polygon points="0,0 100,0 120,20 100,40 0,40" fill="#40033f" />
-            </svg>
-          </div>
+                </svg>
+            </div>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="grid grid-cols-1 gap-6 mb-4 md:grid-cols-2 md:gap-x-[120px]">
+          <div className="grid grid-cols-1 gap-3 mb-3 sm:gap-6 sm:mb-4 md:grid-cols-2 md:gap-x-[120px]">
             <FormInput
               id="name"
               name="name"
@@ -182,10 +184,10 @@ const Registration = () => {
           />
 
           {/* Required Fields Note */}
-          <div className="mt-6 text-sm text-red-600">*All fields are required to fill</div>
+          <div className="mt-3 sm:mt-6 text-xs sm:text-sm text-red-600">*All fields are required to fill</div>
 
           {/* Next Button */}
-          <div className="flex justify-end mt-6">
+          <div className="form-actions">
             <button type="submit" className="primary-btn">Next</button>
           </div>
         </form>

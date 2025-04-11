@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import api from '../../services/api'; // Import the API service
+import axios from 'axios';
 
 const ScheduleMeeting = () => {
   const location = useLocation();
@@ -18,6 +19,13 @@ const ScheduleMeeting = () => {
   const [showMessageModal, setShowMessageModal] = useState(false);
   const [messageModalContent, setMessageModalContent] = useState("");
 
+  // Add a new state for submission loading
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Add this new state to store unavailable slots
+  const [unavailableSlots, setUnavailableSlots] = useState({});
+  const [isLoading, setIsLoading] = useState(true);
+
   // Function to show message modal instead of alert
   const showMessage = (message) => {
     setMessageModalContent(message);
@@ -27,7 +35,26 @@ const ScheduleMeeting = () => {
   // Get selected exhibitors from navigation state
   const [companies, setCompanies] = useState([]);
 
+  // Add this new function to fetch unavailable slots
+  const fetchUnavailableSlots = async () => {
+    try {
+      setIsLoading(true);
+      const response = await api.get('/unavailable-slots');
+      if (response.data.success) {
+        setUnavailableSlots(response.data.data.unavailable_slots);
+      }
+    } catch (error) {
+      console.error('Error fetching unavailable slots:', error);
+      showMessage('Error loading unavailable time slots. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
+    // Fetch unavailable slots when component mounts
+    fetchUnavailableSlots();
+
     // Try to load from localStorage first
     const storedSlots = JSON.parse(localStorage.getItem('selectedMeetingSlots')) || [];
 
@@ -168,94 +195,15 @@ const ScheduleMeeting = () => {
     "5 pm"
   ];;
 
-  // Company-specific unavailable slots (company, day, time)
-const companyUnavailableSlots = {
-    // Company 1
-    "ABC Company": [
-        { day: 1, time: "11 am" },
-        { day: 2, time: "1 pm" },
-        { day: 4, time: "4 pm" },
-    ],
-    // Company 2
-    "HJ Company": [
-        { day: 1, time: "12 pm" },
-        { day: 3, time: "2 pm" },
-        { day: 4, time: "5 pm" },
-    ],
-    // Company 3
-    "AAA Company": [
-        { day: 2, time: "2 pm" },
-        { day: 3, time: "11 am" },
-        { day: 4, time: "1 pm" },
-    ],
-    // Company 4
-    "XYZ Company": [
-        { day: 1, time: "2 pm" },
-        { day: 2, time: "3 pm" },
-        { day: 4, time: "12 pm" },
-    ],
-    // Company 5
-    "Beauty Tech": [
-        { day: 1, time: "3 pm" },
-        { day: 2, time: "11 am" },
-        { day: 3, time: "5 pm" },
-    ],
-    // Company 6
-    "Glow Cosmetics": [
-        { day: 1, time: "5 pm" },
-        { day: 3, time: "12 pm" },
-        { day: 4, time: "3 pm" },
-    ],
-    // Company 7
-    "Natural Beauty": [
-        { day: 1, time: "4 pm" },
-        { day: 2, time: "12 pm" },
-        { day: 3, time: "1 pm" },
-    ],
-    // Company 8
-    "Luxury Skin": [
-        { day: 2, time: "4 pm" },
-        { day: 3, time: "3 pm" },
-        { day: 4, time: "11 am" },
-    ],
-    // Company 9
-    "Color Pop": [
-        { day: 1, time: "1 pm" },
-        { day: 2, time: "5 pm" },
-        { day: 3, time: "4 pm" },
-    ],
-    // Company 10
-    "Pure Elements": [
-        { day: 1, time: "11 am" },
-        { day: 2, time: "2 pm" },
-        { day: 4, time: "5 pm" },
-    ],
-    // Company 11
-    "Green Beauty": [
-        { day: 1, time: "12 pm" },
-        { day: 3, time: "2 pm" },
-        { day: 4, time: "3 pm" },
-    ],
-    // Company 12
-    "Skin Science": [
-        { day: 1, time: "3 pm" },
-        { day: 2, time: "4 pm" },
-        { day: 3, time: "11 am" },
-    ]
-};
-
-  // Default unavailable slots for companies not explicitly listed
-  const defaultUnavailableSlots = [
-    { day: 1, time: "11 am" },
-    { day: 4, time: "2 pm" },
-  ];
-
+  // Update the isSlotUnavailable function to use actual data
   const isSlotUnavailable = (day, time) => {
-    // Get the unavailable slots for the currently selected company
-    const companySlots = companyUnavailableSlots[selectedCompany] || defaultUnavailableSlots;
+    if (!selectedCompany || !unavailableSlots[selectedCompany]) {
+      return false;
+    }
 
-    // Check if this slot is unavailable for the selected company
-    return companySlots.some(slot => slot.day === day && slot.time === time);
+    return unavailableSlots[selectedCompany].some(slot => 
+      slot.day === day && slot.time === time
+    );
   };
 
   // Also check if the slot is already taken by another company
@@ -432,12 +380,8 @@ const companyUnavailableSlots = {
     const companyData = JSON.parse(localStorage.getItem('companyInfoData') || '{}');
     const selectedInterests = JSON.parse(localStorage.getItem('selectedInterests') || '[]');
 
-    // Show loading indicator in the button
-    const submitButton = document.querySelector('button[type="submit"]');
-    if (submitButton) {
-      submitButton.disabled = true;
-      submitButton.innerHTML = 'Submitting...';
-    }
+    // Set loading state to true
+    setIsSubmitting(true);
 
     // Prepare the final data for submission
     const finalData = {
@@ -457,8 +401,40 @@ const companyUnavailableSlots = {
       .then(response => {
         console.log('Registration successful:', response.data);
 
-        // Clear all exhibitor selections from localStorage
-        clearAllSelectedExhibitors();
+        // Clear all data from localStorage
+        localStorage.removeItem('selectedMeetingSlots');
+        localStorage.removeItem('businessRegistration');
+        localStorage.removeItem('companyInfoData');
+        localStorage.removeItem('selectedInterests');
+        localStorage.removeItem('selectedExhibitors');
+        localStorage.removeItem('companies');
+        localStorage.removeItem('selectedCompanies');
+        
+        // Clear any category-specific exhibitor selections
+        const savedInterests = selectedInterests;
+        if (savedInterests && savedInterests.length > 0) {
+          savedInterests.forEach(interest => {
+            localStorage.removeItem(`selectedExhibitors_${interest.subCategory}`);
+            localStorage.removeItem(`companies_${interest.subCategory}`);
+          });
+        }
+
+        // Clear the combined selection keys if they exist
+        if (savedInterests && savedInterests.length > 0) {
+          const sortedKey = [...savedInterests.map(interest => interest.subCategory)].sort().join('_');
+          localStorage.removeItem(`selectedExhibitors_${sortedKey}`);
+          localStorage.removeItem(`companies_${sortedKey}`);
+        }
+
+        // Clear any remaining company-related data
+        localStorage.removeItem('selectedCompany');
+        localStorage.removeItem('previousCompanies');
+        localStorage.removeItem('companySelections');
+
+        // Reset the companies state
+        setCompanies([]);
+        setSelectedCompany("");
+        setSelectedSlots([]);
 
         // Navigate to thank you page with scheduled meetings data
         navigate('/business/thankyou', {
@@ -473,37 +449,10 @@ const companyUnavailableSlots = {
       })
       .catch(error => {
         console.error('Registration failed:', error);
-        // Enable the button again
-        if (submitButton) {
-          submitButton.disabled = false;
-          submitButton.innerHTML = 'Submit';
-        }
+        // Set loading state back to false on error
+        setIsSubmitting(false);
         handleRegistrationError(error);
       });
-  };
-
-  // Add this new function to clear all exhibitor selections
-  const clearAllSelectedExhibitors = () => {
-    // Clear meeting slots
-    localStorage.removeItem('selectedMeetingSlots');
-
-    // Get current interests
-    const savedInterests = localStorage.getItem('selectedInterests');
-    if (savedInterests) {
-      const interests = JSON.parse(savedInterests);
-      const subcategoriesList = interests.map(interest => interest.subCategory);
-
-      // Clear selections for each subcategory
-      subcategoriesList.forEach(subcategory => {
-        localStorage.removeItem(`selectedExhibitors_${subcategory}`);
-      });
-
-      // Also clear the combined selection key if it exists
-      if (subcategoriesList && subcategoriesList.length > 0) {
-        const sortedKey = [...subcategoriesList].sort().join('_');
-        localStorage.removeItem(`selectedExhibitors_${sortedKey}`);
-      }
-    }
   };
 
   const handleRegistrationError = (error) => {
@@ -551,27 +500,27 @@ const companyUnavailableSlots = {
   return (
     <div className="form-container">
       {/* Header */}
-      <div className="bg-gradient-to-r from-[#40033f] to-[#9c0c40] px-14 py-8">
-        <h1 className="text-2xl font-bold text-white">Schedule your meeting</h1>
-        <p className="mt-1 text-sm text-white">
+      <div className="bg-gradient-to-r from-[#40033f] to-[#9c0c40] px-4 sm:px-8 md:px-14 py-6 md:py-8">
+        <h1 className="text-xl md:text-2xl font-bold text-white">Schedule your meeting</h1>
+        <p className="mt-1 text-xs md:text-sm text-white">
           Kindly select the available time slots to book a meeting
         </p>
-        <p className="mt-1 text-sm text-white">
+        <p className="mt-1 text-xs md:text-sm text-white">
           For more information or any updates, kindly contact pr@elite.com.my or WhatsApp, +6016-704 8058
         </p>
       </div>
 
       {/* Content */}
-      <div className="py-4 px-14 white">
+      <div className="py-4 px-4 sm:px-8 md:px-14 white">
         {/* Company details */}
-        <div className='flex justify-between align-bottom'>
+        <div className='flex flex-col sm:flex-row justify-between sm:align-bottom gap-2 sm:gap-0'>
           <div className="mb-4">
-            <div className="relative inline-block w-64 mb-2">
+            <div className="relative inline-block w-full sm:w-64 mb-2">
               {/* Improved dropdown design */}
               <select
                 value={selectedCompany}
                 onChange={handleCompanyChange}
-                className="block appearance-none w-full bg-white border-2 border-gray-300 px-4 py-2 pr-8 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-[16px] text-black font-medium"
+                className="block appearance-none w-full bg-white border-2 border-gray-300 px-4 py-2 pr-8 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 text-sm md:text-[16px] text-black font-medium"
               >
                 {companies.map(company => {
                   const hasScheduled = selectedSlots.some(slot => slot.company === company.name);
@@ -597,114 +546,134 @@ const companyUnavailableSlots = {
           </div>
 
           {/* Selected meetings counter */}
-          <div className="flex items-center">
+          <div className="flex items-center mb-2 sm:mb-0">
             <span className="text-sm font-medium">
               {selectedSlots.length} of {companies.length} Meeting{companies.length !== 1 ? 's' : ''} Scheduled
             </span>
           </div>
         </div>
 
+        {/* Loading state */}
+        {isLoading && (
+          <div className="flex justify-center items-center py-4">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#40033f]"></div>
+          </div>
+        )}
+
         {/* Legend */}
-        <div className="flex items-center gap-6 mb-4 font-medium">
+        <div className="flex flex-wrap items-center gap-3 sm:gap-6 mb-4 font-medium">
           <div className="flex items-center">
-            <div className="w-4 h-4 mr-2 bg-white border border-gray-300 rounded-full"></div>
-            <span className="text-sm">Available</span>
+            <div className="w-4 h-4 mr-1 sm:mr-2 bg-white border border-gray-300 rounded-full"></div>
+            <span className="text-xs sm:text-sm">Available</span>
           </div>
           <div className="flex items-center">
-            <div className="w-4 h-4 mr-2 bg-[#9c0c40] rounded-full"></div>
-            <span className="text-sm">Unavailable</span>
+            <div className="w-4 h-4 mr-1 sm:mr-2 bg-[#9c0c40] rounded-full"></div>
+            <span className="text-xs sm:text-sm">Unavailable</span>
           </div>
           <div className="flex items-center">
-            <div className="w-4 h-4 mr-2 bg-green-400 rounded-full"></div>
-            <span className="text-sm">Selected</span>
+            <div className="w-4 h-4 mr-1 sm:mr-2 bg-green-400 rounded-full"></div>
+            <span className="text-xs sm:text-sm">Selected</span>
           </div>
           <div className="flex items-center">
-            <div className="w-4 h-4 mr-2 bg-orange-400 rounded-full"></div>
-            <span className="text-sm">Booked by Others</span>
+            <div className="w-4 h-4 mr-1 sm:mr-2 bg-orange-400 rounded-full"></div>
+            <span className="text-xs sm:text-sm">Booked by Others</span>
           </div>
         </div>
 
-        {/* Schedule table */}
-        <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead>
-              <tr>
-                <th className="p-2 text-center border border-gray-300 bg-gray-50">
-                  <div>Time</div>
-                  <div className="text-xs">(UTC+8)</div>
-                </th>
-                {days.map((day) => (
-                  <th key={day.day} className="p-2 text-center border border-gray-300 bg-gray-50">
-                    <div>Day {day.day}</div>
-                    <div className="text-xs">{day.date}</div>
-                    <div className="text-xs">({day.dayOfWeek})</div>
+        {/* Schedule table with mobile responsiveness */}
+        {!isLoading && (
+          <div className="overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0">
+            <table className="w-full border-collapse text-xs sm:text-sm">
+              <thead>
+                <tr>
+                  <th className="p-1 sm:p-2 text-center border border-gray-300 bg-gray-50">
+                    <div>Time</div>
+                    <div className="text-[10px] sm:text-xs">(UTC+8)</div>
                   </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {timeSlots.map((time) => (
-                <tr key={time}>
-                  <td className="p-2 text-center border border-gray-300">{time}</td>
-                  {days.map((day) => {
-                    const unavailable = isSlotUnavailable(day.day, time);
-                    const isSelected = isAnyCompanySlotSelected(day.day, time);
-                    const slotCompany = getSlotCompany(day.day, time);
-                    const isOwnedByCurrentCompany = slotCompany === selectedCompany;
-                    const isTakenByOther = isSlotTakenByOtherCompany(day.day, time);
-
-                    let cellClass = "p-2 border border-gray-300 text-center cursor-pointer";
-                    if (unavailable) {
-                      cellClass += " bg-[#9c0c40]"; // Company's unavailable slot
-                    } else if (isTakenByOther) {
-                      cellClass += " bg-orange-400 relative"; // Taken by another company
-                    } else if (isSelected && isOwnedByCurrentCompany) {
-                      cellClass += " bg-green-400 relative"; // Current company's selected slot
-                    }
-
-                    return (
-                      <td
-                        key={`${day.day}-${time}`}
-                        className={cellClass}
-                        onClick={() => handleSlotClick(day, time)}
-                        title={isOwnedByCurrentCompany ? "Click to cancel booking" :
-                               unavailable ? "Unavailable" :
-                               isTakenByOther ? `Booked by ${slotCompany}` : "Click to book"}
-                      >
-                        {isSelected && (
-                          <span className="absolute px-1 text-xs font-medium -translate-x-1/2 bg-white rounded left-1/2 -top-3">
-                            {slotCompany}
-                          </span>
-                        )}
-                      </td>
-                    );
-                  })}
+                  {days.map((day) => (
+                    <th key={day.day} className="p-1 sm:p-2 text-center border border-gray-300 bg-gray-50">
+                      <div>Day {day.day}</div>
+                      <div className="text-[10px] sm:text-xs">{day.date}</div>
+                      <div className="text-[10px] sm:text-xs">({day.dayOfWeek})</div>
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {timeSlots.map((time) => (
+                  <tr key={time}>
+                    <td className="p-1 sm:p-2 text-center border border-gray-300">{time}</td>
+                    {days.map((day) => {
+                      const unavailable = isSlotUnavailable(day.day, time);
+                      const isSelected = isAnyCompanySlotSelected(day.day, time);
+                      const slotCompany = getSlotCompany(day.day, time);
+                      const isOwnedByCurrentCompany = slotCompany === selectedCompany;
+                      const isTakenByOther = isSlotTakenByOtherCompany(day.day, time);
+
+                      let cellClass = "p-1 sm:p-2 border border-gray-300 text-center cursor-pointer min-w-[40px] sm:min-w-0";
+                      if (unavailable) {
+                        cellClass += " bg-[#9c0c40]"; // Company's unavailable slot
+                      } else if (isTakenByOther) {
+                        cellClass += " bg-orange-400 relative"; // Taken by another company
+                      } else if (isSelected && isOwnedByCurrentCompany) {
+                        cellClass += " bg-green-400 relative"; // Current company's selected slot
+                      }
+
+                      return (
+                        <td
+                          key={`${day.day}-${time}`}
+                          className={cellClass}
+                          onClick={() => handleSlotClick(day, time)}
+                          title={isOwnedByCurrentCompany ? "Click to cancel booking" :
+                                 unavailable ? "Unavailable" :
+                                 isTakenByOther ? `Booked by ${slotCompany}` : "Click to book"}
+                        >
+                          {isSelected && (
+                            <span className="absolute px-1 text-[9px] sm:text-xs font-medium -translate-x-1/2 bg-white rounded left-1/2 -top-3 whitespace-nowrap max-w-[80px] sm:max-w-none overflow-hidden text-ellipsis">
+                              {slotCompany}
+                            </span>
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
 
         {/* Action buttons */}
-        <div className="flex justify-between mt-8">
+        <div className="flex flex-col sm:flex-row justify-between mt-8 gap-3 sm:gap-0">
           <button
-            className="px-8 py-2 btn-secondary"
+            className="px-6 sm:px-8 py-2 btn-secondary text-sm sm:text-base w-full sm:w-auto"
             onClick={handleBack}
+            disabled={isSubmitting}
           >
             Back to Previous
           </button>
 
           <button
-            className="px-8 py-2 bg-[#40033f] text-white rounded-md disabled:opacity-50"
+            className="px-6 sm:px-8 py-2 bg-[#40033f] text-white rounded-4xl disabled:opacity-50 text-sm sm:text-base w-full sm:w-auto"
             onClick={handleNextClick}
-            disabled={selectedSlots.length < companies.length}
+            disabled={selectedSlots.length < companies.length || isSubmitting}
           >
-            Submit
+            {isSubmitting ? (
+              <span className="flex items-center justify-center">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5 mr-2 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Submitting...
+              </span>
+            ) : (
+              "Submit"
+            )}
           </button>
         </div>
       </div>
 
-      {/* Confirmation Modal */}
+      {/* Make modals responsive as well */}
       {showConfirmModal && selectedSlot && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(88, 64, 88, 0.7)' }}>
           <div className="relative w-full max-w-md mx-4 bg-white shadow-lg rounded-xl">
@@ -717,28 +686,28 @@ const companyUnavailableSlots = {
             </button>
 
             <div className="flex flex-col items-center py-2 pb-5">
-              <h2 className="my-6 text-xl font-semibold text-center">
+              <h2 className="my-4 sm:my-6 text-lg sm:text-xl font-semibold text-center">
                 {isUpdating ? "Update Meeting Time" : "Confirm Meeting Time"}
               </h2>
               <hr className='w-full h-0.5'/>
-              <div className="w-full p-10 text-center">
-                <p className="text-lg font-medium">Day {selectedSlot.day}</p>
-                <p className="text-base">Date: {selectedSlot.date} ({selectedSlot.dayOfWeek})</p>
-                <p className="text-base">Time: {formatTimeRange(selectedSlot.time)}</p>
-                <p className="text-base">Company: {selectedSlot.company}</p>
-                <p className="text-base">Booth: {selectedSlot.boothNumber}</p>
+              <div className="w-full p-4 sm:p-10 text-center">
+                <p className="text-base sm:text-lg font-medium">Day {selectedSlot.day}</p>
+                <p className="text-sm sm:text-base">Date: {selectedSlot.date} ({selectedSlot.dayOfWeek})</p>
+                <p className="text-sm sm:text-base">Time: {formatTimeRange(selectedSlot.time)}</p>
+                <p className="text-sm sm:text-base">Company: {selectedSlot.company}</p>
+                <p className="text-sm sm:text-base">Booth: {selectedSlot.boothNumber}</p>
               </div>
 
               <div className="flex justify-center gap-4 p-4">
                 <button
                   onClick={handleCancel}
-                  className="px-5 py-1.5 text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full"
+                  className="px-5 py-1.5 text-xs sm:text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleConfirm}
-                  className="px-5 py-1.5 text-sm bg-[#40033f] text-white rounded-full"
+                  className="px-5 py-1.5 text-xs sm:text-sm bg-[#40033f] text-white rounded-full"
                 >
                   Confirm
                 </button>
@@ -748,7 +717,7 @@ const companyUnavailableSlots = {
         </div>
       )}
 
-      {/* Cancellation Modal */}
+      {/* Make cancel modal responsive */}
       {showCancelModal && slotToCancel && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(88, 64, 88, 0.7)' }}>
           <div className="relative w-full max-w-md mx-4 bg-white shadow-lg rounded-xl">
@@ -761,29 +730,29 @@ const companyUnavailableSlots = {
             </button>
 
             <div className="flex flex-col items-center py-2 pb-5">
-              <h2 className="my-6 text-xl font-semibold text-center">
+              <h2 className="my-4 sm:my-6 text-lg sm:text-xl font-semibold text-center">
                 Cancel Meeting Booking
               </h2>
               <hr className='w-full h-0.5'/>
-              <div className="w-full p-10 text-center">
-                <p className="text-lg font-medium">Are you sure you want to cancel this meeting?</p>
-                <p className="mt-4 text-base">Day {slotToCancel.day}</p>
-                <p className="text-base">Date: {slotToCancel.date} ({slotToCancel.dayOfWeek})</p>
-                <p className="text-base">Time: {formatTimeRange(slotToCancel.time)}</p>
-                <p className="text-base">Company: {slotToCancel.company}</p>
-                <p className="text-base">Booth: {slotToCancel.boothNumber}</p>
+              <div className="w-full p-4 sm:p-10 text-center">
+                <p className="text-base sm:text-lg font-medium">Are you sure you want to cancel this meeting?</p>
+                <p className="mt-4 text-sm sm:text-base">Day {slotToCancel.day}</p>
+                <p className="text-sm sm:text-base">Date: {slotToCancel.date} ({slotToCancel.dayOfWeek})</p>
+                <p className="text-sm sm:text-base">Time: {formatTimeRange(slotToCancel.time)}</p>
+                <p className="text-sm sm:text-base">Company: {slotToCancel.company}</p>
+                <p className="text-sm sm:text-base">Booth: {slotToCancel.boothNumber}</p>
               </div>
 
               <div className="flex justify-center gap-4 p-4">
                 <button
                   onClick={handleCancelModalClose}
-                  className="px-5 py-1.5 text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full"
+                  className="px-5 py-1.5 text-xs sm:text-sm border border-[#9c0c40] text-[#9c0c40] rounded-full"
                 >
                   Keep Booking
                 </button>
                 <button
                   onClick={handleCancelBooking}
-                  className="px-5 py-1.5 text-sm bg-[#9c0c40] text-white rounded-full"
+                  className="px-5 py-1.5 text-xs sm:text-sm bg-[#9c0c40] text-white rounded-full"
                 >
                   Cancel Booking
                 </button>
@@ -793,7 +762,7 @@ const companyUnavailableSlots = {
         </div>
       )}
 
-      {/* New Message Modal */}
+      {/* Make message modal responsive */}
       {showMessageModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(88, 64, 88, 0.7)' }}>
           <div className="relative w-full max-w-md mx-4 bg-white shadow-lg rounded-xl">
@@ -806,18 +775,18 @@ const companyUnavailableSlots = {
             </button>
 
             <div className="flex flex-col items-center py-2 pb-5">
-              <h2 className="my-6 text-xl font-semibold text-center">
+              <h2 className="my-4 sm:my-6 text-lg sm:text-xl font-semibold text-center">
                 Information
               </h2>
               <hr className='w-full h-0.5'/>
-              <div className="w-full p-10 text-center">
-                <p className="text-base">{messageModalContent}</p>
+              <div className="w-full p-4 sm:p-10 text-center">
+                <p className="text-sm sm:text-base">{messageModalContent}</p>
               </div>
 
               <div className="flex justify-center gap-4 p-4">
                 <button
                   onClick={() => setShowMessageModal(false)}
-                  className="px-5 py-1.5 text-sm bg-[#40033f] text-white rounded-full"
+                  className="px-5 py-1.5 text-xs sm:text-sm bg-[#40033f] text-white rounded-full"
                 >
                   OK
                 </button>

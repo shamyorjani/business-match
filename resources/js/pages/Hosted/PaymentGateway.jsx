@@ -1,9 +1,34 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PrimaryApplicant from '../../components/form/PrimaryApplicant';
 import AdditionalApplicant from '../../components/form/AdditionalApplicant';
 import StayDetails from '../../components/form/StayDetails';
+import { useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 
 const PaymentGateway = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [userId, setUserId] = useState(null);
+  const [companyId, setCompanyId] = useState(null);
+
+  // Get URL parameters
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const user = params.get('user');
+    const company = params.get('company');
+    
+    if (user && company) {
+      setUserId(parseInt(user));
+      setCompanyId(parseInt(company));
+      // Update formData with the IDs
+      setFormData(prevData => ({
+        ...prevData,
+        userId: parseInt(user),
+        companyId: parseInt(company)
+      }));
+    }
+  }, [location]);
+
   const [formData, setFormData] = useState({
     name: '',
     passportNumber: '',
@@ -13,8 +38,26 @@ const PaymentGateway = () => {
     additionalPassport: '',
     stayingDuration: '',
     roomType: '',
-    extraNight: ''
+    extraNight: '',
+    userId: '',
+    companyId: ''
   });
+
+  // Load saved data from localStorage
+  useEffect(() => {
+    const savedData = localStorage.getItem('hostedPaymentData');
+    if (savedData) {
+      try {
+        const parsedData = JSON.parse(savedData);
+        setFormData(prevData => ({
+          ...prevData,
+          ...parsedData
+        }));
+      } catch (error) {
+        console.error('Error loading saved data:', error);
+      }
+    }
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -24,11 +67,54 @@ const PaymentGateway = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Add your form submission logic here
-    window.location.href = '/hosted/payment-card';
+    
+    try {
+      // Save booking data to database with correct field names
+      const response = await axios.post(`/api/payments/booking/${userId}/${companyId}`, {
+        ...formData,
+        totalAmount: calculateTotalAmount(formData)
+      });
+
+      // Save form data to localStorage
+      const dataToSave = {
+        ...formData,
+        user_id: userId,
+        visitor_company_id: companyId,
+        bookingId: response.data.booking_id
+      };
+      localStorage.setItem('hostedPaymentData', JSON.stringify(dataToSave));
+
+      // Calculate total amount
+      const totalAmount = calculateTotalAmount(formData);
+      
+      // Save total amount to localStorage for payment card
+      localStorage.setItem('paymentSummary', JSON.stringify({
+        ...dataToSave,
+        totalAmount,
+        orderData: [
+          { label: "Refundable Deposit", value: "450.00" },
+          { label: "Room Booking (2 nights)", value: "850.00" },
+          { label: "Registration Fee", value: "150.00" },
+          ...(formData.extraNight ? [{ label: "Extra Night", value: "450.00" }] : [])
+        ]
+      }));
+
+      // Navigate to payment card
+      navigate('/hosted/payment-card');
+    } catch (error) {
+      console.error('Error saving booking:', error);
+      // Handle error (show error message to user)
+    }
+  };
+
+  const calculateTotalAmount = (data) => {
+    let total = 1450.00; // Base amount (450 + 850 + 150)
+    if (data.extraNight) {
+      total += 450.00; // Add extra night charge
+    }
+    return total.toFixed(2);
   };
 
   return (

@@ -34,9 +34,9 @@ class CompanyProduct extends Model
     ];
 
     /**
-     * Get the company that owns the product.
+     * Get the exhibitor company that owns the product.
      */
-    public function company(): BelongsTo
+    public function exhibitor(): BelongsTo
     {
         return $this->belongsTo(ExhibitorCompanyInfo::class, 'company_id');
     }
@@ -48,6 +48,6 @@ class CompanyProduct extends Model
      */
     public function isActive(): bool
     {
-        return $this->status === StatusEnum::ACTIVE->value;
+        return $this->status === StatusEnum::Active->value;
     }
 }

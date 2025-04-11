@@ -43,7 +43,7 @@ button{
 }
 
 .header-title {
-@apply text-white font-bold text-[36px] px-12 py-5;
+@apply text-white font-bold text-[36px] px-4  sm:px-12 py-3 sm:py-5;
 }
 
 .header-subtitle {
@@ -164,7 +164,7 @@ focus:outline-none focus:border-purple-500;
 }
 
 .form-white-container {
-@apply  bg-white px-16 py-16 ;
+@apply  bg-white px-8 sm:px-12 py-8 sm:py-16 ;
 }
 
 .step-container {
@@ -475,7 +475,7 @@ border border-gray-200 rounded focus:outline-none focus:border-purple-500;
 
 /* Content Sections */
 .content {
-@apply p-10 py-6 bg-white;
+@apply p-5 sm:p-10 py-3 bg-white sm:py-6 ;
 }
 
 .info-bar {

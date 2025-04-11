@@ -2,24 +2,62 @@ import React from 'react';
 import RadioGroup from './RadioGroup';
 
 const StayDetails = ({ formData, handleChange }) => {
-  const stayingDurationOptions = [
-    { value: "1-3 June 2025", label: "1-3 June 2025" },
-    { value: "2-4 June 2025", label: "2-4 June 2025" },
-    { value: "3-5 June 2025", label: "3-5 June 2025" }
-  ];
+  // Function to format date as "DD MMM YYYY"
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric'
+    });
+  };
+
+  // Function to generate date range options
+  const generateDateRanges = () => {
+    const today = new Date();
+    const options = [];
+    
+    // Generate 7 different 3-day ranges starting from today
+    for (let i = 0; i < 7; i++) {
+      const startDate = new Date(today);
+      startDate.setDate(today.getDate() + i);
+      
+      const endDate = new Date(startDate);
+      endDate.setDate(startDate.getDate() + 2); // Add 2 days to get 3-day range
+      
+      const value = `${formatDate(startDate)} - ${formatDate(endDate)}`;
+      const label = `${formatDate(startDate)} - ${formatDate(endDate)}`;
+      
+      options.push({ value, label });
+    }
+    
+    return options;
+  };
+
+  // Function to generate extra night options
+  const generateExtraNightOptions = () => {
+    const today = new Date();
+    const options = [];
+    
+    // Generate 7 days of options starting from today
+    for (let i = 0; i < 7; i++) {
+      const date = new Date(today);
+      date.setDate(today.getDate() + i);
+      
+      const value = formatDate(date);
+      const label = formatDate(date);
+      
+      options.push({ value, label });
+    }
+    
+    return options;
+  };
+
+  const stayingDurationOptions = generateDateRanges();
+  const extraNightOptions = generateExtraNightOptions();
 
   const roomTypeOptions = [
     { value: "Two Single Bed", label: "Two Single Bed" },
     { value: "One Double Bed", label: "One Double Bed" }
-  ];
-
-  const extraNightOptions = [
-    { value: "30 May 2025", label: "30 May 2025" },
-    { value: "1 June 2025", label: "1 June 2025" },
-    { value: "2 June 2025", label: "2 June 2025" },
-    { value: "4 June 2025", label: "4 June 2025" },
-    { value: "5 June 2025", label: "5 June 2025" },
-    { value: "6 June 2025", label: "6 June 2025" }
   ];
 
   return (

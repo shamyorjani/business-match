@@ -3,91 +3,85 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Foundation\Auth\AuthenticatesUsers;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Laravel\Sanctum\HasApiTokens;
 
 class LoginController extends Controller
 {
-    /*
-    |--------------------------------------------------------------------------
-    | Login Controller
-    |--------------------------------------------------------------------------
-    |
-    | This controller handles authenticating users for the application and
-    | redirecting them to your home screen. The controller uses a trait
-    | to conveniently provide its functionality to your applications.
-    |
-    */
-
-    use AuthenticatesUsers;
-
     /**
-     * Where to redirect users after login.
-     *
-     * @var string
-     */
-    protected $redirectTo = '/home';
-
-    /**
-     * Create a new controller instance.
-     *
-     * @return void
-     */
-    public function __construct()
-    {
-        $this->middleware('guest')->except('logout');
-    }
-
-    /**
-     * Handle a login request to the application.
+     * Handle a login request for the application.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function login(Request $request)
     {
-        $this->validateLogin($request);
+        try {
+            $credentials = $request->only('email', 'password');
 
-        if ($this->attemptLogin($request)) {
-            $user = $this->guard()->user();
+            if (Auth::attempt($credentials)) {
+                $user = Auth::user();
 
-            if ($request->wantsJson()) {
+                // Delete any existing tokens
+                $user->tokens()->delete();
+
+                // Create new token
+                $token = $user->createToken('API Token')->plainTextToken;
+
+                // Log the successful login
+                Log::info('User logged in successfully', ['user' => $user]);
+
                 return response()->json([
-                    'user' => $user,
-                    'message' => 'Login successful'
+                    'message' => 'Login successful',
+                    'token' => $token,
+                    'user' => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'email' => $user->email
+                    ]
                 ]);
             }
 
-            return $this->sendLoginResponse($request);
-        }
+            // Log the failed login attempt
+            Log::warning('Login failed for user', ['email' => $request->email]);
 
-        if ($request->wantsJson()) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        } catch (\Exception $e) {
+            Log::error('Login error: ' . $e->getMessage());
             return response()->json([
-                'message' => 'The provided credentials do not match our records.'
-            ], 401);
+                'message' => 'Internal server error',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        return $this->sendFailedLoginResponse($request);
     }
 
     /**
-     * Log the user out of the application.
+     * Logout the user and invalidate the token.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response|\Illuminate\Http\JsonResponse
+     * @return \Illuminate\Http\Response
      */
     public function logout(Request $request)
     {
-        $this->guard()->logout();
+        try {
+            // Get the current user
+            $user = Auth::user();
+        
+            if (!$user) {
+                return response()->json(['message' => 'No authenticated user found'], 401);
+            }
+            
+            // Revoke all of the user's tokens
+            $user->tokens()->delete();
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        if ($request->wantsJson()) {
             return response()->json(['message' => 'Logged out successfully']);
+        } catch (\Exception $e) {
+            Log::error('Logout error: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Internal server error',
+                'error' => $e->getMessage()
+            ], 500);
         }
-
-        return $this->loggedOut($request) ?: redirect('/');
     }
 }

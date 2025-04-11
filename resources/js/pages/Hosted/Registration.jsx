@@ -107,7 +107,7 @@ const Registration = () => {
       </div>
 
       {/* Form Content */}
-      <div className="p-6 px-16 py-12 bg-white">
+      <div className="p-6 px-8 sm:px-16 py:py-4 sm:py-12 bg-white">
         {/* Step Indicator */}
         <div className="mb-8">
           <h2 className="step-indicator">STEP 1</h2>

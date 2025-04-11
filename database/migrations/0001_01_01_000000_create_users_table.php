@@ -16,11 +16,12 @@ return new class extends Migration
             $table->string('name');
             $table->string('designation');
             $table->string('email');
+            $table->string('password'); // Ensure password field is added
             $table->string('phone_number');
             $table->string('company_name');
             $table->string('company_nature');
             $table->string('company_size');
-            $table->string('registration_type');
+            $table->string('registration_type')->default('admin');
             $table->timestamps();
         });
     }

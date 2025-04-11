@@ -1,16 +1,8 @@
 import React from 'react';
 import Input from './Input';
+import PhoneInput from './PhoneInput';
 
 const PrimaryApplicant = ({ formData, handleChange }) => {
-  const phonePrefix = (
-    <div className="flex items-center px-2 border border-gray-300 rounded-l bg-gray-50">
-      <div className="flex items-center justify-center w-5 h-3 mr-1 overflow-hidden">
-        <span className="text-xs">🇲🇾</span>
-      </div>
-      <span className="text-sm">+60</span>
-    </div>
-  );
-
   return (
     <div className="grid grid-cols-1 gap-6 mb-8 md:grid-cols-2">
       <Input
@@ -41,16 +33,20 @@ const PrimaryApplicant = ({ formData, handleChange }) => {
         onChange={handleChange}
       />
 
-      <Input
-        id="phoneNumber"
-        name="phoneNumber"
-        label="Phone Number:"
-        type="tel"
-        placeholder="E.g. 123456789"
-        value={formData.phoneNumber}
-        onChange={handleChange}
-        prefix={phonePrefix}
-      />
+      <div>
+        <label className="block mb-2 text-sm font-medium text-gray-700">
+          Phone Number:
+        </label>
+        <PhoneInput
+          id="phoneNumber"
+          name="phoneNumber"
+          placeholder="E.g. 123456789"
+          value={formData.phoneNumber}
+          onChange={handleChange}
+          countryCode="+60"
+          country="Malaysia"
+        />
+      </div>
     </div>
   );
 };

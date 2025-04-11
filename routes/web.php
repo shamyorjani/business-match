@@ -7,14 +7,19 @@ use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\Auth\LogoutController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductSubCategoryController;
+use App\Http\Controllers\MailController;
 use Illuminate\Support\Facades\Log;
 
 // Laravel's default authentication routes
 Auth::routes();
 
+// Test mail sending
+Route::get('/send-mail', [MailController::class, 'sendMail']);
+
+
 // SPA catch-all route
 Route::get('/{any}', function () {
-    return view('layouts.app');
+    return View('layouts.app');
 })->where('any', '.*');
 
 Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
